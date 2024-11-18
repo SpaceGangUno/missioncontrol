@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --theme-primary: 56 189 248;    /* #38bdf8 in RGB */
+    --theme-secondary: 129 140 248;  /* #818cf8 in RGB */
+    --theme-accent: 192 132 252;     /* #c084fc in RGB */
+  }
+
+  body {
+    background: linear-gradient(180deg, #0a0d1f 0%, #1a1b46 100%);
+    color: rgb(var(--theme-primary));
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-navy-900/30 backdrop-blur-md border rounded-xl relative;
+    border-color: rgb(var(--theme-primary) / 0.1);
+    box-shadow: 0 0 30px rgb(var(--theme-primary) / 0.05);
+  }
+
+  .glass-input {
+    @apply bg-navy-900/50 border rounded-lg px-4 py-3
+           focus:ring-1 relative z-10 w-full;
+    border-color: rgb(var(--theme-primary) / 0.2);
+    color: rgb(var(--theme-primary));
+    &::placeholder {
+      color: rgb(var(--theme-primary) / 0.3);
+    }
+    &:focus {
+      border-color: rgb(var(--theme-primary));
+      --tw-ring-color: rgb(var(--theme-primary) / 0.5);
+    }
+  }
+
+  .theme-text {
+    color: rgb(var(--theme-primary));
+  }
+
+  .theme-border {
+    border-color: rgb(var(--theme-primary));
+  }
+
+  .theme-bg {
+    background-color: rgb(var(--theme-primary));
+  }
+
+  .theme-glow {
+    box-shadow: 0 0 20px rgb(var(--theme-primary) / 0.5);
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      to right,
+      rgb(var(--theme-primary)),
+      rgb(var(--theme-secondary))
+    );
+  }
+}
+
+@keyframes doorLeft {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes doorRight {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes contentFadeIn {
+  0% { 
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  50% { 
+    opacity: 0;
+  }
+  100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes glowPulse {
+  0% { opacity: 0; }
+  50% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+
+.animate-door-left {
+  animation: doorLeft 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-door-right {
+  animation: doorRight 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-content-fade-in {
+  animation: contentFadeIn 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation-delay: 0.75s;
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
