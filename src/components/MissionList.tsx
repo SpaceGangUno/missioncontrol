@@ -2,7 +2,7 @@ import React from 'react';
 import { Goal } from '../types';
 import GoalList from './GoalList';
 import { useStore } from '../lib/store';
-import { Heart, Lightbulb, Target, Rocket, Play } from 'lucide-react';
+import { Heart, Lightbulb, Target, Rocket, Play, Check } from 'lucide-react';
 
 interface Props {
   missions: Goal[];
@@ -26,6 +26,11 @@ export default function MissionList({ missions, onToggleMission, onUpdateProgres
         onUpdateProgress(goalId, 'in_progress', 50);
       }
     });
+  };
+
+  const handleSubmitMeals = () => {
+    // Handle meal submission
+    console.log('Meals submitted');
   };
 
   return (
@@ -87,6 +92,53 @@ export default function MissionList({ missions, onToggleMission, onUpdateProgres
                   <p className="text-sky-200/80">{dayPlan.makeItEleven}</p>
                 </div>
               )}
+            </div>
+
+            {/* Meals Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-sky-100 flex items-center gap-2 mb-4">
+                <Rocket className="w-5 h-5 text-sky-400" />
+                Meals for the day
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-2">
+                    Breakfast:
+                  </label>
+                  <input
+                    type="text"
+                    className="glass-input w-full"
+                    placeholder="Enter breakfast"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-2">
+                    Lunch:
+                  </label>
+                  <input
+                    type="text"
+                    className="glass-input w-full"
+                    placeholder="Enter lunch"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-2">
+                    Dinner:
+                  </label>
+                  <input
+                    type="text"
+                    className="glass-input w-full"
+                    placeholder="Enter dinner"
+                  />
+                </div>
+                <button
+                  onClick={handleSubmitMeals}
+                  className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-white font-semibold py-3 px-6 rounded-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] backdrop-blur-sm active:scale-95 touch-manipulation"
+                >
+                  <Check className="w-5 h-5" />
+                  Submit Meals
+                </button>
+              </div>
             </div>
           </div>
         </div>
