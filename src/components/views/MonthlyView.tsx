@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Goal } from '../../types';
-import { Rocket, Star, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
+import GoalDetailsModal from '../GoalDetailsModal';
 
 interface Props {
   goals: Goal[];
@@ -8,6 +9,8 @@ interface Props {
 }
 
 export default function MonthlyView({ goals, onToggleGoal }: Props) {
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+
   // Group goals by priority for different orbital paths
   const priorityGoals = {
     high: goals.filter(g => g.priority === 'high'),
@@ -64,8 +67,8 @@ export default function MonthlyView({ goals, onToggleGoal }: Props) {
             return (
               <button
                 key={goal.id}
-                onClick={() => onToggleGoal(goal.id)}
-                className={`absolute -translate-x-1/2 -translate-y-1/2 transition-transform hover:scale-110 ${
+                onClick={() => setSelectedGoal(goal)}
+                className={`absolute -translate-x-1/2 -translate-y-1/2 transition-transform hover:scale-125 ${
                   goal.completed ? 'opacity-50' : ''
                 }`}
                 style={{
@@ -75,29 +78,18 @@ export default function MonthlyView({ goals, onToggleGoal }: Props) {
                 }}
               >
                 <div
-                  className={`glass-card p-4 w-48 backdrop-blur-md transition-all animate-float ${
-                    goal.completed ? 'bg-emerald-500/20' : getPriorityColor(priority)
+                  className={`w-6 h-6 rounded-full transition-all animate-float shadow-lg ${
+                    goal.completed ? 'bg-emerald-400' : getPriorityColor(priority)
                   }`}
-                  style={{ animationDelay: `${delay}s` }}
+                  style={{ 
+                    animationDelay: `${delay}s`,
+                    boxShadow: `0 0 15px ${getPriorityShadowColor(priority)}`
+                  }}
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="mt-1">
-                      {goal.completed ? (
-                        <Star className="w-5 h-5 text-emerald-400 fill-emerald-400" />
-                      ) : (
-                        <Rocket className="w-5 h-5 text-sky-400" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className={`text-sm font-semibold ${
-                        goal.completed ? 'line-through text-emerald-400' : 'text-white'
-                      }`}>
-                        {goal.title}
-                      </h3>
-                      <p className="text-xs text-white/60 mt-1 line-clamp-2">
-                        {goal.description}
-                      </p>
-                    </div>
+                  <div className="absolute top-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                    <span className="text-xs text-white/80 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {goal.title}
+                    </span>
                   </div>
                 </div>
               </button>
@@ -105,15 +97,31 @@ export default function MonthlyView({ goals, onToggleGoal }: Props) {
           })}
         </div>
       ))}
+
+      {/* Goal Details Modal */}
+      <GoalDetailsModal
+        goal={selectedGoal}
+        onClose={() => setSelectedGoal(null)}
+        onToggleGoal={onToggleGoal}
+      />
     </div>
   );
 }
 
 function getPriorityColor(priority: string): string {
   switch (priority) {
-    case 'high': return 'bg-rose-500/20 hover:bg-rose-500/30';
-    case 'medium': return 'bg-amber-500/20 hover:bg-amber-500/30';
-    case 'low': return 'bg-emerald-500/20 hover:bg-emerald-500/30';
-    default: return 'bg-sky-500/20 hover:bg-sky-500/30';
+    case 'high': return 'bg-rose-500';
+    case 'medium': return 'bg-amber-500';
+    case 'low': return 'bg-emerald-500';
+    default: return 'bg-sky-500';
+  }
+}
+
+function getPriorityShadowColor(priority: string): string {
+  switch (priority) {
+    case 'high': return 'rgba(244, 63, 94, 0.5)'; // rose-500
+    case 'medium': return 'rgba(245, 158, 11, 0.5)'; // amber-500
+    case 'low': return 'rgba(16, 185, 129, 0.5)'; // emerald-500
+    default: return 'rgba(14, 165, 233, 0.5)'; // sky-500
   }
 }
