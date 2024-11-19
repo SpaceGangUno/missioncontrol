@@ -269,25 +269,20 @@ export const useStore = create<Store>((set, get) => ({
       // Wait for all goal updates to complete
       await Promise.all(updatePromises);
 
-      // Then update the day plan
+      // Update the day plan with started status and data
       const dayPlanRef = doc(db, `users/${user.uid}/dayPlans/${plan.date}`);
       await updateDoc(dayPlanRef, {
+        ...plan,
         status: 'started',
         startedAt: plan.startedAt,
         updatedAt: new Date().toISOString()
-      });
-
-      // Finally, create the started day record
-      const startedDayRef = doc(db, `users/${user.uid}/startedDays/${plan.date}`);
-      await setDoc(startedDayRef, {
-        ...plan,
-        createdAt: new Date().toISOString()
       });
 
       // Update local state
       set(state => ({
         dayPlan: state.dayPlan ? {
           ...state.dayPlan,
+          ...plan,
           status: 'started',
           startedAt: plan.startedAt
         } : null
@@ -295,7 +290,7 @@ export const useStore = create<Store>((set, get) => ({
     } catch (error) {
       console.error('Failed to start day:', error);
       set({ error: 'Failed to start day' });
-      throw error; // Re-throw to handle in component
+      throw error;
     }
   }
 }));
