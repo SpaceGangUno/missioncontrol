@@ -55,8 +55,12 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
     low: goals.filter(g => g.priority === 'low'),
   };
 
-  // Keep track of total goals for color generation
+  // Generate and store colors for all goals
+  const goalColors = new Map<string, string>();
   let globalGoalIndex = 0;
+  Object.values(priorityGoals).flat().forEach(goal => {
+    goalColors.set(goal.id, generateUniqueColor(globalGoalIndex++));
+  });
 
   return (
     <div className="relative min-h-[600px] overflow-hidden rounded-xl glass-card p-8">
@@ -110,7 +114,7 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
           {priorityGoals.map((goal, i) => {
             const angle = (i * 360) / priorityGoals.length;
             const delay = i * 0.5;
-            const goalColor = generateUniqueColor(globalGoalIndex++);
+            const goalColor = goalColors.get(goal.id)!;
             
             return (
               <button
@@ -172,6 +176,34 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
           })}
         </div>
       ))}
+
+      {/* Goals Legend */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/30 backdrop-blur-md rounded-xl p-4 max-w-[80%] z-20">
+        <div className="text-white text-sm mb-2 text-center font-medium">Goals Legend</div>
+        <div className="flex flex-wrap gap-3 justify-center">
+          {Object.values(priorityGoals).flat().map((goal) => {
+            const goalColor = goalColors.get(goal.id)!;
+            return (
+              <div 
+                key={goal.id}
+                className="flex items-center gap-2 bg-black/20 rounded-lg px-3 py-1.5"
+                onClick={() => setSelectedGoal(goal)}
+              >
+                <div
+                  className="w-4 h-4 rounded-full"
+                  style={{
+                    background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
+                    boxShadow: `0 0 10px ${goalColor}80`
+                  }}
+                />
+                <span className="text-white text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">
+                  {goal.title}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Edit Goal Form */}
       {selectedGoal && (
