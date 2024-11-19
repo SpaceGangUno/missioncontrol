@@ -1,5 +1,5 @@
-import React from 'react';
-import { CheckCircle2, Circle, AlertCircle, Clock, Tag, PlayCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Circle, AlertCircle, Clock, Tag, PlayCircle, Rocket } from 'lucide-react';
 import { Goal } from '../types';
 
 interface Props {
@@ -8,7 +8,24 @@ interface Props {
   onUpdateProgress: (id: string, status: Goal['status'], progress: number) => void;
 }
 
+interface AnimatingGoal {
+  id: string;
+  action: 'takeoff' | 'landing';
+}
+
 export default function GoalList({ goals, onToggleGoal, onUpdateProgress }: Props) {
+  const [animatingGoal, setAnimatingGoal] = useState<AnimatingGoal | null>(null);
+
+  // Handle animation
+  useEffect(() => {
+    if (animatingGoal) {
+      const timer = setTimeout(() => {
+        setAnimatingGoal(null);
+      }, 1000); // Duration of animation
+      return () => clearTimeout(timer);
+    }
+  }, [animatingGoal]);
+
   const getPriorityColor = (priority: Goal['priority']) => {
     switch (priority) {
       case 'high': return 'text-rose-400';
@@ -18,10 +35,17 @@ export default function GoalList({ goals, onToggleGoal, onUpdateProgress }: Prop
     }
   };
 
-  const getStatusIcon = (status: Goal['status']) => {
-    switch (status) {
+  const getStatusIcon = (goal: Goal) => {
+    const isAnimating = animatingGoal?.id === goal.id;
+    const animationClass = isAnimating 
+      ? animatingGoal.action === 'takeoff' 
+        ? 'blast-off' 
+        : 'landing'
+      : '';
+
+    switch (goal.status) {
       case 'completed':
-        return <CheckCircle2 className="w-6 h-6 text-emerald-400" />;
+        return <Rocket className={`w-6 h-6 text-emerald-400 ${animationClass}`} />;
       case 'in_progress':
         return <PlayCircle className="w-6 h-6 text-amber-400" />;
       default:
@@ -37,14 +61,56 @@ export default function GoalList({ goals, onToggleGoal, onUpdateProgress }: Prop
         : 'not_started';
     
     const progress = nextStatus === 'completed' ? 100 : nextStatus === 'in_progress' ? 50 : 0;
-    onUpdateProgress(goal.id, nextStatus, progress);
+    
     if (nextStatus === 'completed') {
+      setAnimatingGoal({
+        id: goal.id,
+        action: 'takeoff'
+      });
       onToggleGoal(goal.id);
+    } else if (goal.status === 'completed') {
+      setAnimatingGoal({
+        id: goal.id,
+        action: 'landing'
+      });
     }
+    
+    onUpdateProgress(goal.id, nextStatus, progress);
   };
 
   return (
     <div className="space-y-4">
+      <style>
+        {`
+          @keyframes blastOff {
+            0% {
+              transform: translateY(0) rotate(0deg);
+              opacity: 1;
+            }
+            100% {
+              transform: translateY(-100px) rotate(45deg);
+              opacity: 0;
+            }
+          }
+          @keyframes landing {
+            0% {
+              transform: translateY(-100px) rotate(45deg);
+              opacity: 0;
+            }
+            100% {
+              transform: translateY(0) rotate(0deg);
+              opacity: 1;
+            }
+          }
+          .blast-off {
+            animation: blastOff 1s ease-out forwards;
+          }
+          .landing {
+            animation: landing 1s ease-in forwards;
+          }
+        `}
+      </style>
+
       {goals.slice(0, 5).map((goal) => (
         <div
           key={goal.id}
@@ -74,7 +140,7 @@ export default function GoalList({ goals, onToggleGoal, onUpdateProgress }: Prop
               onClick={() => handleStatusClick(goal)}
               className="mt-1 focus:outline-none transition-transform hover:scale-110"
             >
-              {getStatusIcon(goal.status)}
+              {getStatusIcon(goal)}
             </button>
             
             <div className="flex-1">
