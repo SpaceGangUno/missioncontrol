@@ -24,6 +24,7 @@ export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: P
   const descriptionRef = useRef<HTMLDivElement>(null);
   const priorityRef = useRef<HTMLDivElement>(null);
   const dateRef = useRef<HTMLDivElement>(null);
+  const categoryRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll effect when fields are filled
   useEffect(() => {
@@ -34,15 +35,22 @@ export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: P
 
   useEffect(() => {
     if (description.length > 0) {
-      priorityRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      priorityRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [description]);
 
+  // Scroll when priority is selected to show full category section
   useEffect(() => {
-    if (priority && category) {
+    if (priority) {
+      categoryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [priority]);
+
+  useEffect(() => {
+    if (category) {
       dateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [priority, category]);
+  }, [category]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -197,7 +205,7 @@ export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: P
                   </div>
                 </div>
 
-                <div>
+                <div ref={categoryRef}>
                   <label className="block text-sm font-medium text-white/80 mb-3">
                     Category Type
                   </label>
