@@ -136,26 +136,27 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal }: Props
                     />
                   </div>
 
-                  {/* Goal title in circular text */}
-                  <div className="absolute -inset-4 flex items-center justify-center">
-                    <div 
-                      className="absolute w-full h-full rounded-full"
-                      style={{
-                        background: `radial-gradient(circle at center, transparent 60%, ${goalColor}20 100%)`
-                      }}
-                    />
-                    <div 
-                      className="absolute text-xs text-white whitespace-nowrap px-2 py-1 rounded-full bg-black/50 backdrop-blur-sm"
-                      style={{
-                        transform: `rotate(${-angle}deg)`,
-                        maxWidth: '120px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {goal.title}
-                    </div>
-                  </div>
+                  {/* SVG for circular text */}
+                  <svg className="absolute -top-16 -left-16 w-32 h-32 pointer-events-none">
+                    <defs>
+                      <path
+                        id={`textPath-${goal.id}`}
+                        d="M16,32 A16,16 0 1,1 16,31.999999"
+                        fill="none"
+                      />
+                    </defs>
+                    <text className="text-xs fill-white">
+                      <textPath
+                        href={`#textPath-${goal.id}`}
+                        startOffset="0%"
+                        style={{
+                          textShadow: '0 0 4px rgba(0,0,0,0.5)'
+                        }}
+                      >
+                        {goal.title}
+                      </textPath>
+                    </text>
+                  </svg>
                 </div>
               </button>
             );
