@@ -6,9 +6,11 @@ import { Palette } from 'lucide-react';
 export default function ThemeSelector() {
   const { updateUserTheme, currentTheme } = useStore();
 
-  // Set default theme on mount
+  // Set default theme only if no theme is currently set
   useEffect(() => {
-    updateUserTheme('cosmic-blue');
+    if (!currentTheme || !currentTheme.id) {
+      updateUserTheme('cosmic-blue');
+    }
   }, []);
 
   return (
