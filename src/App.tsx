@@ -11,7 +11,7 @@ import MonthlyView from './components/views/MonthlyView';
 import WeekView from './components/views/WeekView';
 import DayView from './components/views/DayView';
 import ThemeSelector from './components/ThemeSelector';
-import { Rocket, Calendar, Clock, CalendarDays, User, LogOut, Settings } from 'lucide-react';
+import { Rocket, Calendar, Clock, CalendarDays, User, LogOut, Settings, Menu, X } from 'lucide-react';
 import { auth } from './lib/firebase';
 
 type ViewType = 'mission-control' | 'month' | 'week' | 'day';
@@ -22,6 +22,7 @@ export default function App() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showWelcomeBack, setShowWelcomeBack] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const currentDate = new Date();
   const { goals, loading, addGoal, toggleGoal } = useStore();
@@ -63,6 +64,11 @@ export default function App() {
     }
   };
 
+  const handleViewChange = (view: ViewType) => {
+    setCurrentView(view);
+    setShowMobileMenu(false);
+  };
+
   return (
     <>
       {showWelcomeBack && (
@@ -73,10 +79,23 @@ export default function App() {
       )}
       
       <div className="min-h-screen p-4 sm:p-6">
-        <nav className="glass-card mb-6 p-4 rounded-xl flex items-center justify-between relative z-30">
-          <div className="flex items-center gap-6">
+        <nav className="glass-card mb-6 p-3 sm:p-4 rounded-xl flex items-center justify-between relative z-30">
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="sm:hidden p-2 hover:bg-white/5 rounded-lg"
+          >
+            {showMobileMenu ? (
+              <X className="w-5 h-5 text-sky-400" />
+            ) : (
+              <Menu className="w-5 h-5 text-sky-400" />
+            )}
+          </button>
+
+          {/* Desktop Navigation */}
+          <div className="hidden sm:flex items-center gap-6">
             <button
-              onClick={() => setCurrentView('mission-control')}
+              onClick={() => handleViewChange('mission-control')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                 currentView === 'mission-control' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60 hover:text-sky-400'
               }`}
@@ -85,7 +104,7 @@ export default function App() {
               Mission Control
             </button>
             <button
-              onClick={() => setCurrentView('month')}
+              onClick={() => handleViewChange('month')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                 currentView === 'month' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60 hover:text-sky-400'
               }`}
@@ -94,7 +113,7 @@ export default function App() {
               Month
             </button>
             <button
-              onClick={() => setCurrentView('week')}
+              onClick={() => handleViewChange('week')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                 currentView === 'week' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60 hover:text-sky-400'
               }`}
@@ -103,7 +122,7 @@ export default function App() {
               Week
             </button>
             <button
-              onClick={() => setCurrentView('day')}
+              onClick={() => handleViewChange('day')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                 currentView === 'day' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60 hover:text-sky-400'
               }`}
@@ -113,13 +132,19 @@ export default function App() {
             </button>
           </div>
 
+          {/* Mobile Title */}
+          <div className="sm:hidden flex items-center gap-2">
+            <Rocket className="w-5 h-5 text-sky-400" />
+            <span className="font-medium">Mission Control</span>
+          </div>
+
           <div className="relative" ref={profileMenuRef}>
             <button
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white/5 transition-colors"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg hover:bg-white/5 transition-colors"
             >
               <User className="w-5 h-5" />
-              <span className="text-sky-100">{user.displayName}</span>
+              <span className="text-sky-100 hidden sm:inline">{user.displayName}</span>
             </button>
 
             {showProfileMenu && (
@@ -162,6 +187,48 @@ export default function App() {
             )}
           </div>
         </nav>
+
+        {/* Mobile Navigation Menu */}
+        {showMobileMenu && (
+          <div className="sm:hidden glass-card mb-6 p-2 rounded-xl">
+            <button
+              onClick={() => handleViewChange('mission-control')}
+              className={`w-full flex items-center gap-2 px-4 py-3 rounded-lg transition-all ${
+                currentView === 'mission-control' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60'
+              }`}
+            >
+              <Rocket className="w-5 h-5" />
+              Mission Control
+            </button>
+            <button
+              onClick={() => handleViewChange('month')}
+              className={`w-full flex items-center gap-2 px-4 py-3 rounded-lg transition-all ${
+                currentView === 'month' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60'
+              }`}
+            >
+              <Calendar className="w-5 h-5" />
+              Month
+            </button>
+            <button
+              onClick={() => handleViewChange('week')}
+              className={`w-full flex items-center gap-2 px-4 py-3 rounded-lg transition-all ${
+                currentView === 'week' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60'
+              }`}
+            >
+              <CalendarDays className="w-5 h-5" />
+              Week
+            </button>
+            <button
+              onClick={() => handleViewChange('day')}
+              className={`w-full flex items-center gap-2 px-4 py-3 rounded-lg transition-all ${
+                currentView === 'day' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60'
+              }`}
+            >
+              <Clock className="w-5 h-5" />
+              Day
+            </button>
+          </div>
+        )}
 
         {/* Main Content */}
         <main className="relative z-20">
