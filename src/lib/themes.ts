@@ -5,6 +5,12 @@ export const themes = [
     primary: '#38bdf8',
     secondary: '#818cf8',
     accent: '#c084fc',
+    background: '#0f172a',
+    backgroundGradient: 'radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%)',
+    fontFamily: "'Space Grotesk', sans-serif",
+    cardBackground: 'rgba(30, 41, 59, 0.7)',
+    textColor: '#e2e8f0',
+    secondaryTextColor: '#94a3b8',
     description: 'Default cosmic theme with calming blue tones'
   },
   {
@@ -13,6 +19,12 @@ export const themes = [
     primary: '#10b981',
     secondary: '#34d399',
     accent: '#6ee7b7',
+    background: '#064e3b',
+    backgroundGradient: 'linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%)',
+    fontFamily: "'Outfit', sans-serif",
+    cardBackground: 'rgba(6, 78, 59, 0.7)',
+    textColor: '#ecfdf5',
+    secondaryTextColor: '#a7f3d0',
     description: 'Serene green hues inspired by cosmic nebulae'
   },
   {
@@ -21,6 +33,12 @@ export const themes = [
     primary: '#f59e0b',
     secondary: '#fbbf24',
     accent: '#fcd34d',
+    background: '#7c2d12',
+    backgroundGradient: 'linear-gradient(to right bottom, #7c2d12 0%, #92400e 50%, #b45309 100%)',
+    fontFamily: "'Sora', sans-serif",
+    cardBackground: 'rgba(124, 45, 18, 0.7)',
+    textColor: '#fff7ed',
+    secondaryTextColor: '#fed7aa',
     description: 'Warm and energetic solar-inspired palette'
   },
   {
@@ -29,6 +47,12 @@ export const themes = [
     primary: '#8b5cf6',
     secondary: '#a78bfa',
     accent: '#c4b5fd',
+    background: '#2e1065',
+    backgroundGradient: 'radial-gradient(circle at top right, #4c1d95 0%, #2e1065 100%)',
+    fontFamily: "'Cabinet Grotesk', sans-serif",
+    cardBackground: 'rgba(46, 16, 101, 0.7)',
+    textColor: '#f5f3ff',
+    secondaryTextColor: '#ddd6fe',
     description: 'Deep purple tones of a distant galaxy'
   },
   {
@@ -37,6 +61,12 @@ export const themes = [
     primary: '#ef4444',
     secondary: '#f87171',
     accent: '#fca5a5',
+    background: '#450a0a',
+    backgroundGradient: 'linear-gradient(45deg, #450a0a 0%, #7f1d1d 100%)',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    cardBackground: 'rgba(69, 10, 10, 0.7)',
+    textColor: '#fef2f2',
+    secondaryTextColor: '#fecaca',
     description: 'Bold and passionate red spectrum'
   },
   {
@@ -45,6 +75,12 @@ export const themes = [
     primary: '#06b6d4',
     secondary: '#67e8f9',
     accent: '#cffafe',
+    background: '#164e63',
+    backgroundGradient: 'linear-gradient(to right, #164e63 0%, #155e75 50%, #0e7490 100%)',
+    fontFamily: "'Inter', sans-serif",
+    cardBackground: 'rgba(22, 78, 99, 0.7)',
+    textColor: '#ecfeff',
+    secondaryTextColor: '#a5f3fc',
     description: 'Cool cyan inspired by northern lights'
   },
   {
@@ -53,6 +89,12 @@ export const themes = [
     primary: '#d97706',
     secondary: '#fbbf24',
     accent: '#fde68a',
+    background: '#78350f',
+    backgroundGradient: 'radial-gradient(circle at bottom left, #92400e 0%, #78350f 100%)',
+    fontFamily: "'Manrope', sans-serif",
+    cardBackground: 'rgba(120, 53, 15, 0.7)',
+    textColor: '#fffbeb',
+    secondaryTextColor: '#fde68a',
     description: 'Rich golden hues of celestial bodies'
   },
   {
@@ -61,6 +103,12 @@ export const themes = [
     primary: '#ec4899',
     secondary: '#f472b6',
     accent: '#fbcfe8',
+    background: '#831843',
+    backgroundGradient: 'linear-gradient(135deg, #831843 0%, #9d174d 50%, #be185d 100%)',
+    fontFamily: "'DM Sans', sans-serif",
+    cardBackground: 'rgba(131, 24, 67, 0.7)',
+    textColor: '#fdf2f8',
+    secondaryTextColor: '#fbcfe8',
     description: 'Vibrant pink energy of a quasar'
   },
   {
@@ -69,6 +117,12 @@ export const themes = [
     primary: '#059669',
     secondary: '#34d399',
     accent: '#a7f3d0',
+    background: '#064e3b',
+    backgroundGradient: 'linear-gradient(to left bottom, #064e3b 0%, #065f46 50%, #047857 100%)',
+    fontFamily: "'Geologica', sans-serif",
+    cardBackground: 'rgba(6, 78, 59, 0.7)',
+    textColor: '#ecfdf5',
+    secondaryTextColor: '#6ee7b7',
     description: 'Fresh mint tones of a passing meteor'
   },
   {
@@ -77,6 +131,12 @@ export const themes = [
     primary: '#0284c7',
     secondary: '#38bdf8',
     accent: '#bae6fd',
+    background: '#0c4a6e',
+    backgroundGradient: 'radial-gradient(circle at bottom right, #0c4a6e 0%, #075985 100%)',
+    fontFamily: "'Albert Sans', sans-serif",
+    cardBackground: 'rgba(12, 74, 110, 0.7)',
+    textColor: '#f0f9ff',
+    secondaryTextColor: '#bae6fd',
     description: 'Deep blue hues of cosmic oceans'
   }
 ];

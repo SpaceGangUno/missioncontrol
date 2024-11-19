@@ -85,7 +85,7 @@ export default function AddGoalForm({ onAddGoal }: Props) {
 
               <StarProgress currentStep={currentProgress} totalSteps={totalSteps} />
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6 mb-24">
                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-2">
                     Goal Title
@@ -198,12 +198,12 @@ export default function AddGoalForm({ onAddGoal }: Props) {
                     <Calendar className="w-5 h-5 text-sky-400" />
                   </button>
                   {showDatePicker && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute bottom-full mb-2 left-0 right-0 z-[60]">
                       <div 
-                        className="absolute inset-0 bg-navy-900/80 backdrop-blur-sm"
+                        className="fixed inset-0 bg-navy-900/80 backdrop-blur-sm z-[55]"
                         onClick={() => setShowDatePicker(false)}
                       />
-                      <div className="relative z-[110]">
+                      <div className="relative z-[65] bg-navy-900 rounded-lg shadow-xl border border-sky-500/10">
                         <DatePicker
                           selected={selectedDate}
                           onSelect={(date) => {
@@ -217,7 +217,7 @@ export default function AddGoalForm({ onAddGoal }: Props) {
                   )}
                 </div>
 
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-navy-900/95 backdrop-blur-md border-t border-sky-500/10 flex gap-3 justify-end">
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-navy-900/95 backdrop-blur-md border-t border-sky-500/10 flex gap-3 justify-end z-[70]">
                   <button
                     type="button"
                     onClick={() => setIsOpen(false)}

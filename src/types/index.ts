@@ -25,6 +25,12 @@ export interface ThemeColors {
   secondary: string;
   accent: string;
   description: string;
+  background: string;
+  backgroundGradient?: string;
+  fontFamily: string;
+  cardBackground: string;
+  textColor: string;
+  secondaryTextColor: string;
 }
 
 export interface UserSettings {

@@ -7,37 +7,58 @@
     --theme-primary: 56 189 248;    /* #38bdf8 in RGB */
     --theme-secondary: 129 140 248;  /* #818cf8 in RGB */
     --theme-accent: 192 132 252;     /* #c084fc in RGB */
+    --theme-background: #0f172a;
+    --theme-background-gradient: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+    --theme-card-background: rgba(30, 41, 59, 0.7);
+    --theme-text-color: #e2e8f0;
+    --theme-text-secondary: #94a3b8;
+    --theme-font-family: 'Space Grotesk', sans-serif;
   }
 
   body {
-    background: linear-gradient(180deg, #0a0d1f 0%, #1a1b46 100%);
-    color: rgb(var(--theme-primary));
-    font-family: 'Inter', sans-serif;
+    background: var(--theme-background-gradient, var(--theme-background));
+    color: var(--theme-text-color);
+    font-family: var(--theme-font-family);
     min-height: 100vh;
     overflow-x: hidden;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Apply theme font to headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--theme-font-family);
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-navy-900/30 backdrop-blur-md border rounded-xl relative;
+    @apply backdrop-blur-md border rounded-xl relative;
+    background: var(--theme-card-background);
     border-color: rgb(var(--theme-primary) / 0.1);
     box-shadow: 0 0 30px rgb(var(--theme-primary) / 0.05);
   }
 
   .glass-input {
-    @apply bg-navy-900/50 border rounded-lg px-4 py-3
+    @apply border rounded-lg px-4 py-3
            focus:ring-1 relative z-10 w-full;
+    background: var(--theme-card-background);
     border-color: rgb(var(--theme-primary) / 0.2);
-    color: rgb(var(--theme-primary));
+    color: var(--theme-text-color);
     &::placeholder {
-      color: rgb(var(--theme-primary) / 0.3);
+      color: var(--theme-text-secondary);
     }
     &:focus {
       border-color: rgb(var(--theme-primary));
       --tw-ring-color: rgb(var(--theme-primary) / 0.5);
     }
+  }
+
+  .theme-text-primary {
+    color: var(--theme-text-color);
+  }
+
+  .theme-text-secondary {
+    color: var(--theme-text-secondary);
   }
 
   .theme-text {
@@ -63,6 +84,11 @@
       rgb(var(--theme-primary)),
       rgb(var(--theme-secondary))
     );
+  }
+
+  .theme-card {
+    background: var(--theme-card-background);
+    color: var(--theme-text-color);
   }
 }
 
@@ -111,4 +137,12 @@
 
 .animate-glow-pulse {
   animation: glowPulse 2s ease-in-out infinite;
+}
+
+/* Theme transition effects */
+body,
+.glass-card,
+.glass-input,
+.theme-card {
+  transition: all 0.3s ease-in-out;
 }

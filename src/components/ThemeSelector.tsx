@@ -8,9 +8,9 @@ export default function ThemeSelector() {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <Palette className="w-5 h-5 text-sky-400" />
-        Theme Colors
+      <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
+        <Palette className="w-4 h-4 text-sky-400" />
+        Theme Selection
       </h3>
       
       <div className="grid grid-cols-2 gap-2">
@@ -20,12 +20,17 @@ export default function ThemeSelector() {
             onClick={() => updateUserTheme(theme.id)}
             className={`group relative p-2 rounded-lg transition-all ${
               currentTheme.id === theme.id 
-                ? 'ring-2 ring-sky-500'
+                ? 'ring-1 ring-sky-500'
                 : 'hover:ring-1 hover:ring-sky-500/50'
             }`}
             title={theme.name}
+            style={{
+              background: theme.backgroundGradient || theme.background,
+              fontFamily: theme.fontFamily.split(',')[0].replace(/['"]/g, ''),
+            }}
           >
             <div className="flex flex-col gap-1">
+              {/* Color Palette Preview */}
               <div className="flex gap-0.5">
                 {[theme.primary, theme.secondary, theme.accent].map((color, i) => (
                   <div
@@ -35,10 +40,31 @@ export default function ThemeSelector() {
                   />
                 ))}
               </div>
-              <div className="text-xs text-left">
-                <div className="font-medium text-white/90">{theme.name}</div>
-                <div className="text-[10px] text-white/50 line-clamp-1">{theme.description}</div>
+
+              {/* Theme Info */}
+              <div 
+                className="p-1.5 rounded-md text-left"
+                style={{ 
+                  backgroundColor: theme.cardBackground,
+                  color: theme.textColor
+                }}
+              >
+                <div className="font-medium text-xs mb-0.5">{theme.name}</div>
+                <div 
+                  className="text-[10px] line-clamp-1"
+                  style={{ color: theme.secondaryTextColor }}
+                >
+                  {theme.description}
+                </div>
               </div>
+
+              {/* Selected Indicator */}
+              {currentTheme.id === theme.id && (
+                <div 
+                  className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-sky-500 border-2 border-white"
+                  style={{ backgroundColor: theme.primary }}
+                />
+              )}
             </div>
           </button>
         ))}

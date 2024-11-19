@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ref, set, get, push, update, remove, onValue } from 'firebase/database';
+import { doc, collection, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { db, auth } from './firebase';
 import { Goal, UserSettings, ThemeColors } from '../types';
@@ -21,9 +21,38 @@ interface Store {
 }
 
 function updateCSSVariables(theme: ThemeColors) {
+  // Colors
   document.documentElement.style.setProperty('--theme-primary', hexToRgb(theme.primary));
   document.documentElement.style.setProperty('--theme-secondary', hexToRgb(theme.secondary));
   document.documentElement.style.setProperty('--theme-accent', hexToRgb(theme.accent));
+  
+  // Background
+  document.documentElement.style.setProperty('--theme-background', theme.background);
+  if (theme.backgroundGradient) {
+    document.documentElement.style.setProperty('--theme-background-gradient', theme.backgroundGradient);
+  }
+  
+  // Card Background
+  document.documentElement.style.setProperty('--theme-card-background', theme.cardBackground);
+  
+  // Text Colors
+  document.documentElement.style.setProperty('--theme-text-color', theme.textColor);
+  document.documentElement.style.setProperty('--theme-text-secondary', theme.secondaryTextColor);
+  
+  // Font Family
+  document.documentElement.style.setProperty('--theme-font-family', theme.fontFamily);
+  
+  // Add font link if it doesn't exist
+  const fontName = theme.fontFamily.split(',')[0].replace(/['"]/g, '');
+  const fontId = `theme-font-${fontName.toLowerCase().replace(/\s+/g, '-')}`;
+  
+  if (!document.getElementById(fontId)) {
+    const link = document.createElement('link');
+    link.id = fontId;
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@400;500;600;700&display=swap`;
+    document.head.appendChild(link);
+  }
   
   // Force a repaint to ensure styles are updated
   document.documentElement.style.display = 'none';
@@ -51,20 +80,19 @@ export const useStore = create<Store>((set, get) => ({
     set({ user });
     if (user) {
       // Listen for goals
-      const userGoalsRef = ref(db, `users/${user.uid}/goals`);
-      onValue(userGoalsRef, (snapshot) => {
-        const data = snapshot.val();
-        const goals = data ? Object.entries(data).map(([id, goal]) => ({
-          ...(goal as any),
-          id
-        })) : [];
+      const userGoalsRef = collection(db, `users/${user.uid}/goals`);
+      onSnapshot(userGoalsRef, (snapshot) => {
+        const goals = snapshot.docs.map(doc => ({
+          ...(doc.data() as Goal),
+          id: doc.id
+        }));
         set({ goals, loading: false });
       });
 
       // Listen for user settings
-      const userSettingsRef = ref(db, `users/${user.uid}/settings`);
-      onValue(userSettingsRef, (snapshot) => {
-        const settings = snapshot.val();
+      const userSettingsRef = doc(db, `users/${user.uid}/settings/preferences`);
+      onSnapshot(userSettingsRef, (snapshot) => {
+        const settings = snapshot.data();
         if (settings?.theme) {
           const theme = themes.find(t => t.id === settings.theme) || themes[0];
           set({ currentTheme: theme });
@@ -82,8 +110,8 @@ export const useStore = create<Store>((set, get) => ({
 
     try {
       await updateProfile(user, profile);
-      const userSettingsRef = ref(db, `users/${user.uid}/settings`);
-      await update(userSettingsRef, profile);
+      const userSettingsRef = doc(db, `users/${user.uid}/settings/preferences`);
+      await updateDoc(userSettingsRef, profile);
       set({ user: { ...get().user, ...profile } });
     } catch (error) {
       set({ error: 'Failed to update profile' });
@@ -103,8 +131,8 @@ export const useStore = create<Store>((set, get) => ({
       updateCSSVariables(theme);
 
       // Then persist to database
-      const userSettingsRef = ref(db, `users/${user.uid}/settings`);
-      await update(userSettingsRef, { theme: themeId });
+      const userSettingsRef = doc(db, `users/${user.uid}/settings/preferences`);
+      await setDoc(userSettingsRef, { theme: themeId }, { merge: true });
     } catch (error) {
       set({ error: 'Failed to update theme' });
     }
@@ -115,9 +143,9 @@ export const useStore = create<Store>((set, get) => ({
     if (!user) return;
 
     try {
-      const userGoalsRef = ref(db, `users/${user.uid}/goals`);
-      const newGoalRef = push(userGoalsRef);
-      await set(newGoalRef, {
+      const goalsRef = collection(db, `users/${user.uid}/goals`);
+      const newGoalRef = doc(goalsRef);
+      await setDoc(newGoalRef, {
         ...goal,
         completed: false,
         createdAt: new Date().toISOString()
@@ -132,8 +160,8 @@ export const useStore = create<Store>((set, get) => ({
     if (!user) return;
 
     try {
-      const goalRef = ref(db, `users/${user.uid}/goals/${id}`);
-      await update(goalRef, updates);
+      const goalRef = doc(db, `users/${user.uid}/goals/${id}`);
+      await updateDoc(goalRef, updates);
     } catch (error) {
       set({ error: 'Failed to update goal' });
     }
@@ -147,8 +175,8 @@ export const useStore = create<Store>((set, get) => ({
       const goal = get().goals.find(g => g.id === id);
       if (!goal) return;
 
-      const goalRef = ref(db, `users/${user.uid}/goals/${id}`);
-      await update(goalRef, { completed: !goal.completed });
+      const goalRef = doc(db, `users/${user.uid}/goals/${id}`);
+      await updateDoc(goalRef, { completed: !goal.completed });
     } catch (error) {
       set({ error: 'Failed to toggle goal' });
     }
@@ -159,8 +187,8 @@ export const useStore = create<Store>((set, get) => ({
     if (!user) return;
 
     try {
-      const goalRef = ref(db, `users/${user.uid}/goals/${id}`);
-      await remove(goalRef);
+      const goalRef = doc(db, `users/${user.uid}/goals/${id}`);
+      await deleteDoc(goalRef);
     } catch (error) {
       set({ error: 'Failed to delete goal' });
     }
