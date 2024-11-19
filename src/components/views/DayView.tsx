@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Goal } from '../../types';
-import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import, Play, Loader } from 'lucide-react';
+import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import, Play, Loader, Save } from 'lucide-react';
 import { useStore } from '../../lib/store';
 
 interface Props {
@@ -14,6 +14,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
   const [quickAddText, setQuickAddText] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [localPlan, setLocalPlan] = useState({
     gratitude: '',
@@ -62,6 +63,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
 
   const handleSave = async () => {
     try {
+      setIsSaving(true);
       const today = new Date().toISOString().split('T')[0];
       if (dayPlan?.status === 'started') {
         await updateStartedDay({
@@ -74,9 +76,11 @@ export default function DayView({ goals, onToggleGoal }: Props) {
           ...localPlan,
         });
       }
+      setIsSaving(false);
     } catch (error) {
       console.error('Error saving day plan:', error);
       setLocalError('Failed to save changes. Please try again.');
+      setIsSaving(false);
     }
   };
 
@@ -103,14 +107,6 @@ export default function DayView({ goals, onToggleGoal }: Props) {
       setIsStarting(false);
     }
   };
-
-  // Auto-save on changes with debounce
-  useEffect(() => {
-    const timeoutId = setTimeout(handleSave, 1000);
-    return () => clearTimeout(timeoutId);
-  }, [localPlan]);
-
-  const getGoalById = (id: string) => goals.find(goal => goal.id === id);
 
   const handleQuickAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,6 +215,15 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     }
   };
 
+  const getGoalById = (id: string) => goals.find(goal => goal.id === id);
+
+  // Filter goals to prioritize in_progress goals
+  const sortedGoals = [...goals].sort((a, b) => {
+    if (a.status === 'in_progress' && b.status !== 'in_progress') return -1;
+    if (b.status === 'in_progress' && a.status !== 'in_progress') return 1;
+    return 0;
+  });
+
   // Check if day is started
   const isStarted = dayPlan?.status === 'started';
 
@@ -233,13 +238,23 @@ export default function DayView({ goals, onToggleGoal }: Props) {
 
       {/* Daily Header */}
       <div className="glass-card p-6">
-        <h2 className="text-2xl font-bold text-sky-100 mb-4">
-          {new Date().toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            month: 'long', 
-            day: 'numeric' 
-          })}
-        </h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-sky-100">
+            {new Date().toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </h2>
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex items-center gap-2 px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 rounded-lg transition-colors"
+          >
+            <Save className="w-4 h-4" />
+            {isSaving ? 'Saving...' : 'Update'}
+          </button>
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -360,8 +375,14 @@ export default function DayView({ goals, onToggleGoal }: Props) {
             {localPlan.topGoals.map(goalId => {
               const goal = getGoalById(goalId);
               const isTemp = goalId.startsWith('temp-');
+              const isCurrentDayTask = goal?.status === 'in_progress';
               return (
-                <div key={goalId} className="glass-card p-3 flex items-center justify-between">
+                <div 
+                  key={goalId} 
+                  className={`glass-card p-3 flex items-center justify-between ${
+                    isCurrentDayTask ? 'border-l-4 border-sky-400' : ''
+                  }`}
+                >
                   <span>{isTemp ? goalId.replace('temp-', '') : goal?.title}</span>
                   <button
                     onClick={() => removeTopGoal(goalId)}
@@ -440,7 +461,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               </button>
             </div>
             <div className="space-y-3">
-              {goals.map(goal => (
+              {sortedGoals.map(goal => (
                 <button
                   key={goal.id}
                   onClick={() => {
@@ -450,7 +471,9 @@ export default function DayView({ goals, onToggleGoal }: Props) {
                     }
                   }}
                   disabled={localPlan.topGoals.includes(goal.id)}
-                  className="w-full glass-card p-3 text-left hover:bg-sky-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`w-full glass-card p-3 text-left hover:bg-sky-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                    goal.status === 'in_progress' ? 'border-l-4 border-sky-400' : ''
+                  }`}
                 >
                   <div className="font-medium">{goal.title}</div>
                   <div className="text-sm text-sky-400/60 line-clamp-2">
