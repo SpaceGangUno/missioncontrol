@@ -427,4 +427,78 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
                       onClick={() => setSelectedGoal(goal)}
                       className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300 group"
                       style={{
-       
+                        left: '50%',
+                        top: '50%',
+                        transform: `rotate(${angle}deg) translateX(${(index + 2) * 140}px) rotate(-${angle}deg)`,
+                      }}
+                      aria-label={`${goal.title} - ${priority} priority goal`}
+                    >
+                      <div className="relative flex flex-col items-center">
+                        {/* Goal title */}
+                        <div 
+                          className="mb-2 text-sm text-white font-medium px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm z-20"
+                          style={{
+                            textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+                            maxWidth: '150px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {goal.title}
+                        </div>
+
+                        {/* Goal dot */}
+                        <div
+                          className={`w-8 h-8 rounded-full transition-all duration-300 
+                            hover:scale-125 ${goal.completed ? 'opacity-70' : ''}`}
+                          style={{ 
+                            background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
+                            boxShadow: `0 0 20px ${goalColor}80`,
+                            animationDelay: `${delay}s`
+                          }}
+                        >
+                          {/* Glow effect */}
+                          <div 
+                            className="absolute inset-0 rounded-full animate-pulse-slow pointer-events-none"
+                            style={{ 
+                              background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
+                              filter: 'blur(8px)',
+                              opacity: 0.5
+                            }}
+                            aria-hidden="true"
+                          />
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Edit Goal Form */}
+      {selectedGoal && (
+        <EditGoalForm
+          goal={selectedGoal}
+          onClose={() => setSelectedGoal(null)}
+          onUpdateGoal={onUpdateGoal}
+        />
+      )}
+
+      {/* Add Goal Form */}
+      {showAddGoal && (
+        <AddGoalForm 
+          onAddGoal={(goal) => {
+            onAddGoal(goal);
+            setShowAddGoal(false);
+          }}
+          onClose={() => setShowAddGoal(false)}
+          showBanner={false}
+        />
+      )}
+    </div>
+  );
+}
