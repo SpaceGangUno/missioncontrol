@@ -218,26 +218,27 @@ export const useStore = create<Store>((set, get) => ({
       const docSnap = await getDoc(dayPlanRef);
       const existingData = docSnap.exists() ? docSnap.data() : {};
       
+      // Create the updated plan, ensuring topGoals is preserved if not explicitly provided
+      const updatedPlan = {
+        ...existingData,
+        ...plan,
+        topGoals: plan.topGoals || existingData.topGoals || [],
+        updatedAt: now
+      };
+      
       if (docSnap.exists()) {
-        await updateDoc(dayPlanRef, {
-          ...existingData,
-          ...plan,
-          updatedAt: now
-        });
+        await updateDoc(dayPlanRef, updatedPlan);
       } else {
         await setDoc(dayPlanRef, {
-          ...plan,
-          createdAt: now,
-          updatedAt: now
+          ...updatedPlan,
+          createdAt: now
         });
       }
 
       // Update local state
       set(state => ({
         dayPlan: {
-          ...state.dayPlan,
-          ...plan,
-          updatedAt: now,
+          ...updatedPlan,
           id: plan.date
         } as DayPlan
       }));
@@ -325,10 +326,11 @@ export const useStore = create<Store>((set, get) => ({
 
       const existingData = docSnap.data();
       
-      // Merge the updates with existing data, preserving started status
+      // Merge the updates with existing data, preserving started status and topGoals if not provided
       const updatedPlan = {
         ...existingData,
         ...plan,
+        topGoals: plan.topGoals || existingData.topGoals || [],
         status: 'started', // Ensure we keep the started status
         startedAt: existingData.startedAt, // Preserve the original start time
         updatedAt: now
