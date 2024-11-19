@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Goal } from '../../types';
-import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import, Play } from 'lucide-react';
+import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import, Play, Loader } from 'lucide-react';
 import { useStore } from '../../lib/store';
 
 interface Props {
@@ -9,10 +9,12 @@ interface Props {
 }
 
 export default function DayView({ goals, onToggleGoal }: Props) {
-  const { dayPlan, saveDayPlan, getDayPlan, startDay } = useStore();
+  const { dayPlan, saveDayPlan, getDayPlan, startDay, error } = useStore();
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddText, setQuickAddText] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
   const [localPlan, setLocalPlan] = useState({
     gratitude: '',
     wordOfDay: '',
@@ -50,6 +52,14 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     }
   }, [dayPlan]);
 
+  // Clear error after 5 seconds
+  useEffect(() => {
+    if (localError) {
+      const timer = setTimeout(() => setLocalError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [localError]);
+
   const handleSave = async () => {
     const today = new Date().toISOString().split('T')[0];
     await saveDayPlan({
@@ -59,17 +69,27 @@ export default function DayView({ goals, onToggleGoal }: Props) {
   };
 
   const handleStartDay = async () => {
-    // First save any pending changes
-    await handleSave();
-    
-    // Then start the day
-    const today = new Date().toISOString().split('T')[0];
-    await startDay({
-      date: today,
-      ...localPlan,
-      status: 'started',
-      startedAt: new Date().toISOString()
-    });
+    try {
+      setIsStarting(true);
+      setLocalError(null);
+
+      // First save any pending changes
+      await handleSave();
+      
+      // Then start the day
+      const today = new Date().toISOString().split('T')[0];
+      await startDay({
+        date: today,
+        ...localPlan,
+        status: 'started',
+        startedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error starting day:', error);
+      setLocalError('Failed to start day. Please try again.');
+    } finally {
+      setIsStarting(false);
+    }
   };
 
   // Auto-save on changes
@@ -115,6 +135,13 @@ export default function DayView({ goals, onToggleGoal }: Props) {
 
   return (
     <div className="space-y-6 pb-24">
+      {/* Error Message */}
+      {localError && (
+        <div className="fixed top-4 right-4 bg-red-500/90 text-white px-4 py-2 rounded-lg shadow-lg">
+          {localError}
+        </div>
+      )}
+
       {/* Daily Header */}
       <div className="glass-card p-6">
         <h2 className="text-2xl font-bold text-sky-100 mb-4">
@@ -305,10 +332,15 @@ export default function DayView({ goals, onToggleGoal }: Props) {
           <div className="max-w-2xl mx-auto">
             <button
               onClick={handleStartDay}
-              className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] backdrop-blur-sm neon-glow active:scale-95 touch-manipulation"
+              disabled={isStarting}
+              className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] backdrop-blur-sm neon-glow active:scale-95 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              <Play className="w-6 h-6" />
-              Start the Day
+              {isStarting ? (
+                <Loader className="w-6 h-6 animate-spin" />
+              ) : (
+                <Play className="w-6 h-6" />
+              )}
+              {isStarting ? 'Starting Day...' : 'Start the Day'}
             </button>
           </div>
         </div>

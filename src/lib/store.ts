@@ -57,11 +57,6 @@ function updateCSSVariables(theme: ThemeColors) {
     link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@400;500;600;700&display=swap`;
     document.head.appendChild(link);
   }
-  
-  // Force a repaint to ensure styles are updated
-  document.documentElement.style.display = 'none';
-  document.documentElement.offsetHeight;
-  document.documentElement.style.display = '';
 }
 
 function hexToRgb(hex: string): string {
@@ -259,33 +254,48 @@ export const useStore = create<Store>((set, get) => ({
     if (!user) return;
 
     try {
-      // Save the started day plan in a separate collection
+      // First update the goals to in_progress
+      const goalsRef = collection(db, `users/${user.uid}/goals`);
+      const updatePromises = plan.topGoals.map(async (goalId) => {
+        if (!goalId.startsWith('temp-')) {
+          const goalRef = doc(goalsRef, goalId);
+          return updateDoc(goalRef, {
+            status: 'in_progress',
+            progress: 50
+          });
+        }
+      }).filter(Boolean);
+
+      // Wait for all goal updates to complete
+      await Promise.all(updatePromises);
+
+      // Then update the day plan
+      const dayPlanRef = doc(db, `users/${user.uid}/dayPlans/${plan.date}`);
+      await updateDoc(dayPlanRef, {
+        status: 'started',
+        startedAt: plan.startedAt,
+        updatedAt: new Date().toISOString()
+      });
+
+      // Finally, create the started day record
       const startedDayRef = doc(db, `users/${user.uid}/startedDays/${plan.date}`);
       await setDoc(startedDayRef, {
         ...plan,
         createdAt: new Date().toISOString()
       });
 
-      // Update the original day plan to mark it as started
-      const dayPlanRef = doc(db, `users/${user.uid}/dayPlans/${plan.date}`);
-      await updateDoc(dayPlanRef, {
-        status: 'started',
-        startedAt: plan.startedAt
-      });
-
-      // Update goals to in_progress
-      const goalsRef = collection(db, `users/${user.uid}/goals`);
-      plan.topGoals.forEach(async (goalId) => {
-        if (!goalId.startsWith('temp-')) {
-          const goalRef = doc(goalsRef, goalId);
-          await updateDoc(goalRef, {
-            status: 'in_progress',
-            progress: 50
-          });
-        }
-      });
+      // Update local state
+      set(state => ({
+        dayPlan: state.dayPlan ? {
+          ...state.dayPlan,
+          status: 'started',
+          startedAt: plan.startedAt
+        } : null
+      }));
     } catch (error) {
+      console.error('Failed to start day:', error);
       set({ error: 'Failed to start day' });
+      throw error; // Re-throw to handle in component
     }
   }
 }));
