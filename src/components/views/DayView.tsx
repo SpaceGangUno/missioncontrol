@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Goal } from '../../types';
-import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import, Play, Loader, Save, Edit2 } from 'lucide-react';
+import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import, Play, Loader, Save, Edit2, CheckCircle2 } from 'lucide-react';
 import { useStore } from '../../lib/store';
 import EditGoalForm from '../EditGoalForm';
 
@@ -402,23 +402,33 @@ export default function DayView({ goals, onToggleGoal }: Props) {
             {localPlan.topGoals.map(goalId => {
               const goal = getGoalById(goalId);
               const isCurrentDayTask = goal?.status === 'in_progress';
+              const isCompleted = goal?.completed || goal?.status === 'completed';
               return (
                 <div 
                   key={goalId} 
                   className={`glass-card p-3 flex items-center justify-between ${
                     isCurrentDayTask ? 'border-l-4 border-sky-400' : ''
-                  }`}
+                  } ${isCompleted ? 'opacity-50' : ''}`}
                 >
-                  <span>{goal?.title || goalId}</span>
+                  <span className={isCompleted ? 'line-through' : ''}>{goal?.title || goalId}</span>
                   <div className="flex items-center gap-2">
                     {goal && (
-                      <button
-                        onClick={() => setEditingGoal(goal)}
-                        className="text-sky-400/60 hover:text-sky-400 p-1"
-                        aria-label="Edit goal"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
+                      <>
+                        <button
+                          onClick={() => onToggleGoal(goal.id)}
+                          className={`text-sky-400/60 hover:text-sky-400 p-1 ${isCompleted ? 'text-green-400' : ''}`}
+                          aria-label={isCompleted ? "Mark as incomplete" : "Mark as complete"}
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setEditingGoal(goal)}
+                          className="text-sky-400/60 hover:text-sky-400 p-1"
+                          aria-label="Edit goal"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      </>
                     )}
                     <button
                       onClick={() => removeTopGoal(goalId)}

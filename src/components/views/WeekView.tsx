@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Goal } from '../../types';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
-import { Calendar, Rocket, CircleDot, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Rocket, CircleDot, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useStore } from '../../lib/store';
 
 interface Props {
@@ -12,12 +12,14 @@ interface Props {
 interface GoalItemProps {
   goal: Goal | { id: string; title: string; description?: string; completed?: boolean };
   isTemp?: boolean;
+  onToggleGoal?: (id: string) => void;
 }
 
-function GoalItem({ goal, isTemp = false }: GoalItemProps) {
+function GoalItem({ goal, isTemp = false, onToggleGoal }: GoalItemProps) {
+  const isCompleted = 'completed' in goal ? goal.completed : false;
   return (
     <div className={`glass-card p-2 ${
-      goal.completed ? 'opacity-50' : ''
+      isCompleted ? 'opacity-50' : ''
     } ${isTemp ? 'border-l-2 border-sky-400/30' : ''}`}>
       <div className="flex items-start gap-2">
         {isTemp ? (
@@ -27,7 +29,7 @@ function GoalItem({ goal, isTemp = false }: GoalItemProps) {
         )}
         <div className="min-w-0 flex-1">
           <div className={`${isTemp ? 'text-xs' : 'text-sm'} font-medium truncate ${
-            goal.completed ? 'line-through' : ''
+            isCompleted ? 'line-through' : ''
           } ${isTemp ? 'text-sky-400/80' : ''}`}>
             {isTemp ? goal.id.replace('temp-', '') : goal.title}
           </div>
@@ -37,14 +39,24 @@ function GoalItem({ goal, isTemp = false }: GoalItemProps) {
             </div>
           )}
         </div>
+        {!isTemp && onToggleGoal && (
+          <button
+            onClick={() => onToggleGoal(goal.id)}
+            className={`text-sky-400/60 hover:text-sky-400 p-1 ${isCompleted ? 'text-green-400' : ''}`}
+            aria-label={isCompleted ? "Mark as incomplete" : "Mark as complete"}
+          >
+            <CheckCircle2 className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
-function DayCard({ day, dayPlan }: { 
+function DayCard({ day, dayPlan, onToggleGoal }: { 
   day: Date; 
   dayPlan: { topGoals: string[] } | undefined;
+  onToggleGoal: (id: string) => void;
 }) {
   const { goals } = useStore();
   const getGoalById = (id: string) => goals.find(goal => goal.id === id);
@@ -78,7 +90,11 @@ function DayCard({ day, dayPlan }: {
           if (!goal) return null;
           
           return (
-            <GoalItem key={goal.id} goal={goal} />
+            <GoalItem 
+              key={goal.id} 
+              goal={goal} 
+              onToggleGoal={onToggleGoal}
+            />
           );
         })}
       </div>
@@ -86,7 +102,7 @@ function DayCard({ day, dayPlan }: {
   );
 }
 
-export default function WeekView({ goals }: Props) {
+export default function WeekView({ goals, onToggleGoal }: Props) {
   const { weekPlans } = useStore();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = React.useState(0);
@@ -164,6 +180,7 @@ export default function WeekView({ goals }: Props) {
             <DayCard
               day={day}
               dayPlan={weekPlans[format(day, 'yyyy-MM-dd')]}
+              onToggleGoal={onToggleGoal}
             />
           </div>
         ))}
