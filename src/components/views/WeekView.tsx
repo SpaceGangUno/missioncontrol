@@ -133,8 +133,8 @@ export default function WeekView({ goals }: Props) {
         <button
           onClick={() => scrollToDay('left')}
           disabled={currentIndex === 0}
-          className={`p-2 rounded-full bg-navy-900/80 backdrop-blur-sm pointer-events-auto ${
-            currentIndex === 0 ? 'opacity-30' : 'hover:bg-navy-800/80'
+          className={`p-2 rounded-full bg-slate-800/80 backdrop-blur-sm pointer-events-auto ${
+            currentIndex === 0 ? 'opacity-30' : 'hover:bg-slate-700/80'
           }`}
         >
           <ChevronLeft className="w-5 h-5" />
@@ -142,8 +142,8 @@ export default function WeekView({ goals }: Props) {
         <button
           onClick={() => scrollToDay('right')}
           disabled={currentIndex === 6}
-          className={`p-2 rounded-full bg-navy-900/80 backdrop-blur-sm pointer-events-auto ${
-            currentIndex === 6 ? 'opacity-30' : 'hover:bg-navy-800/80'
+          className={`p-2 rounded-full bg-slate-800/80 backdrop-blur-sm pointer-events-auto ${
+            currentIndex === 6 ? 'opacity-30' : 'hover:bg-slate-700/80'
           }`}
         >
           <ChevronRight className="w-5 h-5" />

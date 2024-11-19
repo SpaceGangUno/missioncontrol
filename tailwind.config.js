@@ -7,6 +7,7 @@ export default {
         navy: {
           800: '#1a1f35',
           900: '#0f172a',
+          950: '#0B1120'
         }
       },
       animation: {
