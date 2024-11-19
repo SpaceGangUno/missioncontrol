@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Goal } from '../../types';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
-import { Calendar, Rocket, CircleDot, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Rocket, CircleDot, ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
 import { useStore } from '../../lib/store';
 
 interface Props {
@@ -20,6 +20,18 @@ interface GoalItemProps {
   onToggleGoal?: (id: string) => void;
   isAnimating?: boolean;
   animationAction?: 'takeoff' | 'landing';
+}
+
+// Tooltip component for help text
+function Tooltip({ text }: { text: string }) {
+  return (
+    <div className="group relative">
+      <HelpCircle className="w-4 h-4 text-sky-400/60 hover:text-sky-400" />
+      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-navy-800/95 text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+        {text}
+      </div>
+    </div>
+  );
 }
 
 function GoalItem({ goal, isTemp = false, onToggleGoal, isAnimating, animationAction }: GoalItemProps) {
@@ -84,6 +96,11 @@ function DayCard({ day, dayPlan, onToggleGoal, animatingGoal }: {
           <div className="text-sm font-medium">{format(day, 'EEEE')}</div>
           <div className="text-xs text-sky-400/60">{format(day, 'MMMM d')}</div>
         </div>
+        {isToday && (
+          <div className="ml-auto">
+            <Tooltip text="This is your current day. Click goals to mark them complete!" />
+          </div>
+        )}
       </div>
       
       <div className="space-y-2">
@@ -111,6 +128,11 @@ function DayCard({ day, dayPlan, onToggleGoal, animatingGoal }: {
             />
           );
         })}
+        {(!dayPlan?.topGoals || dayPlan.topGoals.length === 0) && (
+          <div className="text-sm text-sky-400/60 text-center py-2">
+            No goals set for this day yet
+          </div>
+        )}
       </div>
     </div>
   );
@@ -131,7 +153,7 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
     if (animatingGoal) {
       const timer = setTimeout(() => {
         setAnimatingGoal(null);
-      }, 1000); // Duration of animation
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [animatingGoal]);
@@ -142,7 +164,7 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
   // Set initial scroll position to today
   useEffect(() => {
     if (scrollContainerRef.current && todayIndex !== -1) {
-      const cardWidth = 300; // Width of each card
+      const cardWidth = 300;
       const scrollPosition = todayIndex * cardWidth;
       scrollContainerRef.current.scrollLeft = scrollPosition;
       setCurrentIndex(todayIndex);
@@ -155,7 +177,7 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
         Math.max(0, currentIndex - 1) : 
         Math.min(6, currentIndex + 1);
       
-      const cardWidth = 300; // Width of each card
+      const cardWidth = 300;
       const scrollPosition = newIndex * cardWidth;
       
       scrollContainerRef.current.scrollTo({
@@ -182,33 +204,23 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
       <style>
         {`
           @keyframes blastOff {
-            0% {
-              transform: translateY(0) rotate(0deg);
-              opacity: 1;
-            }
-            100% {
-              transform: translateY(-100px) rotate(45deg);
-              opacity: 0;
-            }
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-100px) rotate(45deg); opacity: 0; }
           }
           @keyframes landing {
-            0% {
-              transform: translateY(-100px) rotate(45deg);
-              opacity: 0;
-            }
-            100% {
-              transform: translateY(0) rotate(0deg);
-              opacity: 1;
-            }
+            0% { transform: translateY(-100px) rotate(45deg); opacity: 0; }
+            100% { transform: translateY(0) rotate(0deg); opacity: 1; }
           }
-          .blast-off {
-            animation: blastOff 1s ease-out forwards;
-          }
-          .landing {
-            animation: landing 1s ease-in forwards;
-          }
+          .blast-off { animation: blastOff 1s ease-out forwards; }
+          .landing { animation: landing 1s ease-in forwards; }
         `}
       </style>
+
+      {/* Week Overview Header */}
+      <div className="glass-card p-4 mb-4 flex items-center justify-between">
+        <h2 className="text-xl font-bold text-sky-100">Week at a Glance</h2>
+        <Tooltip text="See your goals for the entire week. Swipe or use arrows to navigate between days." />
+      </div>
 
       {/* Navigation Buttons */}
       <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-10 pointer-events-none">
@@ -218,6 +230,7 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
           className={`p-2 rounded-full bg-slate-800/80 backdrop-blur-sm pointer-events-auto ${
             currentIndex === 0 ? 'opacity-30' : 'hover:bg-slate-700/80'
           }`}
+          aria-label="Previous day"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -227,6 +240,7 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
           className={`p-2 rounded-full bg-slate-800/80 backdrop-blur-sm pointer-events-auto ${
             currentIndex === 6 ? 'opacity-30' : 'hover:bg-slate-700/80'
           }`}
+          aria-label="Next day"
         >
           <ChevronRight className="w-5 h-5" />
         </button>

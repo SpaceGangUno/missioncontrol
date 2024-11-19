@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Goal } from '../../types';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, HelpCircle, ZoomIn, ZoomOut, Move } from 'lucide-react';
 import EditGoalForm from '../EditGoalForm';
 import AddGoalForm from '../AddGoalForm';
 
@@ -58,6 +58,33 @@ function generateUniqueColor(index: number): string {
   };
 
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+// Helper function to adjust color brightness
+function adjustColor(color: string, amount: number): string {
+  const hex = color.replace('#', '');
+  const r = Math.min(255, Math.max(0, parseInt(hex.substring(0, 2), 16) + amount));
+  const g = Math.min(255, Math.max(0, parseInt(hex.substring(2, 4), 16) + amount));
+  const b = Math.min(255, Math.max(0, parseInt(hex.substring(4, 6), 16) + amount));
+  
+  const toHex = (n: number) => {
+    const hex = n.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+  
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+// Tooltip component for help text
+function Tooltip({ text }: { text: string }) {
+  return (
+    <div className="group relative">
+      <HelpCircle className="w-4 h-4 text-sky-400/60 hover:text-sky-400" />
+      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-navy-800/95 text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+        {text}
+      </div>
+    </div>
+  );
 }
 
 export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGoal }: Props) {
@@ -180,7 +207,6 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
         const newScale = (currentDistance / initialDistance) * initialScale;
         const clampedScale = Math.min(Math.max(newScale, 0.5), 2);
         
-        // Smooth scale transition
         setScale(prev => prev + (clampedScale - prev) * 0.1);
       }
     } else if (e.touches.length === 1 && isDragging && lastTouch) {
@@ -193,7 +219,7 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
       const deltaTime = touch.timestamp - lastTouch.timestamp;
       if (deltaTime > 0) {
         setVelocity({
-          x: (touch.x - lastTouch.x) / deltaTime * 16, // Adjust for 60fps
+          x: (touch.x - lastTouch.x) / deltaTime * 16,
           y: (touch.y - lastTouch.y) / deltaTime * 16
         });
       }
@@ -236,7 +262,6 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
     
     setPosition({ x: newX, y: newY });
     
-    // Calculate velocity for momentum
     setVelocity({
       x: (newX - position.x) * 0.1,
       y: (newY - position.y) * 0.1
@@ -255,7 +280,6 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
     const targetScale = scale * (1 + delta * zoomFactor);
     const clampedScale = Math.min(Math.max(targetScale, 0.5), 2);
     
-    // Smooth scale transition
     setScale(prev => prev + (clampedScale - prev) * 0.1);
   };
 
@@ -283,128 +307,176 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
   }, [isDragging, position]);
 
   return (
-    <div className="relative h-[600px] overflow-hidden rounded-xl glass-card">
-      <div
-        ref={containerRef}
-        className="absolute inset-0 cursor-grab active:cursor-grabbing touch-none"
-        style={{
-          transform: `translate3d(${position.x}px, ${position.y}px, 0) scale(${scale})`,
-          transformOrigin: 'center',
-          transition: isDragging || isZooming ? 'none' : 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          willChange: 'transform'
-        }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onWheel={handleWheel}
-      >
-        {/* Space background with stars */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(50)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-white rounded-full animate-pulse-slow"
-              style={{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-                opacity: Math.random() * 0.7 + 0.3,
-              }}
-            />
-          ))}
+    <div className="space-y-4">
+      {/* Help Section */}
+      <div className="glass-card p-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-bold text-sky-100">Monthly Goal Universe</h2>
+          <Tooltip text="Visualize your goals as planets orbiting in space. High priority goals are closer to the center." />
         </div>
-
-        {/* Central planet (represents the month) */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-          <div 
-            onClick={() => setShowAddGoal(true)}
-            className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-2xl animate-pulse-slow hover:scale-110 transition-transform cursor-pointer relative"
-          >
-            <div className="absolute inset-0 rounded-full bg-black opacity-20 pointer-events-none"></div>
-            <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-white/80 pointer-events-none" />
-            <span className="absolute inset-0 flex items-center justify-center text-white text-sm font-medium opacity-0 hover:opacity-100 transition-opacity">
-              Add New Goal
-            </span>
+        <div className="flex items-center gap-4 text-sm text-sky-400/80">
+          <div className="flex items-center gap-1">
+            <Move className="w-4 h-4" />
+            <span>Drag to move</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <ZoomIn className="w-4 h-4" />
+            <span>Scroll to zoom</span>
           </div>
         </div>
+      </div>
 
-        {/* Orbital paths */}
-        {Object.entries(priorityGoals).map(([priority, priorityGoals], index) => (
-          <div
-            key={priority}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-            style={{
-              width: `${(index + 2) * 280}px`,
-              height: `${(index + 2) * 280}px`,
-            }}
-          >
-            {/* Orbital path line */}
-            <div
-              className="absolute inset-0 rounded-full border border-sky-500/20"
-              style={{ transform: 'rotate(45deg)' }}
-            />
+      {/* Legend */}
+      <div className="glass-card p-4">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-indigo-500" />
+            <span className="text-sm text-sky-100">High Priority</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-sky-500" />
+            <span className="text-sm text-sky-100">Medium Priority</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-emerald-500" />
+            <span className="text-sm text-sky-100">Low Priority</span>
+          </div>
+        </div>
+      </div>
 
-            {/* Goals in orbit */}
-            {priorityGoals.map((goal, i) => {
-              const angle = (i * 360) / priorityGoals.length;
-              const delay = i * 0.5;
-              const goalColor = generateUniqueColor(globalGoalIndex++);
-              
-              return (
-                <button
-                  key={goal.id}
-                  onClick={() => setSelectedGoal(goal)}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300 group"
-                  style={{
-                    left: '50%',
-                    top: '50%',
-                    transform: `rotate(${angle}deg) translateX(${(index + 2) * 140}px) rotate(-${angle}deg)`,
-                  }}
-                >
-                  <div className="relative flex flex-col items-center">
-                    {/* Goal title */}
-                    <div 
-                      className="mb-2 text-sm text-white font-medium px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm z-20"
+      {/* Main Visualization */}
+      <div className="relative h-[600px] overflow-hidden rounded-xl glass-card">
+        <div
+          ref={containerRef}
+          className="absolute inset-0 cursor-grab active:cursor-grabbing touch-none"
+          style={{
+            transform: `translate3d(${position.x}px, ${position.y}px, 0) scale(${scale})`,
+            transformOrigin: 'center',
+            transition: isDragging || isZooming ? 'none' : 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            willChange: 'transform'
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onWheel={handleWheel}
+          aria-label="Interactive goal visualization"
+        >
+          {/* Space background with stars */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {[...Array(50)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-1 h-1 bg-white rounded-full animate-pulse-slow"
+                style={{
+                  top: `${Math.random() * 100}%`,
+                  left: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 3}s`,
+                  opacity: Math.random() * 0.7 + 0.3,
+                }}
+                aria-hidden="true"
+              />
+            ))}
+          </div>
+
+          {/* Central planet (represents the month) */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+            <button 
+              onClick={() => setShowAddGoal(true)}
+              className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-2xl animate-pulse-slow hover:scale-110 transition-transform cursor-pointer relative"
+              aria-label="Add new goal"
+            >
+              <div className="absolute inset-0 rounded-full bg-black opacity-20 pointer-events-none"></div>
+              <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-white/80 pointer-events-none" />
+              <span className="absolute inset-0 flex items-center justify-center text-white text-sm font-medium opacity-0 hover:opacity-100 transition-opacity">
+                Create New Goal
+              </span>
+            </button>
+          </div>
+
+          {/* Orbital paths */}
+          {Object.entries(priorityGoals).map(([priority, priorityGoals], index) => {
+            const orbitColor = priority === 'high' ? 'indigo' : priority === 'medium' ? 'sky' : 'emerald';
+            return (
+              <div
+                key={priority}
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                style={{
+                  width: `${(index + 2) * 280}px`,
+                  height: `${(index + 2) * 280}px`,
+                }}
+              >
+                {/* Orbital path line */}
+                <div
+                  className={`absolute inset-0 rounded-full border border-${orbitColor}-500/20`}
+                  style={{ transform: 'rotate(45deg)' }}
+                  aria-hidden="true"
+                />
+
+                {/* Goals in orbit */}
+                {priorityGoals.map((goal, i) => {
+                  const angle = (i * 360) / priorityGoals.length;
+                  const delay = i * 0.5;
+                  const goalColor = generateUniqueColor(globalGoalIndex++);
+                  
+                  return (
+                    <button
+                      key={goal.id}
+                      onClick={() => setSelectedGoal(goal)}
+                      className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300 group"
                       style={{
-                        textShadow: '0 2px 4px rgba(0,0,0,0.8)',
-                        maxWidth: '150px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
+                        left: '50%',
+                        top: '50%',
+                        transform: `rotate(${angle}deg) translateX(${(index + 2) * 140}px) rotate(-${angle}deg)`,
                       }}
+                      aria-label={`${goal.title} - ${priority} priority goal`}
                     >
-                      {goal.title}
-                    </div>
+                      <div className="relative flex flex-col items-center">
+                        {/* Goal title */}
+                        <div 
+                          className="mb-2 text-sm text-white font-medium px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm z-20"
+                          style={{
+                            textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+                            maxWidth: '150px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {goal.title}
+                        </div>
 
-                    {/* Goal dot */}
-                    <div
-                      className={`w-8 h-8 rounded-full transition-all duration-300 
-                        hover:scale-125 ${goal.completed ? 'opacity-70' : ''}`}
-                      style={{ 
-                        background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
-                        boxShadow: `0 0 20px ${goalColor}80`,
-                        animationDelay: `${delay}s`
-                      }}
-                    >
-                      {/* Glow effect */}
-                      <div 
-                        className="absolute inset-0 rounded-full animate-pulse-slow pointer-events-none"
-                        style={{ 
-                          background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
-                          filter: 'blur(8px)',
-                          opacity: 0.5
-                        }}
-                      />
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        ))}
+                        {/* Goal dot */}
+                        <div
+                          className={`w-8 h-8 rounded-full transition-all duration-300 
+                            hover:scale-125 ${goal.completed ? 'opacity-70' : ''}`}
+                          style={{ 
+                            background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
+                            boxShadow: `0 0 20px ${goalColor}80`,
+                            animationDelay: `${delay}s`
+                          }}
+                        >
+                          {/* Glow effect */}
+                          <div 
+                            className="absolute inset-0 rounded-full animate-pulse-slow pointer-events-none"
+                            style={{ 
+                              background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
+                              filter: 'blur(8px)',
+                              opacity: 0.5
+                            }}
+                            aria-hidden="true"
+                          />
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Edit Goal Form */}
@@ -429,19 +501,4 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
       )}
     </div>
   );
-}
-
-// Helper function to adjust color brightness
-function adjustColor(color: string, amount: number): string {
-  const hex = color.replace('#', '');
-  const r = Math.min(255, Math.max(0, parseInt(hex.substring(0, 2), 16) + amount));
-  const g = Math.min(255, Math.max(0, parseInt(hex.substring(2, 4), 16) + amount));
-  const b = Math.min(255, Math.max(0, parseInt(hex.substring(4, 6), 16) + amount));
-  
-  const toHex = (n: number) => {
-    const hex = n.toString(16);
-    return hex.length === 1 ? '0' + hex : hex;
-  };
-  
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }

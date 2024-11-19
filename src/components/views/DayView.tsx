@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Goal } from '../../types';
-import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import, Play, Loader, Save, Edit2 } from 'lucide-react';
+import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import, Play, Loader, Save, Edit2, HelpCircle } from 'lucide-react';
 import { useStore } from '../../lib/store';
 import EditGoalForm from '../EditGoalForm';
 
@@ -12,6 +12,18 @@ interface Props {
 interface AnimatingGoal {
   id: string;
   action: 'takeoff' | 'landing';
+}
+
+// Tooltip component for help text
+function Tooltip({ text }: { text: string }) {
+  return (
+    <div className="group relative">
+      <HelpCircle className="w-4 h-4 text-sky-400/60 hover:text-sky-400" />
+      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-navy-800/95 text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+        {text}
+      </div>
+    </div>
+  );
 }
 
 export default function DayView({ goals, onToggleGoal }: Props) {
@@ -38,12 +50,12 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     },
   });
 
-  // Handle animation
+  // Effect for animation
   useEffect(() => {
     if (animatingGoal) {
       const timer = setTimeout(() => {
         setAnimatingGoal(null);
-      }, 1000); // Duration of animation
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [animatingGoal]);
@@ -80,13 +92,11 @@ export default function DayView({ goals, onToggleGoal }: Props) {
         const updatedGoals = [...localPlan.topGoals, newGoal.id];
         const today = new Date().toISOString().split('T')[0];
         
-        // Update local state
         setLocalPlan(prev => ({
           ...prev,
           topGoals: updatedGoals,
         }));
 
-        // Save changes
         if (dayPlan?.status === 'started') {
           updateStartedDay({
             date: today,
@@ -141,11 +151,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     try {
       setIsStarting(true);
       setLocalError(null);
-
-      // First save any pending changes
       await handleSave();
-      
-      // Then start the day
       const today = new Date().toISOString().split('T')[0];
       await startDay({
         date: today,
@@ -165,7 +171,6 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     e.preventDefault();
     if (quickAddText.trim() && localPlan.topGoals.length < 5) {
       try {
-        // Create a real goal
         const newGoal = {
           title: quickAddText.trim(),
           description: '',
@@ -175,12 +180,8 @@ export default function DayView({ goals, onToggleGoal }: Props) {
           progress: 0
         };
         
-        // Add the goal to Firebase
         await addGoal(newGoal);
-        
-        // Set pending quick add to track the new goal
         setPendingQuickAdd(newGoal.title);
-        
         setQuickAddText('');
         setShowQuickAdd(false);
       } catch (error) {
@@ -194,13 +195,11 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     try {
       const updatedGoals = localPlan.topGoals.filter(id => id !== goalId);
       
-      // Update local state immediately
       setLocalPlan(prev => ({
         ...prev,
         topGoals: updatedGoals,
       }));
 
-      // Save changes
       const today = new Date().toISOString().split('T')[0];
       if (dayPlan?.status === 'started') {
         await updateStartedDay({
@@ -226,13 +225,11 @@ export default function DayView({ goals, onToggleGoal }: Props) {
       try {
         const updatedGoals = [...localPlan.topGoals, goalId];
         
-        // Update local state immediately
         setLocalPlan(prev => ({
           ...prev,
           topGoals: updatedGoals,
         }));
 
-        // Save changes
         const today = new Date().toISOString().split('T')[0];
         if (dayPlan?.status === 'started') {
           await updateStartedDay({
@@ -269,7 +266,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
   };
 
   const handleToggleGoal = (goalId: string) => {
-    const goal = getGoalById(goalId);
+    const goal = goals.find(g => g.id === goalId);
     const isCompleted = goal?.completed || goal?.status === 'completed';
     setAnimatingGoal({
       id: goalId,
@@ -278,10 +275,8 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     onToggleGoal(goalId);
   };
 
-  const getGoalById = (id: string) => goals.find(goal => goal.id === id);
-
-  // Filter goals to prioritize in_progress goals
-  const sortedGoals = [...goals].sort((a, b) => {
+  // Sort goals to prioritize in_progress goals
+  const sortedGoals = [...goals].sort((a: Goal, b: Goal) => {
     if (a.status === 'in_progress' && b.status !== 'in_progress') return -1;
     if (b.status === 'in_progress' && a.status !== 'in_progress') return 1;
     return 0;
@@ -295,31 +290,15 @@ export default function DayView({ goals, onToggleGoal }: Props) {
       <style>
         {`
           @keyframes blastOff {
-            0% {
-              transform: translateY(0) rotate(0deg);
-              opacity: 1;
-            }
-            100% {
-              transform: translateY(-100px) rotate(45deg);
-              opacity: 0;
-            }
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-100px) rotate(45deg); opacity: 0; }
           }
           @keyframes landing {
-            0% {
-              transform: translateY(-100px) rotate(45deg);
-              opacity: 0;
-            }
-            100% {
-              transform: translateY(0) rotate(0deg);
-              opacity: 1;
-            }
+            0% { transform: translateY(-100px) rotate(45deg); opacity: 0; }
+            100% { transform: translateY(0) rotate(0deg); opacity: 1; }
           }
-          .blast-off {
-            animation: blastOff 1s ease-out forwards;
-          }
-          .landing {
-            animation: landing 1s ease-in forwards;
-          }
+          .blast-off { animation: blastOff 1s ease-out forwards; }
+          .landing { animation: landing 1s ease-in forwards; }
         `}
       </style>
 
@@ -341,203 +320,212 @@ export default function DayView({ goals, onToggleGoal }: Props) {
         </h2>
       </div>
 
-      <div className="space-y-6">
-        {/* Reflection Section */}
-        <div className="glass-card p-6 space-y-6">
-          {/* Gratitude */}
-          <div>
-            <label className="flex items-center gap-2 text-lg font-semibold text-sky-100 mb-3">
-              <Heart className="w-5 h-5 text-rose-400" />
-              I'm grateful for:
-            </label>
-            <textarea
-              value={localPlan.gratitude}
-              onChange={e => setLocalPlan(prev => ({ ...prev, gratitude: e.target.value }))}
-              className="glass-input min-h-[80px]"
-              placeholder="Write what you're grateful for..."
-            />
+      {/* Main Goals Section - Moved to top for priority */}
+      <div className="glass-card p-6">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2">
+            <Target className="w-5 h-5 text-sky-400" />
+            <h3 className="text-lg font-semibold text-sky-100">Today's Goals</h3>
+            <Tooltip text="Set up to 5 main goals to focus on today. Click the rocket to mark them complete!" />
           </div>
-
-          {/* Word of the Day */}
-          <div>
-            <label className="flex items-center gap-2 text-lg font-semibold text-sky-100 mb-3">
-              <Lightbulb className="w-5 h-5 text-amber-400" />
-              Word of the day:
-            </label>
-            <input
-              type="text"
-              value={localPlan.wordOfDay}
-              onChange={e => setLocalPlan(prev => ({ ...prev, wordOfDay: e.target.value }))}
-              className="glass-input"
-              placeholder="Enter your word of the day..."
-            />
-          </div>
-
-          {/* Great Day */}
-          <div>
-            <label className="flex items-center gap-2 text-lg font-semibold text-sky-100 mb-3">
-              <Target className="w-5 h-5 text-emerald-400" />
-              Today will be great if I:
-            </label>
-            <textarea
-              value={localPlan.greatDay}
-              onChange={e => setLocalPlan(prev => ({ ...prev, greatDay: e.target.value }))}
-              className="glass-input min-h-[80px]"
-              placeholder="What would make today great?"
-            />
-          </div>
-
-          {/* Make it Eleven */}
-          <div>
-            <label className="flex items-center gap-2 text-lg font-semibold text-sky-100 mb-3">
-              <Rocket className="w-5 h-5 text-purple-400" />
-              I'll make today an 11 by:
-            </label>
-            <textarea
-              value={localPlan.makeItEleven}
-              onChange={e => setLocalPlan(prev => ({ ...prev, makeItEleven: e.target.value }))}
-              className="glass-input min-h-[80px]"
-              placeholder="How will you exceed expectations today?"
-            />
-          </div>
-        </div>
-
-        {/* Top 5 Goals Section */}
-        <div className="glass-card p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-sky-100 flex items-center gap-2">
-              <Target className="w-5 h-5 text-sky-400" />
-              Top 5 Goals
-            </h3>
-            <div className="flex gap-2">
-              {localPlan.topGoals.length < 5 && (
-                <>
-                  <button
-                    onClick={() => setShowQuickAdd(true)}
-                    className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors px-3 py-1.5 rounded-md hover:bg-sky-400/10"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Quick Add
-                  </button>
-                  <button
-                    onClick={() => setShowImportModal(true)}
-                    className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors px-3 py-1.5 rounded-md hover:bg-sky-400/10"
-                  >
-                    <Import className="w-4 h-4" />
-                    Import Goals
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="space-y-3 min-h-[100px]">
-            {showQuickAdd && (
-              <form onSubmit={handleQuickAdd} className="flex gap-2">
-                <input
-                  type="text"
-                  value={quickAddText}
-                  onChange={(e) => setQuickAddText(e.target.value)}
-                  placeholder="Enter a quick goal..."
-                  className="glass-input flex-1"
-                  autoFocus
-                />
-                <button 
-                  type="submit"
-                  className="px-3 py-2 bg-sky-500 text-white rounded hover:bg-sky-600 transition-colors"
+          <div className="flex gap-2">
+            {localPlan.topGoals.length < 5 && (
+              <>
+                <button
+                  onClick={() => setShowQuickAdd(true)}
+                  className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors px-3 py-1.5 rounded-md hover:bg-sky-400/10"
                 >
-                  Add
+                  <Plus className="w-4 h-4" />
+                  Add New
                 </button>
-                <button 
-                  type="button"
-                  onClick={() => setShowQuickAdd(false)}
-                  className="px-3 py-2 bg-sky-900/50 text-white rounded hover:bg-sky-900/70 transition-colors"
+                <button
+                  onClick={() => setShowImportModal(true)}
+                  className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors px-3 py-1.5 rounded-md hover:bg-sky-400/10"
                 >
-                  Cancel
+                  <Import className="w-4 h-4" />
+                  Add Existing
                 </button>
-              </form>
+              </>
             )}
-            {localPlan.topGoals.map(goalId => {
-              const goal = getGoalById(goalId);
-              const isCurrentDayTask = goal?.status === 'in_progress';
-              const isCompleted = goal?.completed || goal?.status === 'completed';
-              const isAnimating = animatingGoal?.id === goalId;
-              const animationClass = isAnimating 
-                ? animatingGoal.action === 'takeoff' 
-                  ? 'blast-off' 
-                  : 'landing'
-                : '';
-
-              return (
-                <div 
-                  key={goalId} 
-                  className={`glass-card p-3 flex items-center justify-between ${
-                    isCurrentDayTask ? 'border-l-4 border-sky-400' : ''
-                  } ${isCompleted ? 'opacity-50' : ''}`}
-                >
-                  <span className={isCompleted ? 'line-through' : ''}>{goal?.title || goalId}</span>
-                  <div className="flex items-center gap-2">
-                    {goal && (
-                      <>
-                        <button
-                          onClick={() => handleToggleGoal(goal.id)}
-                          className={`text-sky-400/60 hover:text-sky-400 p-1 ${isCompleted ? 'text-green-400' : ''}`}
-                          aria-label={isCompleted ? "Mark as incomplete" : "Mark as complete"}
-                        >
-                          <Rocket 
-                            className={`w-4 h-4 ${animationClass}`}
-                          />
-                        </button>
-                        <button
-                          onClick={() => setEditingGoal(goal)}
-                          className="text-sky-400/60 hover:text-sky-400 p-1"
-                          aria-label="Edit goal"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
-                    <button
-                      onClick={() => removeTopGoal(goalId)}
-                      className="text-sky-400/60 hover:text-sky-400 p-1"
-                      aria-label="Remove goal"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
           </div>
         </div>
+        <div className="space-y-3 min-h-[100px]">
+          {showQuickAdd && (
+            <form onSubmit={handleQuickAdd} className="flex gap-2">
+              <input
+                type="text"
+                value={quickAddText}
+                onChange={(e) => setQuickAddText(e.target.value)}
+                placeholder="What would you like to accomplish today?"
+                className="glass-input flex-1"
+                autoFocus
+              />
+              <button 
+                type="submit"
+                className="px-3 py-2 bg-sky-500 text-white rounded hover:bg-sky-600 transition-colors"
+              >
+                Add
+              </button>
+              <button 
+                type="button"
+                onClick={() => setShowQuickAdd(false)}
+                className="px-3 py-2 bg-sky-900/50 text-white rounded hover:bg-sky-900/70 transition-colors"
+              >
+                Cancel
+              </button>
+            </form>
+          )}
+          {localPlan.topGoals.map(goalId => {
+            const goal = goals.find(g => g.id === goalId);
+            const isCurrentDayTask = goal?.status === 'in_progress';
+            const isCompleted = goal?.completed || goal?.status === 'completed';
+            const isAnimating = animatingGoal?.id === goalId;
+            const animationClass = isAnimating 
+              ? animatingGoal.action === 'takeoff' 
+                ? 'blast-off' 
+                : 'landing'
+              : '';
 
-        {/* Meals Section */}
-        <div className="glass-card p-6">
-          <h3 className="text-lg font-semibold text-sky-100 mb-4 flex items-center gap-2">
-            <UtensilsCrossed className="w-5 h-5 text-amber-400" />
-            Meals for the day
-          </h3>
-          <div className="space-y-4">
-            {['breakfast', 'lunch', 'dinner'].map((meal) => (
-              <div key={meal}>
-                <label className="block text-sm font-medium text-sky-100 mb-2 capitalize">
-                  {meal}:
-                </label>
-                <input
-                  type="text"
-                  value={localPlan.meals[meal as keyof typeof localPlan.meals]}
-                  onChange={e => setLocalPlan(prev => ({
-                    ...prev,
-                    meals: {
-                      ...prev.meals,
-                      [meal]: e.target.value
-                    }
-                  }))}
-                  className="glass-input"
-                  placeholder={`Enter your ${meal} plan...`}
-                />
+            return (
+              <div 
+                key={goalId} 
+                className={`glass-card p-3 flex items-center justify-between ${
+                  isCurrentDayTask ? 'border-l-4 border-sky-400' : ''
+                } ${isCompleted ? 'opacity-50' : ''}`}
+              >
+                <span className={isCompleted ? 'line-through' : ''}>{goal?.title || goalId}</span>
+                <div className="flex items-center gap-2">
+                  {goal && (
+                    <>
+                      <button
+                        onClick={() => handleToggleGoal(goal.id)}
+                        className={`text-sky-400/60 hover:text-sky-400 p-1 ${isCompleted ? 'text-green-400' : ''}`}
+                        aria-label={isCompleted ? "Mark as incomplete" : "Mark as complete"}
+                      >
+                        <Rocket 
+                          className={`w-4 h-4 ${animationClass}`}
+                        />
+                      </button>
+                      <button
+                        onClick={() => setEditingGoal(goal)}
+                        className="text-sky-400/60 hover:text-sky-400 p-1"
+                        aria-label="Edit goal"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => removeTopGoal(goalId)}
+                    className="text-sky-400/60 hover:text-sky-400 p-1"
+                    aria-label="Remove goal"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Daily Reflection Section */}
+      <div className="glass-card p-6 space-y-6">
+        <div className="flex items-center gap-2 mb-2">
+          <h3 className="text-lg font-semibold text-sky-100">Daily Reflection</h3>
+          <Tooltip text="Take a moment to reflect and set your intentions for the day" />
+        </div>
+
+        {/* Gratitude */}
+        <div>
+          <label className="flex items-center gap-2 text-lg font-semibold text-sky-100 mb-3">
+            <Heart className="w-5 h-5 text-rose-400" />
+            What makes you smile today?
+          </label>
+          <textarea
+            value={localPlan.gratitude}
+            onChange={e => setLocalPlan(prev => ({ ...prev, gratitude: e.target.value }))}
+            className="glass-input min-h-[80px]"
+            placeholder="List a few things you're thankful for..."
+          />
+        </div>
+
+        {/* Word of the Day */}
+        <div>
+          <label className="flex items-center gap-2 text-lg font-semibold text-sky-100 mb-3">
+            <Lightbulb className="w-5 h-5 text-amber-400" />
+            Today's inspiring word
+          </label>
+          <input
+            type="text"
+            value={localPlan.wordOfDay}
+            onChange={e => setLocalPlan(prev => ({ ...prev, wordOfDay: e.target.value }))}
+            className="glass-input"
+            placeholder="Choose a word that inspires you today..."
+          />
+        </div>
+
+        {/* Great Day */}
+        <div>
+          <label className="flex items-center gap-2 text-lg font-semibold text-sky-100 mb-3">
+            <Target className="w-5 h-5 text-emerald-400" />
+            What would make today great?
+          </label>
+          <textarea
+            value={localPlan.greatDay}
+            onChange={e => setLocalPlan(prev => ({ ...prev, greatDay: e.target.value }))}
+            className="glass-input min-h-[80px]"
+            placeholder="List 1-3 things that would make today wonderful..."
+          />
+        </div>
+
+        {/* Make it Special */}
+        <div>
+          <label className="flex items-center gap-2 text-lg font-semibold text-sky-100 mb-3">
+            <Rocket className="w-5 h-5 text-purple-400" />
+            One amazing thing I'll do today
+          </label>
+          <textarea
+            value={localPlan.makeItEleven}
+            onChange={e => setLocalPlan(prev => ({ ...prev, makeItEleven: e.target.value }))}
+            className="glass-input min-h-[80px]"
+            placeholder="What's one special thing you'll do to make today extraordinary?"
+          />
+        </div>
+      </div>
+
+      {/* Meal Planning Section */}
+      <div className="glass-card p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <UtensilsCrossed className="w-5 h-5 text-amber-400" />
+          <h3 className="text-lg font-semibold text-sky-100">Meal Planning</h3>
+          <Tooltip text="Plan your meals to stay energized throughout the day" />
+        </div>
+        <div className="space-y-4">
+          {[
+            { meal: 'breakfast', label: 'Morning Energy' },
+            { meal: 'lunch', label: 'Midday Fuel' },
+            { meal: 'dinner', label: 'Evening Nourishment' }
+          ].map(({ meal, label }) => (
+            <div key={meal}>
+              <label className="block text-sm font-medium text-sky-100 mb-2">
+                {label}:
+              </label>
+              <input
+                type="text"
+                value={localPlan.meals[meal as keyof typeof localPlan.meals]}
+                onChange={e => setLocalPlan(prev => ({
+                  ...prev,
+                  meals: {
+                    ...prev.meals,
+                    [meal]: e.target.value
+                  }
+                }))}
+                className="glass-input"
+                placeholder={`What's on the menu for ${meal}?`}
+              />
+            </div>
+          ))}
         </div>
       </div>
 
@@ -551,7 +539,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               className="px-6 py-3 bg-indigo-500/30 hover:bg-indigo-500/40 text-white font-medium rounded-lg transition-all hover:scale-105 backdrop-blur-sm active:scale-95 touch-manipulation min-w-[100px] border border-indigo-500/30 hover:border-indigo-500/50 shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"
             >
               <Save className="w-5 h-5" />
-              {isSaving ? 'Saving...' : 'Update'}
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
           ) : (
             <button
@@ -564,7 +552,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               ) : (
                 <Play className="w-6 h-6" />
               )}
-              {isStarting ? 'Starting Day...' : 'Start the Day'}
+              {isStarting ? 'Getting Ready...' : 'Begin Your Day'}
             </button>
           )}
         </div>
@@ -572,10 +560,10 @@ export default function DayView({ goals, onToggleGoal }: Props) {
 
       {/* Import Goals Modal */}
       {showImportModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[80]">
           <div className="glass-card p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-sky-100">Import Weekly Goals</h3>
+              <h3 className="text-lg font-semibold text-sky-100">Choose from Your Goals</h3>
               <button
                 onClick={() => setShowImportModal(false)}
                 className="text-sky-400/60 hover:text-sky-400 text-xl"
@@ -587,12 +575,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               {sortedGoals.map(goal => (
                 <button
                   key={goal.id}
-                  onClick={() => {
-                    handleImportGoal(goal.id);
-                    if (localPlan.topGoals.length === 4) {
-                      setShowImportModal(false);
-                    }
-                  }}
+                  onClick={() => handleImportGoal(goal.id)}
                   disabled={localPlan.topGoals.includes(goal.id)}
                   className={`w-full glass-card p-3 text-left hover:bg-sky-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                     goal.status === 'in_progress' ? 'border-l-4 border-sky-400' : ''
