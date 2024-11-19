@@ -1,12 +1,13 @@
 import { create } from 'zustand';
-import { doc, collection, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { doc, collection, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { db, auth } from './firebase';
-import { Goal, UserSettings, ThemeColors } from '../types';
+import { Goal, UserSettings, ThemeColors, DayPlan } from '../types';
 import { themes } from './themes';
 
 interface Store {
   goals: Goal[];
+  dayPlan: DayPlan | null;
   loading: boolean;
   error: string | null;
   user: any;
@@ -18,6 +19,8 @@ interface Store {
   updateGoal: (id: string, updates: Partial<Goal>) => Promise<void>;
   toggleGoal: (id: string) => Promise<void>;
   deleteGoal: (id: string) => Promise<void>;
+  saveDayPlan: (plan: Omit<DayPlan, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  getDayPlan: (date: string) => Promise<void>;
 }
 
 function updateCSSVariables(theme: ThemeColors) {
@@ -71,6 +74,7 @@ function hexToRgb(hex: string): string {
 
 export const useStore = create<Store>((set, get) => ({
   goals: [],
+  dayPlan: null,
   loading: true,
   error: null,
   user: null,
@@ -89,6 +93,17 @@ export const useStore = create<Store>((set, get) => ({
         set({ goals, loading: false });
       });
 
+      // Listen for today's day plan
+      const today = new Date().toISOString().split('T')[0];
+      const userDayPlanRef = doc(db, `users/${user.uid}/dayPlans/${today}`);
+      onSnapshot(userDayPlanRef, (snapshot) => {
+        if (snapshot.exists()) {
+          set({ dayPlan: { ...snapshot.data() as DayPlan, id: snapshot.id } });
+        } else {
+          set({ dayPlan: null });
+        }
+      });
+
       // Listen for user settings
       const userSettingsRef = doc(db, `users/${user.uid}/settings/preferences`);
       onSnapshot(userSettingsRef, (snapshot) => {
@@ -100,7 +115,7 @@ export const useStore = create<Store>((set, get) => ({
         }
       });
     } else {
-      set({ goals: [], loading: false });
+      set({ goals: [], dayPlan: null, loading: false });
     }
   },
 
@@ -191,6 +206,50 @@ export const useStore = create<Store>((set, get) => ({
       await deleteDoc(goalRef);
     } catch (error) {
       set({ error: 'Failed to delete goal' });
+    }
+  },
+
+  saveDayPlan: async (plan) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const dayPlanRef = doc(db, `users/${user.uid}/dayPlans/${plan.date}`);
+      const now = new Date().toISOString();
+      
+      const docSnap = await getDoc(dayPlanRef);
+      if (docSnap.exists()) {
+        await updateDoc(dayPlanRef, {
+          ...plan,
+          updatedAt: now
+        });
+      } else {
+        await setDoc(dayPlanRef, {
+          ...plan,
+          createdAt: now,
+          updatedAt: now
+        });
+      }
+    } catch (error) {
+      set({ error: 'Failed to save day plan' });
+    }
+  },
+
+  getDayPlan: async (date) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const dayPlanRef = doc(db, `users/${user.uid}/dayPlans/${date}`);
+      const docSnap = await getDoc(dayPlanRef);
+      
+      if (docSnap.exists()) {
+        set({ dayPlan: { ...docSnap.data() as DayPlan, id: docSnap.id } });
+      } else {
+        set({ dayPlan: null });
+      }
+    } catch (error) {
+      set({ error: 'Failed to get day plan' });
     }
   }
 }));

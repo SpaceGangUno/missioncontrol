@@ -1,32 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Goal } from '../../types';
 import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import } from 'lucide-react';
+import { useStore } from '../../lib/store';
 
 interface Props {
   goals: Goal[];
   onToggleGoal: (id: string) => void;
 }
 
-interface DayPlan {
-  gratitude: string;
-  wordOfDay: string;
-  greatDay: string;
-  makeItEleven: string;
-  topGoals: string[];
-  meals: {
-    breakfast: string;
-    lunch: string;
-    dinner: string;
-  };
-}
-
 export default function DayView({ goals, onToggleGoal }: Props) {
-  const [plan, setPlan] = useState<DayPlan>({
+  const { dayPlan, saveDayPlan, getDayPlan } = useStore();
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [quickAddText, setQuickAddText] = useState('');
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [localPlan, setLocalPlan] = useState({
     gratitude: '',
     wordOfDay: '',
     greatDay: '',
     makeItEleven: '',
-    topGoals: [],
+    topGoals: [] as string[],
     meals: {
       breakfast: '',
       lunch: '',
@@ -34,18 +26,48 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     },
   });
 
-  const [showQuickAdd, setShowQuickAdd] = useState(false);
-  const [quickAddText, setQuickAddText] = useState('');
-  const [showImportModal, setShowImportModal] = useState(false);
+  // Load day plan on mount
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    getDayPlan(today);
+  }, [getDayPlan]);
+
+  // Update local state when day plan changes
+  useEffect(() => {
+    if (dayPlan) {
+      setLocalPlan({
+        gratitude: dayPlan.gratitude,
+        wordOfDay: dayPlan.wordOfDay,
+        greatDay: dayPlan.greatDay,
+        makeItEleven: dayPlan.makeItEleven,
+        topGoals: dayPlan.topGoals,
+        meals: dayPlan.meals,
+      });
+    }
+  }, [dayPlan]);
+
+  const handleSave = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    await saveDayPlan({
+      date: today,
+      ...localPlan
+    });
+  };
+
+  // Auto-save on changes
+  useEffect(() => {
+    const timeoutId = setTimeout(handleSave, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [localPlan]);
 
   const getGoalById = (id: string) => goals.find(goal => goal.id === id);
 
   const handleQuickAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (quickAddText.trim() && plan.topGoals.length < 5) {
+    if (quickAddText.trim() && localPlan.topGoals.length < 5) {
       // For quick-add, we'll create a temporary ID
-      const tempId = `temp-${Date.now()}`;
-      setPlan(prev => ({
+      const tempId = `temp-${quickAddText}`;
+      setLocalPlan(prev => ({
         ...prev,
         topGoals: [...prev.topGoals, tempId],
       }));
@@ -55,15 +77,15 @@ export default function DayView({ goals, onToggleGoal }: Props) {
   };
 
   const removeTopGoal = (goalId: string) => {
-    setPlan(prev => ({
+    setLocalPlan(prev => ({
       ...prev,
       topGoals: prev.topGoals.filter(id => id !== goalId),
     }));
   };
 
   const handleImportGoal = (goalId: string) => {
-    if (!plan.topGoals.includes(goalId) && plan.topGoals.length < 5) {
-      setPlan(prev => ({
+    if (!localPlan.topGoals.includes(goalId) && localPlan.topGoals.length < 5) {
+      setLocalPlan(prev => ({
         ...prev,
         topGoals: [...prev.topGoals, goalId],
       }));
@@ -93,8 +115,8 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               I'm grateful for:
             </label>
             <textarea
-              value={plan.gratitude}
-              onChange={e => setPlan(prev => ({ ...prev, gratitude: e.target.value }))}
+              value={localPlan.gratitude}
+              onChange={e => setLocalPlan(prev => ({ ...prev, gratitude: e.target.value }))}
               className="glass-input min-h-[80px]"
               placeholder="Write what you're grateful for..."
             />
@@ -108,8 +130,8 @@ export default function DayView({ goals, onToggleGoal }: Props) {
             </label>
             <input
               type="text"
-              value={plan.wordOfDay}
-              onChange={e => setPlan(prev => ({ ...prev, wordOfDay: e.target.value }))}
+              value={localPlan.wordOfDay}
+              onChange={e => setLocalPlan(prev => ({ ...prev, wordOfDay: e.target.value }))}
               className="glass-input"
               placeholder="Enter your word of the day..."
             />
@@ -122,8 +144,8 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               Today will be great if I:
             </label>
             <textarea
-              value={plan.greatDay}
-              onChange={e => setPlan(prev => ({ ...prev, greatDay: e.target.value }))}
+              value={localPlan.greatDay}
+              onChange={e => setLocalPlan(prev => ({ ...prev, greatDay: e.target.value }))}
               className="glass-input min-h-[80px]"
               placeholder="What would make today great?"
             />
@@ -136,8 +158,8 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               I'll make today an 11 by:
             </label>
             <textarea
-              value={plan.makeItEleven}
-              onChange={e => setPlan(prev => ({ ...prev, makeItEleven: e.target.value }))}
+              value={localPlan.makeItEleven}
+              onChange={e => setLocalPlan(prev => ({ ...prev, makeItEleven: e.target.value }))}
               className="glass-input min-h-[80px]"
               placeholder="How will you exceed expectations today?"
             />
@@ -152,7 +174,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               Top 5 Goals
             </h3>
             <div className="flex gap-2">
-              {plan.topGoals.length < 5 && (
+              {localPlan.topGoals.length < 5 && (
                 <>
                   <button
                     onClick={() => setShowQuickAdd(true)}
@@ -198,7 +220,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
                 </button>
               </form>
             )}
-            {plan.topGoals.map(goalId => {
+            {localPlan.topGoals.map(goalId => {
               const goal = getGoalById(goalId);
               const isTemp = goalId.startsWith('temp-');
               return (
@@ -230,8 +252,8 @@ export default function DayView({ goals, onToggleGoal }: Props) {
                 </label>
                 <input
                   type="text"
-                  value={plan.meals[meal as keyof typeof plan.meals]}
-                  onChange={e => setPlan(prev => ({
+                  value={localPlan.meals[meal as keyof typeof localPlan.meals]}
+                  onChange={e => setLocalPlan(prev => ({
                     ...prev,
                     meals: {
                       ...prev.meals,
@@ -266,11 +288,11 @@ export default function DayView({ goals, onToggleGoal }: Props) {
                   key={goal.id}
                   onClick={() => {
                     handleImportGoal(goal.id);
-                    if (plan.topGoals.length === 4) {
+                    if (localPlan.topGoals.length === 4) {
                       setShowImportModal(false);
                     }
                   }}
-                  disabled={plan.topGoals.includes(goal.id)}
+                  disabled={localPlan.topGoals.includes(goal.id)}
                   className="w-full glass-card p-3 text-left hover:bg-sky-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="font-medium">{goal.title}</div>

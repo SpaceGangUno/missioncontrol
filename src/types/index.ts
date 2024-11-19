@@ -9,6 +9,23 @@ export interface Goal {
   createdAt: Date;
 }
 
+export interface DayPlan {
+  id: string;
+  date: string;
+  gratitude: string;
+  wordOfDay: string;
+  greatDay: string;
+  makeItEleven: string;
+  topGoals: string[];
+  meals: {
+    breakfast: string;
+    lunch: string;
+    dinner: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MonthlyPlan {
   id: string;
   month: number;
