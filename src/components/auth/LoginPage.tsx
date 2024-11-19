@@ -60,6 +60,7 @@ export default function LoginPage() {
                 ? 'glass-card bg-indigo-500/20 text-white' 
                 : 'text-sky-400/60 hover:text-sky-400'
             }`}
+            type="button"
           >
             <div className="flex items-center justify-center gap-2">
               <ArrowLeft className={`w-4 h-4 ${isLogin ? 'text-sky-400' : 'text-sky-400/60'}`} />
@@ -73,6 +74,7 @@ export default function LoginPage() {
                 ? 'glass-card bg-indigo-500/20 text-white' 
                 : 'text-sky-400/60 hover:text-sky-400'
             }`}
+            type="button"
           >
             <div className="flex items-center justify-center gap-2">
               Sign Up
@@ -98,36 +100,38 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
             <div>
-              <label className="block text-sm font-medium text-sky-100 mb-2">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-sky-100 mb-2">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-sky-400/40" />
                 <input
+                  id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="glass-input pl-10"
                   placeholder="Enter your email"
                   required
-                  name="email"
-                  autoComplete="username"
+                  name="username"
+                  autoComplete="email"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-sky-100 mb-2">Password</label>
+              <label htmlFor="password" className="block text-sm font-medium text-sky-100 mb-2">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-sky-400/40" />
                 <input
+                  id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="glass-input pl-10"
                   placeholder="Enter your password"
                   required
-                  name="password"
+                  name="current-password"
                   autoComplete={isLogin ? "current-password" : "new-password"}
                 />
               </div>
