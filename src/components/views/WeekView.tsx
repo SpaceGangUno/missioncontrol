@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Goal } from '../../types';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
-import { Calendar, Rocket, CircleDot, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Calendar, Rocket, CircleDot, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useStore } from '../../lib/store';
 
 interface Props {
@@ -13,9 +13,10 @@ interface GoalItemProps {
   goal: Goal | { id: string; title: string; description?: string; completed?: boolean };
   isTemp?: boolean;
   onToggleGoal?: (id: string) => void;
+  isBlastingOff?: boolean;
 }
 
-function GoalItem({ goal, isTemp = false, onToggleGoal }: GoalItemProps) {
+function GoalItem({ goal, isTemp = false, onToggleGoal, isBlastingOff }: GoalItemProps) {
   const isCompleted = 'completed' in goal ? goal.completed : false;
   return (
     <div className={`glass-card p-2 ${
@@ -25,7 +26,9 @@ function GoalItem({ goal, isTemp = false, onToggleGoal }: GoalItemProps) {
         {isTemp ? (
           <CircleDot className="w-3 h-3 text-sky-400/60 shrink-0 mt-0.5" />
         ) : (
-          <Rocket className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+          <div className="flex-shrink-0">
+            <Rocket className={`w-4 h-4 text-sky-400 shrink-0 mt-0.5 ${isBlastingOff ? 'blast-off' : ''}`} />
+          </div>
         )}
         <div className="min-w-0 flex-1">
           <div className={`${isTemp ? 'text-xs' : 'text-sm'} font-medium truncate ${
@@ -45,7 +48,7 @@ function GoalItem({ goal, isTemp = false, onToggleGoal }: GoalItemProps) {
             className={`text-sky-400/60 hover:text-sky-400 p-1 ${isCompleted ? 'text-green-400' : ''}`}
             aria-label={isCompleted ? "Mark as incomplete" : "Mark as complete"}
           >
-            <CheckCircle2 className="w-4 h-4" />
+            <Rocket className={`w-4 h-4 ${isBlastingOff ? 'blast-off' : ''}`} />
           </button>
         )}
       </div>
@@ -53,10 +56,11 @@ function GoalItem({ goal, isTemp = false, onToggleGoal }: GoalItemProps) {
   );
 }
 
-function DayCard({ day, dayPlan, onToggleGoal }: { 
+function DayCard({ day, dayPlan, onToggleGoal, blastOffId }: { 
   day: Date; 
   dayPlan: { topGoals: string[] } | undefined;
   onToggleGoal: (id: string) => void;
+  blastOffId: string | null;
 }) {
   const { goals } = useStore();
   const getGoalById = (id: string) => goals.find(goal => goal.id === id);
@@ -94,6 +98,7 @@ function DayCard({ day, dayPlan, onToggleGoal }: {
               key={goal.id} 
               goal={goal} 
               onToggleGoal={onToggleGoal}
+              isBlastingOff={blastOffId === goal.id}
             />
           );
         })}
@@ -106,10 +111,21 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
   const { weekPlans } = useStore();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = React.useState(0);
+  const [blastOffId, setBlastOffId] = React.useState<string | null>(null);
   
   const today = new Date();
   const startDate = startOfWeek(today, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
+
+  // Handle blast-off animation
+  useEffect(() => {
+    if (blastOffId) {
+      const timer = setTimeout(() => {
+        setBlastOffId(null);
+      }, 1000); // Duration of animation
+      return () => clearTimeout(timer);
+    }
+  }, [blastOffId]);
 
   // Find today's index in the week
   const todayIndex = weekDays.findIndex(day => isSameDay(day, today));
@@ -142,8 +158,31 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
     }
   };
 
+  const handleToggleGoal = (goalId: string) => {
+    setBlastOffId(goalId);
+    onToggleGoal(goalId);
+  };
+
   return (
     <div className="mobile-container pb-safe relative">
+      <style>
+        {`
+          @keyframes blastOff {
+            0% {
+              transform: translateY(0) rotate(0deg);
+              opacity: 1;
+            }
+            100% {
+              transform: translateY(-100px) rotate(45deg);
+              opacity: 0;
+            }
+          }
+          .blast-off {
+            animation: blastOff 1s ease-out forwards;
+          }
+        `}
+      </style>
+
       {/* Navigation Buttons */}
       <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-10 pointer-events-none">
         <button
@@ -180,7 +219,8 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
             <DayCard
               day={day}
               dayPlan={weekPlans[format(day, 'yyyy-MM-dd')]}
-              onToggleGoal={onToggleGoal}
+              onToggleGoal={handleToggleGoal}
+              blastOffId={blastOffId}
             />
           </div>
         ))}

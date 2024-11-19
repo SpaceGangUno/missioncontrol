@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Goal } from '../../types';
-import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import, Play, Loader, Save, Edit2, CheckCircle2 } from 'lucide-react';
+import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import, Play, Loader, Save, Edit2 } from 'lucide-react';
 import { useStore } from '../../lib/store';
 import EditGoalForm from '../EditGoalForm';
 
@@ -19,6 +19,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
   const [localError, setLocalError] = useState<string | null>(null);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [pendingQuickAdd, setPendingQuickAdd] = useState<string | null>(null);
+  const [blastOffId, setBlastOffId] = useState<string | null>(null);
   const [localPlan, setLocalPlan] = useState({
     gratitude: '',
     wordOfDay: '',
@@ -31,6 +32,16 @@ export default function DayView({ goals, onToggleGoal }: Props) {
       dinner: '',
     },
   });
+
+  // Handle blast-off animation
+  useEffect(() => {
+    if (blastOffId) {
+      const timer = setTimeout(() => {
+        setBlastOffId(null);
+      }, 1000); // Duration of animation
+      return () => clearTimeout(timer);
+    }
+  }, [blastOffId]);
 
   // Load day plan on mount
   useEffect(() => {
@@ -252,6 +263,11 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     }
   };
 
+  const handleToggleGoal = (goalId: string) => {
+    setBlastOffId(goalId);
+    onToggleGoal(goalId);
+  };
+
   const getGoalById = (id: string) => goals.find(goal => goal.id === id);
 
   // Filter goals to prioritize in_progress goals
@@ -266,6 +282,24 @@ export default function DayView({ goals, onToggleGoal }: Props) {
 
   return (
     <div className="space-y-6 pb-24">
+      <style>
+        {`
+          @keyframes blastOff {
+            0% {
+              transform: translateY(0) rotate(0deg);
+              opacity: 1;
+            }
+            100% {
+              transform: translateY(-100px) rotate(45deg);
+              opacity: 0;
+            }
+          }
+          .blast-off {
+            animation: blastOff 1s ease-out forwards;
+          }
+        `}
+      </style>
+
       {/* Error Message */}
       {localError && (
         <div className="fixed top-4 right-4 bg-red-500/90 text-white px-4 py-2 rounded-lg shadow-lg">
@@ -415,11 +449,13 @@ export default function DayView({ goals, onToggleGoal }: Props) {
                     {goal && (
                       <>
                         <button
-                          onClick={() => onToggleGoal(goal.id)}
+                          onClick={() => handleToggleGoal(goal.id)}
                           className={`text-sky-400/60 hover:text-sky-400 p-1 ${isCompleted ? 'text-green-400' : ''}`}
                           aria-label={isCompleted ? "Mark as incomplete" : "Mark as complete"}
                         >
-                          <CheckCircle2 className="w-4 h-4" />
+                          <Rocket 
+                            className={`w-4 h-4 ${blastOffId === goal.id ? 'blast-off' : ''}`}
+                          />
                         </button>
                         <button
                           onClick={() => setEditingGoal(goal)}
