@@ -214,9 +214,13 @@ export const useStore = create<Store>((set, get) => ({
       const dayPlanRef = doc(db, `users/${user.uid}/dayPlans/${plan.date}`);
       const now = new Date().toISOString();
       
+      // Get the current day plan to preserve any existing data
       const docSnap = await getDoc(dayPlanRef);
+      const existingData = docSnap.exists() ? docSnap.data() : {};
+      
       if (docSnap.exists()) {
         await updateDoc(dayPlanRef, {
+          ...existingData,
           ...plan,
           updatedAt: now
         });
@@ -227,6 +231,16 @@ export const useStore = create<Store>((set, get) => ({
           updatedAt: now
         });
       }
+
+      // Update local state
+      set(state => ({
+        dayPlan: {
+          ...state.dayPlan,
+          ...plan,
+          updatedAt: now,
+          id: plan.date
+        } as DayPlan
+      }));
     } catch (error) {
       set({ error: 'Failed to save day plan' });
     }
@@ -303,14 +317,27 @@ export const useStore = create<Store>((set, get) => ({
       const dayPlanRef = doc(db, `users/${user.uid}/dayPlans/${plan.date}`);
       const now = new Date().toISOString();
 
-      // Update the day plan while preserving started status
-      await updateDoc(dayPlanRef, {
-        ...plan,
-        updatedAt: now,
-        status: 'started' // Ensure we keep the started status
-      });
+      // Get the current day plan to preserve any existing data
+      const docSnap = await getDoc(dayPlanRef);
+      if (!docSnap.exists()) {
+        throw new Error('Day plan not found');
+      }
 
-      // Update goals if topGoals changed
+      const existingData = docSnap.data();
+      
+      // Merge the updates with existing data, preserving started status
+      const updatedPlan = {
+        ...existingData,
+        ...plan,
+        status: 'started', // Ensure we keep the started status
+        startedAt: existingData.startedAt, // Preserve the original start time
+        updatedAt: now
+      };
+
+      // Update the day plan
+      await updateDoc(dayPlanRef, updatedPlan);
+
+      // If topGoals changed, update the goals' status
       if (plan.topGoals) {
         const goalsRef = collection(db, `users/${user.uid}/goals`);
         const updatePromises = plan.topGoals.map(async (goalId) => {
@@ -328,11 +355,11 @@ export const useStore = create<Store>((set, get) => ({
 
       // Update local state
       set(state => ({
-        dayPlan: state.dayPlan ? {
+        dayPlan: {
           ...state.dayPlan,
-          ...plan,
-          updatedAt: now
-        } : null
+          ...updatedPlan,
+          id: plan.date
+        } as DayPlan
       }));
     } catch (error) {
       console.error('Failed to update started day:', error);

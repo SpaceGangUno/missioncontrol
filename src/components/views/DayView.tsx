@@ -61,17 +61,22 @@ export default function DayView({ goals, onToggleGoal }: Props) {
   }, [localError]);
 
   const handleSave = async () => {
-    const today = new Date().toISOString().split('T')[0];
-    if (dayPlan?.status === 'started') {
-      await updateStartedDay({
-        date: today,
-        ...localPlan,
-      });
-    } else {
-      await saveDayPlan({
-        date: today,
-        ...localPlan,
-      });
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      if (dayPlan?.status === 'started') {
+        await updateStartedDay({
+          date: today,
+          ...localPlan,
+        });
+      } else {
+        await saveDayPlan({
+          date: today,
+          ...localPlan,
+        });
+      }
+    } catch (error) {
+      console.error('Error saving day plan:', error);
+      setLocalError('Failed to save changes. Please try again.');
     }
   };
 
@@ -99,7 +104,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     }
   };
 
-  // Auto-save on changes
+  // Auto-save on changes with debounce
   useEffect(() => {
     const timeoutId = setTimeout(handleSave, 1000);
     return () => clearTimeout(timeoutId);
@@ -107,33 +112,110 @@ export default function DayView({ goals, onToggleGoal }: Props) {
 
   const getGoalById = (id: string) => goals.find(goal => goal.id === id);
 
-  const handleQuickAdd = (e: React.FormEvent) => {
+  const handleQuickAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (quickAddText.trim() && localPlan.topGoals.length < 5) {
-      // For quick-add, we'll create a temporary ID
-      const tempId = `temp-${quickAddText}`;
-      setLocalPlan(prev => ({
-        ...prev,
-        topGoals: [...prev.topGoals, tempId],
-      }));
-      setQuickAddText('');
-      setShowQuickAdd(false);
+      try {
+        // For quick-add, we'll create a temporary ID
+        const tempId = `temp-${quickAddText}`;
+        const updatedGoals = [...localPlan.topGoals, tempId];
+        
+        // Update local state immediately
+        setLocalPlan(prev => ({
+          ...prev,
+          topGoals: updatedGoals,
+        }));
+
+        // Save changes
+        const today = new Date().toISOString().split('T')[0];
+        if (dayPlan?.status === 'started') {
+          await updateStartedDay({
+            date: today,
+            ...localPlan,
+            topGoals: updatedGoals,
+          });
+        } else {
+          await saveDayPlan({
+            date: today,
+            ...localPlan,
+            topGoals: updatedGoals,
+          });
+        }
+
+        setQuickAddText('');
+        setShowQuickAdd(false);
+      } catch (error) {
+        console.error('Error adding quick goal:', error);
+        setLocalError('Failed to add goal. Please try again.');
+      }
     }
   };
 
-  const removeTopGoal = (goalId: string) => {
-    setLocalPlan(prev => ({
-      ...prev,
-      topGoals: prev.topGoals.filter(id => id !== goalId),
-    }));
-  };
-
-  const handleImportGoal = (goalId: string) => {
-    if (!localPlan.topGoals.includes(goalId) && localPlan.topGoals.length < 5) {
+  const removeTopGoal = async (goalId: string) => {
+    try {
+      const updatedGoals = localPlan.topGoals.filter(id => id !== goalId);
+      
+      // Update local state immediately
       setLocalPlan(prev => ({
         ...prev,
-        topGoals: [...prev.topGoals, goalId],
+        topGoals: updatedGoals,
       }));
+
+      // Save changes
+      const today = new Date().toISOString().split('T')[0];
+      if (dayPlan?.status === 'started') {
+        await updateStartedDay({
+          date: today,
+          ...localPlan,
+          topGoals: updatedGoals,
+        });
+      } else {
+        await saveDayPlan({
+          date: today,
+          ...localPlan,
+          topGoals: updatedGoals,
+        });
+      }
+    } catch (error) {
+      console.error('Error removing goal:', error);
+      setLocalError('Failed to remove goal. Please try again.');
+    }
+  };
+
+  const handleImportGoal = async (goalId: string) => {
+    if (!localPlan.topGoals.includes(goalId) && localPlan.topGoals.length < 5) {
+      try {
+        const updatedGoals = [...localPlan.topGoals, goalId];
+        
+        // Update local state immediately
+        setLocalPlan(prev => ({
+          ...prev,
+          topGoals: updatedGoals,
+        }));
+
+        // Save changes
+        const today = new Date().toISOString().split('T')[0];
+        if (dayPlan?.status === 'started') {
+          await updateStartedDay({
+            date: today,
+            ...localPlan,
+            topGoals: updatedGoals,
+          });
+        } else {
+          await saveDayPlan({
+            date: today,
+            ...localPlan,
+            topGoals: updatedGoals,
+          });
+        }
+
+        if (localPlan.topGoals.length === 4) {
+          setShowImportModal(false);
+        }
+      } catch (error) {
+        console.error('Error importing goal:', error);
+        setLocalError('Failed to import goal. Please try again.');
+      }
     }
   };
 
