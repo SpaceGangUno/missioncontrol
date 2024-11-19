@@ -150,11 +150,13 @@ export default function App() {
             </button>
           </div>
 
-          {/* Mobile Title */}
-          <div className="sm:hidden flex items-center gap-2">
-            <Rocket className="w-5 h-5 text-sky-400" />
-            <span className="font-medium">Mission Control</span>
-          </div>
+          {/* Mobile Title - Only show when menu is collapsed */}
+          {!showMobileMenu && (
+            <div className="sm:hidden flex items-center gap-2">
+              <Rocket className="w-5 h-5 text-sky-400" />
+              <span className="font-medium">Mission Control</span>
+            </div>
+          )}
 
           <div className="relative" ref={profileMenuRef}>
             <button
