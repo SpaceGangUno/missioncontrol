@@ -64,7 +64,12 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     const today = new Date().toISOString().split('T')[0];
     await saveDayPlan({
       date: today,
-      ...localPlan
+      ...localPlan,
+      // Preserve started status if it exists
+      ...(dayPlan?.status === 'started' ? { 
+        status: 'started',
+        startedAt: dayPlan.startedAt 
+      } : {})
     });
   };
 
@@ -130,7 +135,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     }
   };
 
-  // Disable start button if plan is already started
+  // Check if day is started
   const isStarted = dayPlan?.status === 'started';
 
   return (
@@ -167,7 +172,6 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               onChange={e => setLocalPlan(prev => ({ ...prev, gratitude: e.target.value }))}
               className="glass-input min-h-[80px]"
               placeholder="Write what you're grateful for..."
-              disabled={isStarted}
             />
           </div>
 
@@ -183,7 +187,6 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               onChange={e => setLocalPlan(prev => ({ ...prev, wordOfDay: e.target.value }))}
               className="glass-input"
               placeholder="Enter your word of the day..."
-              disabled={isStarted}
             />
           </div>
 
@@ -198,7 +201,6 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               onChange={e => setLocalPlan(prev => ({ ...prev, greatDay: e.target.value }))}
               className="glass-input min-h-[80px]"
               placeholder="What would make today great?"
-              disabled={isStarted}
             />
           </div>
 
@@ -213,7 +215,6 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               onChange={e => setLocalPlan(prev => ({ ...prev, makeItEleven: e.target.value }))}
               className="glass-input min-h-[80px]"
               placeholder="How will you exceed expectations today?"
-              disabled={isStarted}
             />
           </div>
         </div>
@@ -318,7 +319,6 @@ export default function DayView({ goals, onToggleGoal }: Props) {
                   }))}
                   className="glass-input"
                   placeholder={`Enter your ${meal} plan...`}
-                  disabled={isStarted}
                 />
               </div>
             ))}
