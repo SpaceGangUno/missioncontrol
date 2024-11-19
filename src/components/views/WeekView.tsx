@@ -12,7 +12,7 @@ import {
   useDraggable,
   useDroppable
 } from '@dnd-kit/core';
-import { Calendar, Rocket, Menu, X } from 'lucide-react';
+import { Calendar, Rocket } from 'lucide-react';
 
 interface Props {
   goals: Goal[];
@@ -111,7 +111,6 @@ function DroppableDay({ day, index, goals, getGoalById }: {
 export default function WeekView({ goals, onToggleGoal }: Props) {
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [weeklyGoals, setWeeklyGoals] = React.useState<{ [key: string]: string[] }>({});
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -170,48 +169,6 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
         onDragStart={e => setActiveId(e.active.id as string)}
       >
         <div className="flex flex-col gap-3">
-          {/* Header */}
-          <div className="glass-card p-3 flex items-center justify-between sticky top-0 z-50">
-            <div className="flex items-center gap-2">
-              <Rocket className="w-5 h-5 text-sky-400" />
-              <span className="font-medium text-base">Mission Control</span>
-            </div>
-            <button 
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 hover:bg-sky-400/10 rounded-md"
-            >
-              {isMenuOpen ? (
-                <X className="w-5 h-5 text-sky-400" />
-              ) : (
-                <Menu className="w-5 h-5 text-sky-400" />
-              )}
-            </button>
-          </div>
-
-          {/* Collapsible Navigation Menu */}
-          {isMenuOpen && (
-            <div className="glass-card p-2 flex flex-col gap-1 sticky top-[60px] z-40">
-              <button 
-                className="text-sky-400 text-sm w-full text-left px-3 py-2 rounded-md hover:bg-sky-400/10"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Month
-              </button>
-              <button 
-                className="text-sky-400 text-sm w-full text-left px-3 py-2 rounded-md bg-sky-400/20"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Week
-              </button>
-              <button 
-                className="text-sky-400 text-sm w-full text-left px-3 py-2 rounded-md hover:bg-sky-400/10"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Day
-              </button>
-            </div>
-          )}
-
           {/* Week View - Vertical Layout */}
           <div className="space-y-3 px-3 -mx-3">
             {weekDays.map((day, index) => (
