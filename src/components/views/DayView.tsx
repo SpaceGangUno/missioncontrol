@@ -9,6 +9,11 @@ interface Props {
   onToggleGoal: (id: string) => void;
 }
 
+interface AnimatingGoal {
+  id: string;
+  action: 'takeoff' | 'landing';
+}
+
 export default function DayView({ goals, onToggleGoal }: Props) {
   const { dayPlan, saveDayPlan, getDayPlan, startDay, updateStartedDay, error, updateGoal, addGoal } = useStore();
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -19,7 +24,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
   const [localError, setLocalError] = useState<string | null>(null);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [pendingQuickAdd, setPendingQuickAdd] = useState<string | null>(null);
-  const [blastOffId, setBlastOffId] = useState<string | null>(null);
+  const [animatingGoal, setAnimatingGoal] = useState<AnimatingGoal | null>(null);
   const [localPlan, setLocalPlan] = useState({
     gratitude: '',
     wordOfDay: '',
@@ -33,15 +38,15 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     },
   });
 
-  // Handle blast-off animation
+  // Handle animation
   useEffect(() => {
-    if (blastOffId) {
+    if (animatingGoal) {
       const timer = setTimeout(() => {
-        setBlastOffId(null);
+        setAnimatingGoal(null);
       }, 1000); // Duration of animation
       return () => clearTimeout(timer);
     }
-  }, [blastOffId]);
+  }, [animatingGoal]);
 
   // Load day plan on mount
   useEffect(() => {
@@ -99,7 +104,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
         setPendingQuickAdd(null);
       }
     }
-  }, [goals, pendingQuickAdd]);
+  }, [goals, pendingQuickAdd, localPlan, dayPlan, updateStartedDay, saveDayPlan]);
 
   // Clear error after 5 seconds
   useEffect(() => {
@@ -264,7 +269,12 @@ export default function DayView({ goals, onToggleGoal }: Props) {
   };
 
   const handleToggleGoal = (goalId: string) => {
-    setBlastOffId(goalId);
+    const goal = getGoalById(goalId);
+    const isCompleted = goal?.completed || goal?.status === 'completed';
+    setAnimatingGoal({
+      id: goalId,
+      action: isCompleted ? 'landing' : 'takeoff'
+    });
     onToggleGoal(goalId);
   };
 
@@ -294,8 +304,21 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               opacity: 0;
             }
           }
+          @keyframes landing {
+            0% {
+              transform: translateY(-100px) rotate(45deg);
+              opacity: 0;
+            }
+            100% {
+              transform: translateY(0) rotate(0deg);
+              opacity: 1;
+            }
+          }
           .blast-off {
             animation: blastOff 1s ease-out forwards;
+          }
+          .landing {
+            animation: landing 1s ease-in forwards;
           }
         `}
       </style>
@@ -437,6 +460,13 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               const goal = getGoalById(goalId);
               const isCurrentDayTask = goal?.status === 'in_progress';
               const isCompleted = goal?.completed || goal?.status === 'completed';
+              const isAnimating = animatingGoal?.id === goalId;
+              const animationClass = isAnimating 
+                ? animatingGoal.action === 'takeoff' 
+                  ? 'blast-off' 
+                  : 'landing'
+                : '';
+
               return (
                 <div 
                   key={goalId} 
@@ -454,7 +484,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
                           aria-label={isCompleted ? "Mark as incomplete" : "Mark as complete"}
                         >
                           <Rocket 
-                            className={`w-4 h-4 ${blastOffId === goal.id ? 'blast-off' : ''}`}
+                            className={`w-4 h-4 ${animationClass}`}
                           />
                         </button>
                         <button

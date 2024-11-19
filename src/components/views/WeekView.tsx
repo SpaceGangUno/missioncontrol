@@ -9,15 +9,23 @@ interface Props {
   onToggleGoal: (id: string) => void;
 }
 
+interface AnimatingGoal {
+  id: string;
+  action: 'takeoff' | 'landing';
+}
+
 interface GoalItemProps {
   goal: Goal | { id: string; title: string; description?: string; completed?: boolean };
   isTemp?: boolean;
   onToggleGoal?: (id: string) => void;
-  isBlastingOff?: boolean;
+  isAnimating?: boolean;
+  animationAction?: 'takeoff' | 'landing';
 }
 
-function GoalItem({ goal, isTemp = false, onToggleGoal, isBlastingOff }: GoalItemProps) {
+function GoalItem({ goal, isTemp = false, onToggleGoal, isAnimating, animationAction }: GoalItemProps) {
   const isCompleted = 'completed' in goal ? goal.completed : false;
+  const animationClass = isAnimating ? (animationAction === 'takeoff' ? 'blast-off' : 'landing') : '';
+
   return (
     <div className={`glass-card p-2 ${
       isCompleted ? 'opacity-50' : ''
@@ -27,7 +35,7 @@ function GoalItem({ goal, isTemp = false, onToggleGoal, isBlastingOff }: GoalIte
           <CircleDot className="w-3 h-3 text-sky-400/60 shrink-0 mt-0.5" />
         ) : (
           <div className="flex-shrink-0">
-            <Rocket className={`w-4 h-4 text-sky-400 shrink-0 mt-0.5 ${isBlastingOff ? 'blast-off' : ''}`} />
+            <Rocket className={`w-4 h-4 text-sky-400 shrink-0 mt-0.5 ${animationClass}`} />
           </div>
         )}
         <div className="min-w-0 flex-1">
@@ -48,7 +56,7 @@ function GoalItem({ goal, isTemp = false, onToggleGoal, isBlastingOff }: GoalIte
             className={`text-sky-400/60 hover:text-sky-400 p-1 ${isCompleted ? 'text-green-400' : ''}`}
             aria-label={isCompleted ? "Mark as incomplete" : "Mark as complete"}
           >
-            <Rocket className={`w-4 h-4 ${isBlastingOff ? 'blast-off' : ''}`} />
+            <Rocket className={`w-4 h-4 ${animationClass}`} />
           </button>
         )}
       </div>
@@ -56,11 +64,11 @@ function GoalItem({ goal, isTemp = false, onToggleGoal, isBlastingOff }: GoalIte
   );
 }
 
-function DayCard({ day, dayPlan, onToggleGoal, blastOffId }: { 
+function DayCard({ day, dayPlan, onToggleGoal, animatingGoal }: { 
   day: Date; 
   dayPlan: { topGoals: string[] } | undefined;
   onToggleGoal: (id: string) => void;
-  blastOffId: string | null;
+  animatingGoal: AnimatingGoal | null;
 }) {
   const { goals } = useStore();
   const getGoalById = (id: string) => goals.find(goal => goal.id === id);
@@ -98,7 +106,8 @@ function DayCard({ day, dayPlan, onToggleGoal, blastOffId }: {
               key={goal.id} 
               goal={goal} 
               onToggleGoal={onToggleGoal}
-              isBlastingOff={blastOffId === goal.id}
+              isAnimating={animatingGoal?.id === goal.id}
+              animationAction={animatingGoal?.action}
             />
           );
         })}
@@ -111,21 +120,21 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
   const { weekPlans } = useStore();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = React.useState(0);
-  const [blastOffId, setBlastOffId] = React.useState<string | null>(null);
+  const [animatingGoal, setAnimatingGoal] = React.useState<AnimatingGoal | null>(null);
   
   const today = new Date();
   const startDate = startOfWeek(today, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
 
-  // Handle blast-off animation
+  // Handle animation
   useEffect(() => {
-    if (blastOffId) {
+    if (animatingGoal) {
       const timer = setTimeout(() => {
-        setBlastOffId(null);
+        setAnimatingGoal(null);
       }, 1000); // Duration of animation
       return () => clearTimeout(timer);
     }
-  }, [blastOffId]);
+  }, [animatingGoal]);
 
   // Find today's index in the week
   const todayIndex = weekDays.findIndex(day => isSameDay(day, today));
@@ -159,7 +168,12 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
   };
 
   const handleToggleGoal = (goalId: string) => {
-    setBlastOffId(goalId);
+    const goal = goals.find(g => g.id === goalId);
+    const isCompleted = goal?.completed || goal?.status === 'completed';
+    setAnimatingGoal({
+      id: goalId,
+      action: isCompleted ? 'landing' : 'takeoff'
+    });
     onToggleGoal(goalId);
   };
 
@@ -177,8 +191,21 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
               opacity: 0;
             }
           }
+          @keyframes landing {
+            0% {
+              transform: translateY(-100px) rotate(45deg);
+              opacity: 0;
+            }
+            100% {
+              transform: translateY(0) rotate(0deg);
+              opacity: 1;
+            }
+          }
           .blast-off {
             animation: blastOff 1s ease-out forwards;
+          }
+          .landing {
+            animation: landing 1s ease-in forwards;
           }
         `}
       </style>
@@ -220,7 +247,7 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
               day={day}
               dayPlan={weekPlans[format(day, 'yyyy-MM-dd')]}
               onToggleGoal={handleToggleGoal}
-              blastOffId={blastOffId}
+              animatingGoal={animatingGoal}
             />
           </div>
         ))}

@@ -61,12 +61,4 @@
   }
   
   .hide-scrollbar::-webkit-scrollbar { 
-    display: none;  /* Safari and Chrome */
-  }
-}
-
-@layer utilities {
-  .touch-manipulation {
-    touch-action: manipulation;
-  }
-}
+    display: none;  /* Safari and C
