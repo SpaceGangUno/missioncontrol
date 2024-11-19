@@ -18,6 +18,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
   const [isSaving, setIsSaving] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const [pendingQuickAdd, setPendingQuickAdd] = useState<string | null>(null);
   const [localPlan, setLocalPlan] = useState({
     gratitude: '',
     wordOfDay: '',
@@ -54,6 +55,40 @@ export default function DayView({ goals, onToggleGoal }: Props) {
       });
     }
   }, [dayPlan]);
+
+  // Handle pending quick add when goals update
+  useEffect(() => {
+    if (pendingQuickAdd) {
+      const newGoal = goals.find(g => g.title === pendingQuickAdd);
+      if (newGoal) {
+        const updatedGoals = [...localPlan.topGoals, newGoal.id];
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Update local state
+        setLocalPlan(prev => ({
+          ...prev,
+          topGoals: updatedGoals,
+        }));
+
+        // Save changes
+        if (dayPlan?.status === 'started') {
+          updateStartedDay({
+            date: today,
+            ...localPlan,
+            topGoals: updatedGoals,
+          });
+        } else {
+          saveDayPlan({
+            date: today,
+            ...localPlan,
+            topGoals: updatedGoals,
+          });
+        }
+
+        setPendingQuickAdd(null);
+      }
+    }
+  }, [goals, pendingQuickAdd]);
 
   // Clear error after 5 seconds
   useEffect(() => {
@@ -114,9 +149,9 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     e.preventDefault();
     if (quickAddText.trim() && localPlan.topGoals.length < 5) {
       try {
-        // Create a real goal instead of using a temporary ID
+        // Create a real goal
         const newGoal = {
-          title: quickAddText,
+          title: quickAddText.trim(),
           description: '',
           priority: 'medium' as const,
           category: 'personal',
@@ -127,34 +162,9 @@ export default function DayView({ goals, onToggleGoal }: Props) {
         // Add the goal to Firebase
         await addGoal(newGoal);
         
-        // Find the newly added goal in the goals array
-        const addedGoal = goals.find(g => g.title === quickAddText);
-        if (addedGoal) {
-          const updatedGoals = [...localPlan.topGoals, addedGoal.id];
-          
-          // Update local state immediately
-          setLocalPlan(prev => ({
-            ...prev,
-            topGoals: updatedGoals,
-          }));
-
-          // Save changes
-          const today = new Date().toISOString().split('T')[0];
-          if (dayPlan?.status === 'started') {
-            await updateStartedDay({
-              date: today,
-              ...localPlan,
-              topGoals: updatedGoals,
-            });
-          } else {
-            await saveDayPlan({
-              date: today,
-              ...localPlan,
-              topGoals: updatedGoals,
-            });
-          }
-        }
-
+        // Set pending quick add to track the new goal
+        setPendingQuickAdd(newGoal.title);
+        
         setQuickAddText('');
         setShowQuickAdd(false);
       } catch (error) {
@@ -391,7 +401,6 @@ export default function DayView({ goals, onToggleGoal }: Props) {
             )}
             {localPlan.topGoals.map(goalId => {
               const goal = getGoalById(goalId);
-              const isTemp = goalId.startsWith('temp-');
               const isCurrentDayTask = goal?.status === 'in_progress';
               return (
                 <div 
@@ -400,7 +409,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
                     isCurrentDayTask ? 'border-l-4 border-sky-400' : ''
                   }`}
                 >
-                  <span>{isTemp ? goalId.replace('temp-', '') : goal?.title}</span>
+                  <span>{goal?.title || goalId}</span>
                   <div className="flex items-center gap-2">
                     {goal && (
                       <button
