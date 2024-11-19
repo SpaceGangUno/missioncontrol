@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Goal } from '../../types';
 import { Sparkles } from 'lucide-react';
 import EditGoalForm from '../EditGoalForm';
@@ -9,6 +9,11 @@ interface Props {
   onToggleGoal: (id: string) => void;
   onUpdateGoal: (id: string, updates: Partial<Goal>) => Promise<void>;
   onAddGoal: (goal: Omit<Goal, 'id' | 'completed' | 'createdAt'>) => void;
+}
+
+interface Position {
+  x: number;
+  y: number;
 }
 
 // Generate a unique color based on index
@@ -47,6 +52,11 @@ function generateUniqueColor(index: number): string {
 export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGoal }: Props) {
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [showAddGoal, setShowAddGoal] = useState(false);
+  const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [startPosition, setStartPosition] = useState<Position>({ x: 0, y: 0 });
+  const [lastPosition, setLastPosition] = useState<Position>({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Group goals by priority for different orbital paths
   const priorityGoals = {
@@ -58,112 +68,191 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
   // Keep track of total goals for color generation
   let globalGoalIndex = 0;
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    setStartPosition({
+      x: e.touches[0].clientX - position.x,
+      y: e.touches[0].clientY - position.y
+    });
+    setLastPosition(position);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    
+    const newX = e.touches[0].clientX - startPosition.x;
+    const newY = e.touches[0].clientY - startPosition.y;
+
+    setPosition({ x: newX, y: newY });
+    e.preventDefault();
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setLastPosition(position);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setStartPosition({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    });
+    setLastPosition(position);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    
+    const newX = e.clientX - startPosition.x;
+    const newY = e.clientY - startPosition.y;
+
+    setPosition({ x: newX, y: newY });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setLastPosition(position);
+  };
+
+  useEffect(() => {
+    const handleMouseLeave = () => {
+      if (isDragging) {
+        setIsDragging(false);
+        setLastPosition(position);
+      }
+    };
+
+    document.addEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mouseleave', handleMouseLeave);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, position]);
+
   return (
-    <div className="relative min-h-[600px] overflow-hidden rounded-xl glass-card p-8">
-      {/* Space background with stars */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(50)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-white rounded-full animate-pulse-slow"
-            style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              opacity: Math.random() * 0.7 + 0.3,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Central planet (represents the month) */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-        <div 
-          onClick={() => setShowAddGoal(true)}
-          className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-2xl animate-pulse-slow hover:scale-110 transition-transform cursor-pointer relative"
-        >
-          <div className="absolute inset-0 rounded-full bg-black opacity-20 pointer-events-none"></div>
-          <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-white/80 pointer-events-none" />
-          <span className="absolute inset-0 flex items-center justify-center text-white text-sm font-medium opacity-0 hover:opacity-100 transition-opacity">
-            Add New Goal
-          </span>
+    <div className="relative h-[600px] overflow-hidden rounded-xl glass-card">
+      <div
+        ref={containerRef}
+        className="absolute inset-0 cursor-grab active:cursor-grabbing touch-none"
+        style={{
+          transform: `translate(${position.x}px, ${position.y}px)`,
+          transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+      >
+        {/* Space background with stars */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(50)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-white rounded-full animate-pulse-slow"
+              style={{
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 3}s`,
+                opacity: Math.random() * 0.7 + 0.3,
+              }}
+            />
+          ))}
         </div>
-      </div>
 
-      {/* Orbital paths */}
-      {Object.entries(priorityGoals).map(([priority, priorityGoals], index) => (
-        <div
-          key={priority}
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-          style={{
-            width: `${(index + 2) * 280}px`,
-            height: `${(index + 2) * 280}px`,
-          }}
-        >
-          {/* Orbital path line */}
+        {/* Central planet (represents the month) */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+          <div 
+            onClick={() => setShowAddGoal(true)}
+            className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-2xl animate-pulse-slow hover:scale-110 transition-transform cursor-pointer relative"
+          >
+            <div className="absolute inset-0 rounded-full bg-black opacity-20 pointer-events-none"></div>
+            <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-white/80 pointer-events-none" />
+            <span className="absolute inset-0 flex items-center justify-center text-white text-sm font-medium opacity-0 hover:opacity-100 transition-opacity">
+              Add New Goal
+            </span>
+          </div>
+        </div>
+
+        {/* Orbital paths */}
+        {Object.entries(priorityGoals).map(([priority, priorityGoals], index) => (
           <div
-            className="absolute inset-0 rounded-full border border-sky-500/20"
-            style={{ transform: 'rotate(45deg)' }}
-          />
+            key={priority}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            style={{
+              width: `${(index + 2) * 280}px`,
+              height: `${(index + 2) * 280}px`,
+            }}
+          >
+            {/* Orbital path line */}
+            <div
+              className="absolute inset-0 rounded-full border border-sky-500/20"
+              style={{ transform: 'rotate(45deg)' }}
+            />
 
-          {/* Goals in orbit */}
-          {priorityGoals.map((goal, i) => {
-            const angle = (i * 360) / priorityGoals.length;
-            const delay = i * 0.5;
-            const goalColor = generateUniqueColor(globalGoalIndex++);
-            
-            return (
-              <button
-                key={goal.id}
-                onClick={() => setSelectedGoal(goal)}
-                className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300 group"
-                style={{
-                  left: '50%',
-                  top: '50%',
-                  transform: `rotate(${angle}deg) translateX(${(index + 2) * 140}px) rotate(-${angle}deg)`,
-                }}
-              >
-                <div className="relative flex flex-col items-center">
-                  {/* Goal title */}
-                  <div 
-                    className="mb-2 text-sm text-white font-medium px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm z-20"
-                    style={{
-                      textShadow: '0 2px 4px rgba(0,0,0,0.8)',
-                      maxWidth: '150px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {goal.title}
-                  </div>
-
-                  {/* Goal dot */}
-                  <div
-                    className={`w-8 h-8 rounded-full transition-all duration-300 
-                      hover:scale-125 ${goal.completed ? 'opacity-70' : ''}`}
-                    style={{ 
-                      background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
-                      boxShadow: `0 0 20px ${goalColor}80`,
-                      animationDelay: `${delay}s`
-                    }}
-                  >
-                    {/* Glow effect */}
+            {/* Goals in orbit */}
+            {priorityGoals.map((goal, i) => {
+              const angle = (i * 360) / priorityGoals.length;
+              const delay = i * 0.5;
+              const goalColor = generateUniqueColor(globalGoalIndex++);
+              
+              return (
+                <button
+                  key={goal.id}
+                  onClick={() => setSelectedGoal(goal)}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300 group"
+                  style={{
+                    left: '50%',
+                    top: '50%',
+                    transform: `rotate(${angle}deg) translateX(${(index + 2) * 140}px) rotate(-${angle}deg)`,
+                  }}
+                >
+                  <div className="relative flex flex-col items-center">
+                    {/* Goal title */}
                     <div 
-                      className="absolute inset-0 rounded-full animate-pulse-slow pointer-events-none"
+                      className="mb-2 text-sm text-white font-medium px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm z-20"
+                      style={{
+                        textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+                        maxWidth: '150px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {goal.title}
+                    </div>
+
+                    {/* Goal dot */}
+                    <div
+                      className={`w-8 h-8 rounded-full transition-all duration-300 
+                        hover:scale-125 ${goal.completed ? 'opacity-70' : ''}`}
                       style={{ 
                         background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
-                        filter: 'blur(8px)',
-                        opacity: 0.5
+                        boxShadow: `0 0 20px ${goalColor}80`,
+                        animationDelay: `${delay}s`
                       }}
-                    />
+                    >
+                      {/* Glow effect */}
+                      <div 
+                        className="absolute inset-0 rounded-full animate-pulse-slow pointer-events-none"
+                        style={{ 
+                          background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
+                          filter: 'blur(8px)',
+                          opacity: 0.5
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      ))}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
 
       {/* Edit Goal Form */}
       {selectedGoal && (
