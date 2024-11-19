@@ -2,7 +2,7 @@ import React from 'react';
 import { Goal } from '../types';
 import GoalList from './GoalList';
 import { useStore } from '../lib/store';
-import { Heart, Lightbulb, Target, Rocket } from 'lucide-react';
+import { Heart, Lightbulb, Target, Rocket, Play } from 'lucide-react';
 
 interface Props {
   missions: Goal[];
@@ -17,6 +17,16 @@ export default function MissionList({ missions, onToggleMission, onUpdateProgres
 
   // Enforce 5 goal maximum for top goals
   const topGoals = dayPlan?.topGoals.slice(0, 5) || [];
+
+  const handleStartDay = () => {
+    // Set all top goals to 'in_progress' status
+    topGoals.forEach(goalId => {
+      const goal = getGoalById(goalId);
+      if (goal && goal.status === 'not_started') {
+        onUpdateProgress(goalId, 'in_progress', 50);
+      }
+    });
+  };
 
   return (
     <div className="mt-8 space-y-8">
@@ -78,6 +88,15 @@ export default function MissionList({ missions, onToggleMission, onUpdateProgres
                 </div>
               )}
             </div>
+
+            {/* Start the Day Button */}
+            <button
+              onClick={handleStartDay}
+              className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] backdrop-blur-sm neon-glow active:scale-95 touch-manipulation"
+            >
+              <Play className="w-6 h-6" />
+              Start the Day
+            </button>
           </div>
         </div>
       )}
