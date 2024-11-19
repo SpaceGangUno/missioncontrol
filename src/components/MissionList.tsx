@@ -88,15 +88,6 @@ export default function MissionList({ missions, onToggleMission, onUpdateProgres
                 </div>
               )}
             </div>
-
-            {/* Start the Day Button */}
-            <button
-              onClick={handleStartDay}
-              className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] backdrop-blur-sm neon-glow active:scale-95 touch-manipulation"
-            >
-              <Play className="w-6 h-6" />
-              Start the Day
-            </button>
           </div>
         </div>
       )}
@@ -110,6 +101,20 @@ export default function MissionList({ missions, onToggleMission, onUpdateProgres
           onUpdateProgress={onUpdateProgress}
         />
       </div>
+
+      {/* Start the Day Button */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-navy-900/95 backdrop-blur-md border-t border-sky-500/10">
+        <button
+          onClick={handleStartDay}
+          className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] backdrop-blur-sm neon-glow active:scale-95 touch-manipulation"
+        >
+          <Play className="w-6 h-6" />
+          Start the Day
+        </button>
+      </div>
+
+      {/* Bottom Padding to Account for Fixed Button */}
+      <div className="h-24" />
     </div>
   );
 }
