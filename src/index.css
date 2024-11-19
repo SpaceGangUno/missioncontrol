@@ -4,201 +4,65 @@
 
 @layer base {
   :root {
-    --theme-primary: 56 189 248;    /* #38bdf8 in RGB */
-    --theme-secondary: 129 140 248;  /* #818cf8 in RGB */
-    --theme-accent: 192 132 252;     /* #c084fc in RGB */
-    --theme-background: #0f172a;
-    --theme-background-gradient: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
-    --theme-card-background: rgba(30, 41, 59, 0.7);
-    --theme-text-color: #e2e8f0;
-    --theme-text-secondary: #94a3b8;
-    --theme-font-family: 'Space Grotesk', sans-serif;
-    
-    /* Mobile safe area variables */
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --safe-left: env(safe-area-inset-left, 0px);
-    --safe-right: env(safe-area-inset-right, 0px);
-  }
-
-  /* Improved mobile text selection */
-  ::selection {
-    background: rgb(var(--theme-primary) / 0.3);
-    color: var(--theme-text-color);
-  }
-
-  html {
-    -webkit-tap-highlight-color: transparent;
-    height: -webkit-fill-available;
-    width: 100vw;
-    overflow-x: hidden;
+    --theme-primary: 56 189 248;
+    --theme-secondary: 186 230 253;
+    --theme-accent: 125 211 252;
+    --theme-background: #0B1120;
+    --theme-card-background: rgba(30, 41, 59, 0.5);
+    --theme-text-color: #E2E8F0;
+    --theme-text-secondary: #94A3B8;
+    --theme-font-family: 'Inter', sans-serif;
   }
 
   body {
-    background: var(--theme-background-gradient, var(--theme-background));
-    color: var(--theme-text-color);
-    font-family: var(--theme-font-family);
-    min-height: 100vh;
-    min-height: -webkit-fill-available;
-    width: 100%;
-    max-width: 100vw;
-    overflow-x: hidden;
-    /* Disable pull to refresh on mobile */
-    overscroll-behavior-y: none;
-    /* Enable smooth scrolling */
-    scroll-behavior: smooth;
-    /* Ensure proper mobile viewport */
-    position: relative;
-  }
-
-  /* Apply theme font to headings */
-  h1, h2, h3, h4, h5, h6 {
+    @apply bg-navy-950 text-slate-200 font-sans antialiased;
+    background: radial-gradient(
+      circle at top center,
+      rgba(var(--theme-primary), 0.15),
+      transparent 40%
+    ),
+    var(--theme-background);
     font-family: var(--theme-font-family);
   }
 
-  /* Improve input experience on mobile */
-  input, textarea, select, button {
-    font-family: var(--theme-font-family);
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* Disable iOS zoom on input focus */
-  @media screen and (max-width: 768px) {
-    input, textarea, select {
-      font-size: 16px;
-    }
+  #root {
+    @apply min-h-screen;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply backdrop-blur-md border rounded-xl relative;
-    background: var(--theme-card-background);
-    border-color: rgb(var(--theme-primary) / 0.1);
-    box-shadow: 0 0 30px rgb(var(--theme-primary) / 0.05);
-    width: 100%;
-    max-width: 100%;
-    margin: 0 auto;
+    @apply rounded-xl bg-slate-800/50 backdrop-blur-md border border-slate-700/50;
   }
 
   .glass-input {
-    @apply border rounded-lg px-4 py-3
-           focus:ring-1 relative z-10 w-full
-           focus:outline-none;
-    background: var(--theme-card-background);
-    border-color: rgb(var(--theme-primary) / 0.2);
-    color: var(--theme-text-color);
-    &::placeholder {
-      color: var(--theme-text-secondary);
-    }
-    &:focus {
-      border-color: rgb(var(--theme-primary));
-      --tw-ring-color: rgb(var(--theme-primary) / 0.5);
-    }
+    @apply w-full bg-slate-800/50 backdrop-blur-md border border-slate-700/50 rounded-lg px-3 py-2 text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-transparent;
   }
 
-  /* Mobile-optimized container */
   .mobile-container {
-    @apply w-full max-w-screen-xl mx-auto px-4;
-    padding-left: max(1rem, var(--safe-left));
-    padding-right: max(1rem, var(--safe-right));
+    @apply max-w-2xl mx-auto;
   }
 
-  /* Navigation tabs container */
-  .nav-tabs {
-    @apply flex items-center justify-between gap-2 w-full overflow-x-auto no-scrollbar;
-    padding: 0.5rem max(1rem, var(--safe-left)) 0.5rem max(1rem, var(--safe-right));
-  }
-
-  /* Navigation tab item */
-  .nav-tab {
-    @apply flex-1 min-w-[80px] text-center py-2 px-4 rounded-lg touch-manipulation;
-    font-size: max(14px, min(16px, 4vw));
-  }
-
-  /* Circular progress container */
-  .progress-circle {
-    @apply relative mx-auto;
-    width: min(300px, 80vw);
-    height: min(300px, 80vw);
-  }
-
-  /* Mobile-optimized touch targets */
-  .touch-manipulation {
-    touch-action: manipulation;
-    min-height: 44px;
-  }
-
-  /* Safe area padding utilities */
   .pb-safe {
-    padding-bottom: calc(1rem + var(--safe-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
-  .pt-safe {
-    padding-top: calc(1rem + var(--safe-top));
+  .neon-glow {
+    box-shadow: 0 0 20px rgba(var(--theme-primary), 0.3);
   }
 
-  .theme-text-primary {
-    color: var(--theme-text-color);
+  .hide-scrollbar {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
   }
-
-  .theme-text-secondary {
-    color: var(--theme-text-secondary);
-  }
-
-  .theme-text {
-    color: rgb(var(--theme-primary));
-  }
-
-  .theme-border {
-    border-color: rgb(var(--theme-primary));
-  }
-
-  .theme-bg {
-    background-color: rgb(var(--theme-primary));
-  }
-
-  .theme-glow {
-    box-shadow: 0 0 20px rgb(var(--theme-primary) / 0.5);
-  }
-
-  .gradient-text {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(
-      to right,
-      rgb(var(--theme-primary)),
-      rgb(var(--theme-secondary))
-    );
-  }
-
-  .theme-card {
-    background: var(--theme-card-background);
-    color: var(--theme-text-color);
-    width: 100%;
-    max-width: 100%;
-    margin: 0 auto;
-  }
-
-  /* Mobile-optimized scrolling */
-  .smooth-scroll {
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-  }
-
-  /* Hide scrollbar but keep functionality */
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-    &::-webkit-scrollbar {
-      display: none;
-    }
+  
+  .hide-scrollbar::-webkit-scrollbar { 
+    display: none;  /* Safari and Chrome */
   }
 }
 
-/* Theme transition effects */
-body,
-.glass-card,
-.glass-input,
-.theme-card {
-  transition: all 0.3s ease-in-out;
+@layer utilities {
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
 }

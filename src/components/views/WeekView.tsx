@@ -1,18 +1,7 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Goal } from '../../types';
-import { format, startOfWeek, addDays } from 'date-fns';
-import { 
-  DndContext, 
-  DragEndEvent, 
-  DragOverlay,
-  useSensor, 
-  useSensors, 
-  PointerSensor,
-  TouchSensor,
-  useDraggable,
-  useDroppable
-} from '@dnd-kit/core';
-import { Calendar, Rocket, CircleDot } from 'lucide-react';
+import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
+import { Calendar, Rocket, CircleDot, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useStore } from '../../lib/store';
 
 interface Props {
@@ -20,31 +9,16 @@ interface Props {
   onToggleGoal: (id: string) => void;
 }
 
-interface DraggableGoalProps {
+interface GoalItemProps {
   goal: Goal | { id: string; title: string; description?: string; completed?: boolean };
-  isDayGoal?: boolean;
   isTemp?: boolean;
 }
 
-function DraggableGoal({ goal, isDayGoal = false, isTemp = false }: DraggableGoalProps) {
-  const {attributes, listeners, setNodeRef, transform} = useDraggable({
-    id: goal.id,
-  });
-  
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-  } : undefined;
-
+function GoalItem({ goal, isTemp = false }: GoalItemProps) {
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      className={`glass-card ${isDayGoal ? 'p-2' : 'p-3'} touch-manipulation ${
-        goal.completed ? 'opacity-50' : ''
-      } ${isTemp ? 'border-l-2 border-sky-400/30' : ''}`}
-    >
+    <div className={`glass-card p-2 ${
+      goal.completed ? 'opacity-50' : ''
+    } ${isTemp ? 'border-l-2 border-sky-400/30' : ''}`}>
       <div className="flex items-start gap-2">
         {isTemp ? (
           <CircleDot className="w-3 h-3 text-sky-400/60 shrink-0 mt-0.5" />
@@ -62,45 +36,24 @@ function DraggableGoal({ goal, isDayGoal = false, isTemp = false }: DraggableGoa
               {goal.description}
             </div>
           )}
-          {!isDayGoal && !isTemp && 'priority' in goal && 'category' in goal && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                goal.priority === 'high' ? 'bg-rose-500/20 text-rose-300' :
-                goal.priority === 'medium' ? 'bg-amber-500/20 text-amber-300' :
-                'bg-emerald-500/20 text-emerald-300'
-              }`}>
-                {goal.priority}
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300">
-                {goal.category}
-              </span>
-            </div>
-          )}
         </div>
       </div>
     </div>
   );
 }
 
-function DroppableDay({ day, index, dayPlan }: { 
+function DayCard({ day, dayPlan }: { 
   day: Date; 
-  index: number;
   dayPlan: { topGoals: string[] } | undefined;
 }) {
-  const {isOver, setNodeRef} = useDroppable({
-    id: format(day, 'yyyy-MM-dd'),
-  });
-
   const { goals } = useStore();
   const getGoalById = (id: string) => goals.find(goal => goal.id === id);
+  const isToday = isSameDay(day, new Date());
 
   return (
-    <div
-      ref={setNodeRef}
-      className={`glass-card p-3 ${
-        isOver ? 'ring-2 ring-sky-400' : ''
-      }`}
-    >
+    <div className={`glass-card p-3 min-w-[300px] max-w-[300px] ${
+      isToday ? 'ring-2 ring-sky-400' : ''
+    }`}>
       <div className="flex items-center gap-2 mb-3">
         <Calendar className="w-4 h-4 text-sky-400" />
         <div>
@@ -113,10 +66,9 @@ function DroppableDay({ day, index, dayPlan }: {
         {dayPlan?.topGoals?.map(goalId => {
           if (goalId.startsWith('temp-')) {
             return (
-              <DraggableGoal 
+              <GoalItem 
                 key={goalId} 
                 goal={{ id: goalId, title: goalId.replace('temp-', '') }}
-                isDayGoal={true}
                 isTemp={true}
               />
             );
@@ -126,7 +78,7 @@ function DroppableDay({ day, index, dayPlan }: {
           if (!goal) return null;
           
           return (
-            <DraggableGoal key={goal.id} goal={goal} isDayGoal={true} />
+            <GoalItem key={goal.id} goal={goal} />
           );
         })}
       </div>
@@ -134,118 +86,88 @@ function DroppableDay({ day, index, dayPlan }: {
   );
 }
 
-export default function WeekView({ goals, onToggleGoal }: Props) {
-  const [activeId, setActiveId] = React.useState<string | null>(null);
-  const { weekPlans, assignGoalToDay } = useStore();
+export default function WeekView({ goals }: Props) {
+  const { weekPlans } = useStore();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [currentIndex, setCurrentIndex] = React.useState(0);
   
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 250,
-        tolerance: 8,
-      },
-    })
-  );
-
-  const startDate = startOfWeek(new Date(), { weekStartsOn: 0 });
+  const today = new Date();
+  const startDate = startOfWeek(today, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
 
-  const unassignedGoals = goals.filter(
-    goal => !Object.values(weekPlans).some(plan => plan.topGoals.includes(goal.id))
-  );
+  // Find today's index in the week
+  const todayIndex = weekDays.findIndex(day => isSameDay(day, today));
 
-  async function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    
-    if (!over) return;
-
-    const goalId = active.id as string;
-    const date = over.id as string;
-
-    if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      await assignGoalToDay(goalId, date);
+  // Set initial scroll position to today
+  useEffect(() => {
+    if (scrollContainerRef.current && todayIndex !== -1) {
+      const cardWidth = 300; // Width of each card
+      const scrollPosition = todayIndex * cardWidth;
+      scrollContainerRef.current.scrollLeft = scrollPosition;
+      setCurrentIndex(todayIndex);
     }
+  }, [todayIndex]);
 
-    setActiveId(null);
-  }
-
-  const getGoalById = (id: string) => goals.find(goal => goal.id === id);
+  const scrollToDay = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const newIndex = direction === 'left' ? 
+        Math.max(0, currentIndex - 1) : 
+        Math.min(6, currentIndex + 1);
+      
+      const cardWidth = 300; // Width of each card
+      const scrollPosition = newIndex * cardWidth;
+      
+      scrollContainerRef.current.scrollTo({
+        left: scrollPosition,
+        behavior: 'smooth'
+      });
+      
+      setCurrentIndex(newIndex);
+    }
+  };
 
   return (
-    <div className="mobile-container pb-safe">
-      <DndContext 
-        sensors={sensors} 
-        onDragEnd={handleDragEnd} 
-        onDragStart={e => setActiveId(e.active.id as string)}
+    <div className="mobile-container pb-safe relative">
+      {/* Navigation Buttons */}
+      <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-10 pointer-events-none">
+        <button
+          onClick={() => scrollToDay('left')}
+          disabled={currentIndex === 0}
+          className={`p-2 rounded-full bg-navy-900/80 backdrop-blur-sm pointer-events-auto ${
+            currentIndex === 0 ? 'opacity-30' : 'hover:bg-navy-800/80'
+          }`}
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <button
+          onClick={() => scrollToDay('right')}
+          disabled={currentIndex === 6}
+          className={`p-2 rounded-full bg-navy-900/80 backdrop-blur-sm pointer-events-auto ${
+            currentIndex === 6 ? 'opacity-30' : 'hover:bg-navy-800/80'
+          }`}
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Horizontal Scrolling Container */}
+      <div 
+        ref={scrollContainerRef}
+        className="flex overflow-x-auto gap-3 px-3 -mx-3 hide-scrollbar snap-x snap-mandatory"
+        style={{ scrollSnapType: 'x mandatory' }}
       >
-        <div className="flex flex-col gap-3">
-          {/* Week View - Vertical Layout */}
-          <div className="space-y-3 px-3 -mx-3">
-            {weekDays.map((day, index) => (
-              <DroppableDay
-                key={format(day, 'yyyy-MM-dd')}
-                day={day}
-                index={index}
-                dayPlan={weekPlans[format(day, 'yyyy-MM-dd')]}
-              />
-            ))}
+        {weekDays.map((day) => (
+          <div 
+            key={format(day, 'yyyy-MM-dd')} 
+            className="snap-center shrink-0"
+          >
+            <DayCard
+              day={day}
+              dayPlan={weekPlans[format(day, 'yyyy-MM-dd')]}
+            />
           </div>
-
-          {/* Unassigned Goals Section */}
-          <div className="glass-card p-3">
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <Rocket className="w-4 h-4 text-sky-400" />
-              Monthly Goals
-            </h3>
-            <div className="space-y-2">
-              {unassignedGoals.map(goal => (
-                <DraggableGoal key={goal.id} goal={goal} />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <DragOverlay>
-          {activeId ? (
-            <div className="glass-card p-3 shadow-2xl max-w-[90vw]">
-              {(() => {
-                if (activeId.startsWith('temp-')) {
-                  return (
-                    <div className="flex items-start gap-2">
-                      <CircleDot className="w-3 h-3 text-sky-400/60 shrink-0 mt-0.5" />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs font-medium truncate text-sky-400/80">
-                          {activeId.replace('temp-', '')}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-
-                const goal = getGoalById(activeId);
-                if (!goal) return null;
-                
-                return (
-                  <div className="flex items-start gap-2">
-                    <Rocket className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium truncate">{goal.title}</div>
-                      <div className="text-xs text-sky-400/60 line-clamp-2 mt-0.5">
-                        {goal.description}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+        ))}
+      </div>
     </div>
   );
 }
