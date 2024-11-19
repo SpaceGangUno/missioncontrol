@@ -1,10 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { themes } from '../lib/themes';
 import { useStore } from '../lib/store';
 import { Palette } from 'lucide-react';
 
 export default function ThemeSelector() {
   const { updateUserTheme, currentTheme } = useStore();
+
+  // Set default theme on mount
+  useEffect(() => {
+    updateUserTheme('cosmic-blue');
+  }, []);
 
   return (
     <div>

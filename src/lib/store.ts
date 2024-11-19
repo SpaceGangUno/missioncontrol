@@ -176,7 +176,13 @@ export const useStore = create<Store>((set, get) => {
 
     updateUserTheme: async (themeId) => {
       const user = auth.currentUser;
-      if (!user) return;
+      if (!user) {
+        // If no user is logged in, just update the theme locally
+        const theme = themes.find(t => t.id === themeId) || themes[0];
+        set((state: Store) => ({ ...state, currentTheme: theme }));
+        updateCSSVariables(theme);
+        return;
+      }
 
       try {
         const theme = themes.find(t => t.id === themeId);
