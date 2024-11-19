@@ -13,6 +13,7 @@ import {
   useDroppable
 } from '@dnd-kit/core';
 import { Calendar, Rocket } from 'lucide-react';
+import { useStore } from '../../lib/store';
 
 interface Props {
   goals: Goal[];
@@ -69,15 +70,17 @@ function DraggableGoal({ goal, isDayGoal = false }: { goal: Goal, isDayGoal?: bo
   );
 }
 
-function DroppableDay({ day, index, goals, getGoalById }: { 
+function DroppableDay({ day, index, dayPlan }: { 
   day: Date; 
   index: number;
-  goals: string[];
-  getGoalById: (id: string) => Goal | undefined;
+  dayPlan: { topGoals: string[] } | undefined;
 }) {
   const {isOver, setNodeRef} = useDroppable({
-    id: `day-${index}`,
+    id: format(day, 'yyyy-MM-dd'),
   });
+
+  const { goals } = useStore();
+  const getGoalById = (id: string) => goals.find(goal => goal.id === id);
 
   return (
     <div
@@ -95,7 +98,7 @@ function DroppableDay({ day, index, goals, getGoalById }: {
       </div>
       
       <div className="space-y-2">
-        {goals?.map(goalId => {
+        {dayPlan?.topGoals?.map(goalId => {
           const goal = getGoalById(goalId);
           if (!goal) return null;
           
@@ -110,7 +113,7 @@ function DroppableDay({ day, index, goals, getGoalById }: {
 
 export default function WeekView({ goals, onToggleGoal }: Props) {
   const [activeId, setActiveId] = React.useState<string | null>(null);
-  const [weeklyGoals, setWeeklyGoals] = React.useState<{ [key: string]: string[] }>({});
+  const { weekPlans, assignGoalToDay } = useStore();
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -130,30 +133,19 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
 
   const unassignedGoals = goals.filter(
-    goal => !Object.values(weeklyGoals).flat().includes(goal.id)
+    goal => !Object.values(weekPlans).some(plan => plan.topGoals.includes(goal.id))
   );
 
-  function handleDragEnd(event: DragEndEvent) {
+  async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     
     if (!over) return;
 
     const goalId = active.id as string;
-    const dayId = over.id as string;
+    const date = over.id as string;
 
-    if (dayId.startsWith('day-')) {
-      setWeeklyGoals(prev => {
-        const newGoals = { ...prev };
-        Object.keys(newGoals).forEach(key => {
-          newGoals[key] = newGoals[key]?.filter(id => id !== goalId) || [];
-        });
-        
-        if (!newGoals[dayId]) {
-          newGoals[dayId] = [];
-        }
-        newGoals[dayId] = [...newGoals[dayId], goalId];
-        return newGoals;
-      });
+    if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      await assignGoalToDay(goalId, date);
     }
 
     setActiveId(null);
@@ -176,8 +168,7 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
                 key={format(day, 'yyyy-MM-dd')}
                 day={day}
                 index={index}
-                goals={weeklyGoals[`day-${index}`] || []}
-                getGoalById={getGoalById}
+                dayPlan={weekPlans[format(day, 'yyyy-MM-dd')]}
               />
             ))}
           </div>
