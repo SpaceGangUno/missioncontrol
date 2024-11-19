@@ -110,6 +110,8 @@ export default function LoginPage() {
                   className="glass-input pl-10"
                   placeholder="Enter your email"
                   required
+                  name="email"
+                  autoComplete="username"
                 />
               </div>
             </div>
@@ -125,6 +127,8 @@ export default function LoginPage() {
                   className="glass-input pl-10"
                   placeholder="Enter your password"
                   required
+                  name="password"
+                  autoComplete={isLogin ? "current-password" : "new-password"}
                 />
               </div>
             </div>
