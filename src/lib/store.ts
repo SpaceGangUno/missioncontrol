@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { doc, collection, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { db, auth } from './firebase';
-import { Goal, UserSettings, ThemeColors, DayPlan } from '../types';
+import { Goal, UserSettings, ThemeColors, DayPlan, StartedDayPlan } from '../types';
 import { themes } from './themes';
 
 interface Store {
@@ -21,6 +21,7 @@ interface Store {
   deleteGoal: (id: string) => Promise<void>;
   saveDayPlan: (plan: Omit<DayPlan, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   getDayPlan: (date: string) => Promise<void>;
+  startDay: (plan: StartedDayPlan) => Promise<void>;
 }
 
 function updateCSSVariables(theme: ThemeColors) {
@@ -250,6 +251,41 @@ export const useStore = create<Store>((set, get) => ({
       }
     } catch (error) {
       set({ error: 'Failed to get day plan' });
+    }
+  },
+
+  startDay: async (plan) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      // Save the started day plan in a separate collection
+      const startedDayRef = doc(db, `users/${user.uid}/startedDays/${plan.date}`);
+      await setDoc(startedDayRef, {
+        ...plan,
+        createdAt: new Date().toISOString()
+      });
+
+      // Update the original day plan to mark it as started
+      const dayPlanRef = doc(db, `users/${user.uid}/dayPlans/${plan.date}`);
+      await updateDoc(dayPlanRef, {
+        status: 'started',
+        startedAt: plan.startedAt
+      });
+
+      // Update goals to in_progress
+      const goalsRef = collection(db, `users/${user.uid}/goals`);
+      plan.topGoals.forEach(async (goalId) => {
+        if (!goalId.startsWith('temp-')) {
+          const goalRef = doc(goalsRef, goalId);
+          await updateDoc(goalRef, {
+            status: 'in_progress',
+            progress: 50
+          });
+        }
+      });
+    } catch (error) {
+      set({ error: 'Failed to start day' });
     }
   }
 }));

@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function DayView({ goals, onToggleGoal }: Props) {
-  const { dayPlan, saveDayPlan, getDayPlan } = useStore();
+  const { dayPlan, saveDayPlan, getDayPlan, startDay } = useStore();
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddText, setQuickAddText] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
@@ -36,12 +36,16 @@ export default function DayView({ goals, onToggleGoal }: Props) {
   useEffect(() => {
     if (dayPlan) {
       setLocalPlan({
-        gratitude: dayPlan.gratitude,
-        wordOfDay: dayPlan.wordOfDay,
-        greatDay: dayPlan.greatDay,
-        makeItEleven: dayPlan.makeItEleven,
-        topGoals: dayPlan.topGoals,
-        meals: dayPlan.meals,
+        gratitude: dayPlan.gratitude || '',
+        wordOfDay: dayPlan.wordOfDay || '',
+        greatDay: dayPlan.greatDay || '',
+        makeItEleven: dayPlan.makeItEleven || '',
+        topGoals: dayPlan.topGoals || [],
+        meals: dayPlan.meals || {
+          breakfast: '',
+          lunch: '',
+          dinner: '',
+        },
       });
     }
   }, [dayPlan]);
@@ -55,20 +59,17 @@ export default function DayView({ goals, onToggleGoal }: Props) {
   };
 
   const handleStartDay = async () => {
-    // First save the current state
+    // First save any pending changes
     await handleSave();
     
-    // Store the day's data in a completed sheet format
+    // Then start the day
     const today = new Date().toISOString().split('T')[0];
-    const completedSheet = {
+    await startDay({
       date: today,
       ...localPlan,
       status: 'started',
       startedAt: new Date().toISOString()
-    };
-    
-    // TODO: Add store function to save completed sheet
-    console.log('Starting day with sheet:', completedSheet);
+    });
   };
 
   // Auto-save on changes
@@ -109,6 +110,9 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     }
   };
 
+  // Disable start button if plan is already started
+  const isStarted = dayPlan?.status === 'started';
+
   return (
     <div className="space-y-6 pb-24">
       {/* Daily Header */}
@@ -136,6 +140,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               onChange={e => setLocalPlan(prev => ({ ...prev, gratitude: e.target.value }))}
               className="glass-input min-h-[80px]"
               placeholder="Write what you're grateful for..."
+              disabled={isStarted}
             />
           </div>
 
@@ -151,6 +156,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               onChange={e => setLocalPlan(prev => ({ ...prev, wordOfDay: e.target.value }))}
               className="glass-input"
               placeholder="Enter your word of the day..."
+              disabled={isStarted}
             />
           </div>
 
@@ -165,6 +171,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               onChange={e => setLocalPlan(prev => ({ ...prev, greatDay: e.target.value }))}
               className="glass-input min-h-[80px]"
               placeholder="What would make today great?"
+              disabled={isStarted}
             />
           </div>
 
@@ -179,6 +186,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               onChange={e => setLocalPlan(prev => ({ ...prev, makeItEleven: e.target.value }))}
               className="glass-input min-h-[80px]"
               placeholder="How will you exceed expectations today?"
+              disabled={isStarted}
             />
           </div>
         </div>
@@ -190,26 +198,28 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               <Target className="w-5 h-5 text-sky-400" />
               Top 5 Goals
             </h3>
-            <div className="flex gap-2">
-              {localPlan.topGoals.length < 5 && (
-                <>
-                  <button
-                    onClick={() => setShowQuickAdd(true)}
-                    className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors px-3 py-1.5 rounded-md hover:bg-sky-400/10"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Quick Add
-                  </button>
-                  <button
-                    onClick={() => setShowImportModal(true)}
-                    className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors px-3 py-1.5 rounded-md hover:bg-sky-400/10"
-                  >
-                    <Import className="w-4 h-4" />
-                    Import Goals
-                  </button>
-                </>
-              )}
-            </div>
+            {!isStarted && (
+              <div className="flex gap-2">
+                {localPlan.topGoals.length < 5 && (
+                  <>
+                    <button
+                      onClick={() => setShowQuickAdd(true)}
+                      className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors px-3 py-1.5 rounded-md hover:bg-sky-400/10"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Quick Add
+                    </button>
+                    <button
+                      onClick={() => setShowImportModal(true)}
+                      className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors px-3 py-1.5 rounded-md hover:bg-sky-400/10"
+                    >
+                      <Import className="w-4 h-4" />
+                      Import Goals
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
           <div className="space-y-3 min-h-[100px]">
             {showQuickAdd && (
@@ -243,12 +253,14 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               return (
                 <div key={goalId} className="glass-card p-3 flex items-center justify-between">
                   <span>{isTemp ? goalId.replace('temp-', '') : goal?.title}</span>
-                  <button
-                    onClick={() => removeTopGoal(goalId)}
-                    className="text-sky-400/60 hover:text-sky-400"
-                  >
-                    ×
-                  </button>
+                  {!isStarted && (
+                    <button
+                      onClick={() => removeTopGoal(goalId)}
+                      className="text-sky-400/60 hover:text-sky-400"
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -279,6 +291,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
                   }))}
                   className="glass-input"
                   placeholder={`Enter your ${meal} plan...`}
+                  disabled={isStarted}
                 />
               </div>
             ))}
@@ -287,17 +300,19 @@ export default function DayView({ goals, onToggleGoal }: Props) {
       </div>
 
       {/* Start Day Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-navy-900/95 backdrop-blur-md border-t border-sky-500/10">
-        <div className="max-w-2xl mx-auto">
-          <button
-            onClick={handleStartDay}
-            className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] backdrop-blur-sm neon-glow active:scale-95 touch-manipulation"
-          >
-            <Play className="w-6 h-6" />
-            Start the Day
-          </button>
+      {!isStarted && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-navy-900/95 backdrop-blur-md border-t border-sky-500/10">
+          <div className="max-w-2xl mx-auto">
+            <button
+              onClick={handleStartDay}
+              className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] backdrop-blur-sm neon-glow active:scale-95 touch-manipulation"
+            >
+              <Play className="w-6 h-6" />
+              Start the Day
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Import Goals Modal */}
       {showImportModal && (

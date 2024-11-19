@@ -26,6 +26,13 @@ export interface DayPlan {
   };
   createdAt: string;
   updatedAt: string;
+  status?: 'started';
+  startedAt?: string;
+}
+
+export interface StartedDayPlan extends Omit<DayPlan, 'id' | 'createdAt' | 'updatedAt'> {
+  status: 'started';
+  startedAt: string;
 }
 
 export interface MonthlyPlan {
