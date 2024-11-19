@@ -236,4 +236,36 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
         </button>
         <button
           onClick={() => scrollToDay('right')}
-          disabled={cur
+          disabled={currentIndex === 6}
+          className={`p-2 rounded-full bg-slate-800/80 backdrop-blur-sm pointer-events-auto ${
+            currentIndex === 6 ? 'opacity-30' : 'hover:bg-slate-700/80'
+          }`}
+          aria-label="Next day"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Horizontal Scrolling Container */}
+      <div 
+        ref={scrollContainerRef}
+        className="flex overflow-x-auto gap-3 px-3 -mx-3 hide-scrollbar snap-x snap-mandatory"
+        style={{ scrollSnapType: 'x mandatory' }}
+      >
+        {weekDays.map((day) => (
+          <div 
+            key={format(day, 'yyyy-MM-dd')} 
+            className="snap-center shrink-0"
+          >
+            <DayCard
+              day={day}
+              dayPlan={weekPlans[format(day, 'yyyy-MM-dd')]}
+              onToggleGoal={handleToggleGoal}
+              animatingGoal={animatingGoal}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
