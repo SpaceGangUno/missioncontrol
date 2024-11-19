@@ -16,9 +16,15 @@ interface Position {
   y: number;
 }
 
+interface Velocity {
+  x: number;
+  y: number;
+}
+
 interface Touch {
   x: number;
   y: number;
+  timestamp: number;
 }
 
 // Generate a unique color based on index
@@ -60,11 +66,16 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
   const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
+  const [isZooming, setIsZooming] = useState(false);
   const [startPosition, setStartPosition] = useState<Position>({ x: 0, y: 0 });
   const [lastPosition, setLastPosition] = useState<Position>({ x: 0, y: 0 });
+  const [velocity, setVelocity] = useState<Velocity>({ x: 0, y: 0 });
+  const [lastTouch, setLastTouch] = useState<Touch | null>(null);
   const [initialDistance, setInitialDistance] = useState<number | null>(null);
   const [initialScale, setInitialScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const animationFrameRef = useRef<number>();
+  const momentumRef = useRef<number>();
 
   // Group goals by priority for different orbital paths
   const priorityGoals = {
@@ -79,18 +90,14 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
       const containerWidth = containerRef.current.clientWidth;
       const containerHeight = containerRef.current.clientHeight;
       
-      // Calculate the size needed for all orbits
       const orbitLevels = Object.keys(priorityGoals).length;
-      const maxOrbitSize = (orbitLevels + 1) * 280; // Adding 1 to account for spacing
+      const maxOrbitSize = (orbitLevels + 1) * 280;
       
-      // Calculate scale needed to fit
       const scaleX = containerWidth / maxOrbitSize;
       const scaleY = containerHeight / maxOrbitSize;
-      const fitScale = Math.min(scaleX, scaleY) * 0.8; // 0.8 to add some padding
+      const fitScale = Math.min(scaleX, scaleY) * 0.8;
       
       setScale(fitScale);
-      
-      // Center the view
       setPosition({
         x: (containerWidth - maxOrbitSize * fitScale) / 2,
         y: (containerHeight - maxOrbitSize * fitScale) / 2
@@ -98,7 +105,35 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
     }
   }, [goals]);
 
-  // Keep track of total goals for color generation
+  // Momentum scrolling
+  useEffect(() => {
+    const applyMomentum = () => {
+      if (!isDragging && (Math.abs(velocity.x) > 0.1 || Math.abs(velocity.y) > 0.1)) {
+        setPosition(prev => ({
+          x: prev.x + velocity.x,
+          y: prev.y + velocity.y
+        }));
+        
+        setVelocity(prev => ({
+          x: prev.x * 0.95,
+          y: prev.y * 0.95
+        }));
+        
+        momentumRef.current = requestAnimationFrame(applyMomentum);
+      }
+    };
+
+    if (!isDragging && (Math.abs(velocity.x) > 0.1 || Math.abs(velocity.y) > 0.1)) {
+      momentumRef.current = requestAnimationFrame(applyMomentum);
+    }
+
+    return () => {
+      if (momentumRef.current) {
+        cancelAnimationFrame(momentumRef.current);
+      }
+    };
+  }, [isDragging, velocity]);
+
   let globalGoalIndex = 0;
 
   const getDistance = (touch1: Touch, touch2: Touch): number => {
@@ -106,15 +141,25 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (momentumRef.current) {
+      cancelAnimationFrame(momentumRef.current);
+    }
+    setVelocity({ x: 0, y: 0 });
+
     if (e.touches.length === 2) {
-      // Pinch gesture start
-      const touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      const touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY };
+      const touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY, timestamp: Date.now() };
+      const touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY, timestamp: Date.now() };
       setInitialDistance(getDistance(touch1, touch2));
       setInitialScale(scale);
+      setIsZooming(true);
     } else if (e.touches.length === 1) {
-      // Pan gesture start
       setIsDragging(true);
+      const touch = { 
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        timestamp: Date.now()
+      };
+      setLastTouch(touch);
       setStartPosition({
         x: e.touches[0].clientX - position.x,
         y: e.touches[0].clientY - position.y
@@ -126,32 +171,55 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
   const handleTouchMove = (e: React.TouchEvent) => {
     e.preventDefault();
     
-    if (e.touches.length === 2) {
-      // Pinch gesture
-      const touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      const touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY };
+    if (e.touches.length === 2 && initialDistance !== null) {
+      const touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY, timestamp: Date.now() };
+      const touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY, timestamp: Date.now() };
       const currentDistance = getDistance(touch1, touch2);
       
-      if (initialDistance !== null && initialScale !== null) {
+      if (initialScale !== null) {
         const newScale = (currentDistance / initialDistance) * initialScale;
-        setScale(Math.min(Math.max(newScale, 0.5), 2)); // Limit scale between 0.5 and 2
+        const clampedScale = Math.min(Math.max(newScale, 0.5), 2);
+        
+        // Smooth scale transition
+        setScale(prev => prev + (clampedScale - prev) * 0.1);
       }
-    } else if (e.touches.length === 1 && isDragging) {
-      // Pan gesture
+    } else if (e.touches.length === 1 && isDragging && lastTouch) {
+      const touch = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        timestamp: Date.now()
+      };
+      
+      const deltaTime = touch.timestamp - lastTouch.timestamp;
+      if (deltaTime > 0) {
+        setVelocity({
+          x: (touch.x - lastTouch.x) / deltaTime * 16, // Adjust for 60fps
+          y: (touch.y - lastTouch.y) / deltaTime * 16
+        });
+      }
+      
       const newX = e.touches[0].clientX - startPosition.x;
       const newY = e.touches[0].clientY - startPosition.y;
+      
       setPosition({ x: newX, y: newY });
+      setLastTouch(touch);
     }
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
+    setIsZooming(false);
     setLastPosition(position);
     setInitialDistance(null);
     setInitialScale(scale);
+    setLastTouch(null);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (momentumRef.current) {
+      cancelAnimationFrame(momentumRef.current);
+    }
+    setVelocity({ x: 0, y: 0 });
     setIsDragging(true);
     setStartPosition({
       x: e.clientX - position.x,
@@ -165,7 +233,14 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
     
     const newX = e.clientX - startPosition.x;
     const newY = e.clientY - startPosition.y;
+    
     setPosition({ x: newX, y: newY });
+    
+    // Calculate velocity for momentum
+    setVelocity({
+      x: (newX - position.x) * 0.1,
+      y: (newY - position.y) * 0.1
+    });
   };
 
   const handleMouseUp = () => {
@@ -173,13 +248,15 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
     setLastPosition(position);
   };
 
-  // Handle mouse wheel zoom
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const delta = -e.deltaY;
     const zoomFactor = 0.001;
-    const newScale = scale * (1 + delta * zoomFactor);
-    setScale(Math.min(Math.max(newScale, 0.5), 2)); // Limit scale between 0.5 and 2
+    const targetScale = scale * (1 + delta * zoomFactor);
+    const clampedScale = Math.min(Math.max(targetScale, 0.5), 2);
+    
+    // Smooth scale transition
+    setScale(prev => prev + (clampedScale - prev) * 0.1);
   };
 
   useEffect(() => {
@@ -196,6 +273,12 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
     return () => {
       document.removeEventListener('mouseleave', handleMouseLeave);
       document.removeEventListener('mouseup', handleMouseUp);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (momentumRef.current) {
+        cancelAnimationFrame(momentumRef.current);
+      }
     };
   }, [isDragging, position]);
 
@@ -205,9 +288,10 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
         ref={containerRef}
         className="absolute inset-0 cursor-grab active:cursor-grabbing touch-none"
         style={{
-          transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+          transform: `translate3d(${position.x}px, ${position.y}px, 0) scale(${scale})`,
           transformOrigin: 'center',
-          transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+          transition: isDragging || isZooming ? 'none' : 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          willChange: 'transform'
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
