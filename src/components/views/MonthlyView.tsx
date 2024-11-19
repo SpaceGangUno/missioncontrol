@@ -16,6 +16,11 @@ interface Position {
   y: number;
 }
 
+interface Touch {
+  x: number;
+  y: number;
+}
+
 // Generate a unique color based on index
 function generateUniqueColor(index: number): string {
   const goldenRatio = 0.618033988749895;
@@ -53,9 +58,12 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [showAddGoal, setShowAddGoal] = useState(false);
   const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
+  const [scale, setScale] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
   const [startPosition, setStartPosition] = useState<Position>({ x: 0, y: 0 });
   const [lastPosition, setLastPosition] = useState<Position>({ x: 0, y: 0 });
+  const [initialDistance, setInitialDistance] = useState<number | null>(null);
+  const [initialScale, setInitialScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Group goals by priority for different orbital paths
@@ -65,31 +73,82 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
     low: goals.filter(g => g.priority === 'low'),
   };
 
+  // Calculate initial scale to fit all goals
+  useEffect(() => {
+    if (containerRef.current) {
+      const containerWidth = containerRef.current.clientWidth;
+      const containerHeight = containerRef.current.clientHeight;
+      
+      // Calculate the size needed for all orbits
+      const orbitLevels = Object.keys(priorityGoals).length;
+      const maxOrbitSize = (orbitLevels + 1) * 280; // Adding 1 to account for spacing
+      
+      // Calculate scale needed to fit
+      const scaleX = containerWidth / maxOrbitSize;
+      const scaleY = containerHeight / maxOrbitSize;
+      const fitScale = Math.min(scaleX, scaleY) * 0.8; // 0.8 to add some padding
+      
+      setScale(fitScale);
+      
+      // Center the view
+      setPosition({
+        x: (containerWidth - maxOrbitSize * fitScale) / 2,
+        y: (containerHeight - maxOrbitSize * fitScale) / 2
+      });
+    }
+  }, [goals]);
+
   // Keep track of total goals for color generation
   let globalGoalIndex = 0;
 
+  const getDistance = (touch1: Touch, touch2: Touch): number => {
+    return Math.hypot(touch1.x - touch2.x, touch1.y - touch2.y);
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
-    setIsDragging(true);
-    setStartPosition({
-      x: e.touches[0].clientX - position.x,
-      y: e.touches[0].clientY - position.y
-    });
-    setLastPosition(position);
+    if (e.touches.length === 2) {
+      // Pinch gesture start
+      const touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      const touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY };
+      setInitialDistance(getDistance(touch1, touch2));
+      setInitialScale(scale);
+    } else if (e.touches.length === 1) {
+      // Pan gesture start
+      setIsDragging(true);
+      setStartPosition({
+        x: e.touches[0].clientX - position.x,
+        y: e.touches[0].clientY - position.y
+      });
+      setLastPosition(position);
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
-    
-    const newX = e.touches[0].clientX - startPosition.x;
-    const newY = e.touches[0].clientY - startPosition.y;
-
-    setPosition({ x: newX, y: newY });
     e.preventDefault();
+    
+    if (e.touches.length === 2) {
+      // Pinch gesture
+      const touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      const touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY };
+      const currentDistance = getDistance(touch1, touch2);
+      
+      if (initialDistance !== null && initialScale !== null) {
+        const newScale = (currentDistance / initialDistance) * initialScale;
+        setScale(Math.min(Math.max(newScale, 0.5), 2)); // Limit scale between 0.5 and 2
+      }
+    } else if (e.touches.length === 1 && isDragging) {
+      // Pan gesture
+      const newX = e.touches[0].clientX - startPosition.x;
+      const newY = e.touches[0].clientY - startPosition.y;
+      setPosition({ x: newX, y: newY });
+    }
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
     setLastPosition(position);
+    setInitialDistance(null);
+    setInitialScale(scale);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -106,13 +165,21 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
     
     const newX = e.clientX - startPosition.x;
     const newY = e.clientY - startPosition.y;
-
     setPosition({ x: newX, y: newY });
   };
 
   const handleMouseUp = () => {
     setIsDragging(false);
     setLastPosition(position);
+  };
+
+  // Handle mouse wheel zoom
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = -e.deltaY;
+    const zoomFactor = 0.001;
+    const newScale = scale * (1 + delta * zoomFactor);
+    setScale(Math.min(Math.max(newScale, 0.5), 2)); // Limit scale between 0.5 and 2
   };
 
   useEffect(() => {
@@ -138,7 +205,8 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
         ref={containerRef}
         className="absolute inset-0 cursor-grab active:cursor-grabbing touch-none"
         style={{
-          transform: `translate(${position.x}px, ${position.y}px)`,
+          transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+          transformOrigin: 'center',
           transition: isDragging ? 'none' : 'transform 0.3s ease-out'
         }}
         onTouchStart={handleTouchStart}
@@ -147,6 +215,7 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onWheel={handleWheel}
       >
         {/* Space background with stars */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
