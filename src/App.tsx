@@ -25,7 +25,7 @@ export default function App() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const currentDate = new Date();
-  const { goals, loading, addGoal, toggleGoal } = useStore();
+  const { goals, loading, addGoal, toggleGoal, updateGoal } = useStore();
   const previousLoginRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -241,7 +241,11 @@ export default function App() {
           )}
 
           {currentView === 'month' && (
-            <MonthlyView goals={goals} onToggleGoal={toggleGoal} />
+            <MonthlyView 
+              goals={goals} 
+              onToggleGoal={toggleGoal} 
+              onUpdateGoal={updateGoal}
+            />
           )}
 
           {currentView === 'week' && (

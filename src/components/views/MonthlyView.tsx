@@ -1,39 +1,34 @@
 import React, { useState } from 'react';
 import { Goal } from '../../types';
 import { Sparkles } from 'lucide-react';
-import GoalDetailsModal from '../GoalDetailsModal';
+import EditGoalForm from '../EditGoalForm';
 
 interface Props {
   goals: Goal[];
   onToggleGoal: (id: string) => void;
+  onUpdateGoal: (id: string, updates: Partial<Goal>) => Promise<void>;
 }
 
 // Generate a unique color based on index
 function generateUniqueColor(index: number): string {
-  // Use golden ratio for better color distribution
   const goldenRatio = 0.618033988749895;
   const hue = (index * goldenRatio) % 1;
-  
-  // Convert HSL to RGB then to hex
-  const h = hue;
-  const s = 0.7; // High saturation for vibrant colors
-  const l = 0.6; // Medium lightness for visibility
-
-  // HSL to RGB conversion
+  const s = 0.7;
+  const l = 0.6;
   const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+  const x = c * (1 - Math.abs((hue * 6) % 2 - 1));
   const m = l - c/2;
 
   let r, g, b;
-  if (h < 1/6) {
+  if (hue < 1/6) {
     [r, g, b] = [c, x, 0];
-  } else if (h < 2/6) {
+  } else if (hue < 2/6) {
     [r, g, b] = [x, c, 0];
-  } else if (h < 3/6) {
+  } else if (hue < 3/6) {
     [r, g, b] = [0, c, x];
-  } else if (h < 4/6) {
+  } else if (hue < 4/6) {
     [r, g, b] = [0, x, c];
-  } else if (h < 5/6) {
+  } else if (hue < 5/6) {
     [r, g, b] = [x, 0, c];
   } else {
     [r, g, b] = [c, 0, x];
@@ -47,7 +42,7 @@ function generateUniqueColor(index: number): string {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
-export default function MonthlyView({ goals, onToggleGoal }: Props) {
+export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal }: Props) {
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
 
   // Group goals by priority for different orbital paths
@@ -119,28 +114,47 @@ export default function MonthlyView({ goals, onToggleGoal }: Props) {
                   transform: `rotate(${angle}deg) translateX(${(index + 2) * 140}px) rotate(-${angle}deg)`,
                 }}
               >
-                <div
-                  className={`relative w-8 h-8 rounded-full transition-all duration-300 
-                    hover:scale-150 hover:z-50 ${goal.completed ? 'opacity-70' : ''}`}
-                  style={{ 
-                    background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
-                    boxShadow: `0 0 20px ${goalColor}80`,
-                    animationDelay: `${delay}s`
-                  }}
-                >
-                  {/* Glow effect */}
-                  <div 
-                    className="absolute inset-0 rounded-full animate-pulse-slow"
+                <div className="relative">
+                  {/* Goal dot */}
+                  <div
+                    className={`w-8 h-8 rounded-full transition-all duration-300 
+                      hover:scale-125 ${goal.completed ? 'opacity-70' : ''}`}
                     style={{ 
                       background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
-                      filter: 'blur(8px)',
-                      opacity: 0.5
+                      boxShadow: `0 0 20px ${goalColor}80`,
+                      animationDelay: `${delay}s`
                     }}
-                  />
-                  
-                  {/* Title tooltip */}
-                  <div className="absolute left-1/2 -translate-x-1/2 -bottom-8 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap text-sm text-white bg-black/50 px-2 py-1 rounded">
-                    {goal.title}
+                  >
+                    {/* Glow effect */}
+                    <div 
+                      className="absolute inset-0 rounded-full animate-pulse-slow"
+                      style={{ 
+                        background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
+                        filter: 'blur(8px)',
+                        opacity: 0.5
+                      }}
+                    />
+                  </div>
+
+                  {/* Goal title in circular text */}
+                  <div className="absolute -inset-4 flex items-center justify-center">
+                    <div 
+                      className="absolute w-full h-full rounded-full"
+                      style={{
+                        background: `radial-gradient(circle at center, transparent 60%, ${goalColor}20 100%)`
+                      }}
+                    />
+                    <div 
+                      className="absolute text-xs text-white whitespace-nowrap px-2 py-1 rounded-full bg-black/50 backdrop-blur-sm"
+                      style={{
+                        transform: `rotate(${-angle}deg)`,
+                        maxWidth: '120px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {goal.title}
+                    </div>
                   </div>
                 </div>
               </button>
@@ -149,12 +163,14 @@ export default function MonthlyView({ goals, onToggleGoal }: Props) {
         </div>
       ))}
 
-      {/* Goal Details Modal */}
-      <GoalDetailsModal
-        goal={selectedGoal}
-        onClose={() => setSelectedGoal(null)}
-        onToggleGoal={onToggleGoal}
-      />
+      {/* Edit Goal Form */}
+      {selectedGoal && (
+        <EditGoalForm
+          goal={selectedGoal}
+          onClose={() => setSelectedGoal(null)}
+          onUpdateGoal={onUpdateGoal}
+        />
+      )}
     </div>
   );
 }
