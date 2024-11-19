@@ -190,6 +190,7 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
             setShowAddGoal(false);
           }}
           onClose={() => setShowAddGoal(false)}
+          showBanner={false}
         />
       )}
     </div>

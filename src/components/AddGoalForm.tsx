@@ -7,10 +7,12 @@ import confetti from 'canvas-confetti';
 
 interface Props {
   onAddGoal: (goal: Omit<Goal, 'id' | 'completed' | 'createdAt'>) => void;
-  onClose: () => void;
+  onClose?: () => void;
+  showBanner?: boolean;
 }
 
-export default function AddGoalForm({ onAddGoal, onClose }: Props) {
+export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: Props) {
+  const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Goal['priority']>();
@@ -20,11 +22,15 @@ export default function AddGoalForm({ onAddGoal, onClose }: Props) {
 
   // Prevent body scroll when modal is open
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
+    if (isOpen || !showBanner) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, []);
+  }, [isOpen, showBanner]);
 
   const calculateProgress = () => {
     let steps = 0;
@@ -58,21 +64,38 @@ export default function AddGoalForm({ onAddGoal, onClose }: Props) {
       colors: ['#38bdf8', '#818cf8', '#c084fc'],
     });
 
-    onClose();
+    if (showBanner) {
+      setIsOpen(false);
+      setTitle('');
+      setDescription('');
+      setPriority(undefined);
+      setCategory('');
+      setSelectedDate(undefined);
+    } else if (onClose) {
+      onClose();
+    }
   };
 
-  return (
+  const handleClose = () => {
+    if (showBanner) {
+      setIsOpen(false);
+    } else if (onClose) {
+      onClose();
+    }
+  };
+
+  const renderForm = () => (
     <div className="fixed inset-0 z-50">
       <div 
         className="fixed inset-0 bg-navy-900/80 backdrop-blur-sm" 
-        onClick={onClose}
+        onClick={handleClose}
       />
       <div className="relative h-[100dvh] overflow-auto overscroll-contain pb-safe">
         <div className="glass-card rounded-t-xl mx-auto max-w-2xl">
           <div className="sticky top-0 z-30 flex justify-between items-center p-4 sm:p-6 bg-navy-900/95 backdrop-blur-md border-b border-sky-500/10">
             <h3 className="text-xl sm:text-2xl font-bold gradient-text">Create New Goal</h3>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-2 hover:bg-white/5 rounded-lg transition-colors touch-manipulation"
               aria-label="Close"
             >
@@ -220,7 +243,7 @@ export default function AddGoalForm({ onAddGoal, onClose }: Props) {
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-navy-900/95 backdrop-blur-md border-t border-sky-500/10 flex gap-3 justify-end z-[70]">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-6 py-3 text-white/60 hover:text-white/80 transition-colors active:scale-95 touch-manipulation min-w-[100px]"
             >
               Cancel
@@ -235,6 +258,26 @@ export default function AddGoalForm({ onAddGoal, onClose }: Props) {
           </div>
         </div>
       </div>
+    </div>
+  );
+
+  if (!showBanner) {
+    return renderForm();
+  }
+
+  return (
+    <div className="relative z-20">
+      {!isOpen ? (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] backdrop-blur-sm neon-glow active:scale-95 touch-manipulation"
+        >
+          <Plus className="w-6 h-6" />
+          Create New Goal
+        </button>
+      ) : (
+        renderForm()
+      )}
     </div>
   );
 }
