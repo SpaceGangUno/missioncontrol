@@ -8,6 +8,45 @@ interface Props {
   onToggleGoal: (id: string) => void;
 }
 
+// Generate a unique color based on index
+function generateUniqueColor(index: number): string {
+  // Use golden ratio for better color distribution
+  const goldenRatio = 0.618033988749895;
+  const hue = (index * goldenRatio) % 1;
+  
+  // Convert HSL to RGB then to hex
+  const h = hue;
+  const s = 0.7; // High saturation for vibrant colors
+  const l = 0.6; // Medium lightness for visibility
+
+  // HSL to RGB conversion
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+  const m = l - c/2;
+
+  let r, g, b;
+  if (h < 1/6) {
+    [r, g, b] = [c, x, 0];
+  } else if (h < 2/6) {
+    [r, g, b] = [x, c, 0];
+  } else if (h < 3/6) {
+    [r, g, b] = [0, c, x];
+  } else if (h < 4/6) {
+    [r, g, b] = [0, x, c];
+  } else if (h < 5/6) {
+    [r, g, b] = [x, 0, c];
+  } else {
+    [r, g, b] = [c, 0, x];
+  }
+
+  const toHex = (n: number) => {
+    const hex = Math.round((n + m) * 255).toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
 export default function MonthlyView({ goals, onToggleGoal }: Props) {
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
 
@@ -17,6 +56,9 @@ export default function MonthlyView({ goals, onToggleGoal }: Props) {
     medium: goals.filter(g => g.priority === 'medium'),
     low: goals.filter(g => g.priority === 'low'),
   };
+
+  // Keep track of total goals for color generation
+  let globalGoalIndex = 0;
 
   return (
     <div className="relative min-h-[600px] overflow-hidden rounded-xl glass-card p-8">
@@ -64,6 +106,8 @@ export default function MonthlyView({ goals, onToggleGoal }: Props) {
           {priorityGoals.map((goal, i) => {
             const angle = (i * 360) / priorityGoals.length;
             const delay = i * 0.5;
+            const goalColor = generateUniqueColor(globalGoalIndex++);
+            
             return (
               <button
                 key={goal.id}
@@ -79,8 +123,8 @@ export default function MonthlyView({ goals, onToggleGoal }: Props) {
                   className={`relative w-8 h-8 rounded-full transition-all duration-300 
                     hover:scale-150 hover:z-50 ${goal.completed ? 'opacity-70' : ''}`}
                   style={{ 
-                    background: getPriorityGradient(priority),
-                    boxShadow: `0 0 20px ${getPriorityShadowColor(priority)}`,
+                    background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
+                    boxShadow: `0 0 20px ${goalColor}80`,
                     animationDelay: `${delay}s`
                   }}
                 >
@@ -88,7 +132,7 @@ export default function MonthlyView({ goals, onToggleGoal }: Props) {
                   <div 
                     className="absolute inset-0 rounded-full animate-pulse-slow"
                     style={{ 
-                      background: getPriorityGradient(priority),
+                      background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
                       filter: 'blur(8px)',
                       opacity: 0.5
                     }}
@@ -115,20 +159,17 @@ export default function MonthlyView({ goals, onToggleGoal }: Props) {
   );
 }
 
-function getPriorityGradient(priority: string): string {
-  switch (priority) {
-    case 'high': return 'linear-gradient(45deg, #ef4444, #f87171)';
-    case 'medium': return 'linear-gradient(45deg, #f59e0b, #fbbf24)';
-    case 'low': return 'linear-gradient(45deg, #10b981, #34d399)';
-    default: return 'linear-gradient(45deg, #0ea5e9, #38bdf8)';
-  }
-}
-
-function getPriorityShadowColor(priority: string): string {
-  switch (priority) {
-    case 'high': return 'rgba(239, 68, 68, 0.5)';
-    case 'medium': return 'rgba(245, 158, 11, 0.5)';
-    case 'low': return 'rgba(16, 185, 129, 0.5)';
-    default: return 'rgba(14, 165, 233, 0.5)';
-  }
+// Helper function to adjust color brightness
+function adjustColor(color: string, amount: number): string {
+  const hex = color.replace('#', '');
+  const r = Math.min(255, Math.max(0, parseInt(hex.substring(0, 2), 16) + amount));
+  const g = Math.min(255, Math.max(0, parseInt(hex.substring(2, 4), 16) + amount));
+  const b = Math.min(255, Math.max(0, parseInt(hex.substring(4, 6), 16) + amount));
+  
+  const toHex = (n: number) => {
+    const hex = n.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+  
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
