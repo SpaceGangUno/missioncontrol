@@ -242,18 +242,18 @@ export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: P
             </form>
           </div>
 
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-navy-900/95 backdrop-blur-md border-t border-sky-500/10 flex gap-3 justify-end z-[70]">
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-navy-900/90 backdrop-blur-xl border-t border-sky-500/30 shadow-lg shadow-navy-900/50 flex gap-3 justify-end z-[70]">
             <button
               type="button"
               onClick={handleClose}
-              className="px-6 py-3 text-white/60 hover:text-white/80 transition-colors active:scale-95 touch-manipulation min-w-[100px]"
+              className="px-6 py-3 text-white/90 hover:text-white font-medium border border-sky-500/20 hover:border-sky-500/40 rounded-lg transition-all active:scale-95 touch-manipulation min-w-[100px] hover:bg-sky-500/10"
             >
               Cancel
             </button>
             <button
               type="submit"
               onClick={handleSubmit}
-              className="px-6 py-3 bg-indigo-500/20 hover:bg-indigo-500/30 text-white rounded-lg transition-all hover:scale-105 backdrop-blur-sm active:scale-95 touch-manipulation min-w-[100px]"
+              className="px-6 py-3 bg-indigo-500/30 hover:bg-indigo-500/40 text-white font-medium rounded-lg transition-all hover:scale-105 backdrop-blur-sm active:scale-95 touch-manipulation min-w-[100px] border border-indigo-500/30 hover:border-indigo-500/50 shadow-lg shadow-indigo-500/20"
             >
               Create
             </button>
