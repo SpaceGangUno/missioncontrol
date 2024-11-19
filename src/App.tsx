@@ -26,14 +26,6 @@ export default function App() {
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const currentDate = new Date();
   const { goals, loading, addGoal, toggleGoal, updateGoal } = useStore();
-  const previousLoginRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (user?.displayName && (!previousLoginRef.current || previousLoginRef.current !== user.uid)) {
-      setShowWelcomeBack(true);
-      previousLoginRef.current = user.uid;
-    }
-  }, [user]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -48,7 +40,7 @@ export default function App() {
   }, []);
 
   if (!user) {
-    return <LoginPage />;
+    return <LoginPage onShowWelcome={() => setShowWelcomeBack(true)} />;
   }
 
   if (!user.displayName) {
@@ -58,7 +50,6 @@ export default function App() {
   const handleLogout = async () => {
     try {
       await auth.signOut();
-      previousLoginRef.current = null;
     } catch (error) {
       console.error('Error signing out:', error);
     }

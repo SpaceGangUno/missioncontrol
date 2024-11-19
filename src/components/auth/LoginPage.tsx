@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { Rocket, Mail, Lock, Loader2, Star, ArrowRight, ArrowLeft } from 'lucide-react';
-import WelcomeBack from './WelcomeBack';
 
-export default function LoginPage() {
+interface LoginPageProps {
+  onShowWelcome: () => void;
+}
+
+export default function LoginPage({ onShowWelcome }: LoginPageProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showWelcome, setShowWelcome] = useState(false);
-  const [userName, setUserName] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,9 +22,7 @@ export default function LoginPage() {
 
     try {
       if (isLogin) {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const name = userCredential.user.email?.split('@')[0] || 'Commander';
-        setUserName(name);
+        await signInWithEmailAndPassword(auth, email, password);
         setIsAuthenticated(true);
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
@@ -34,14 +33,6 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-
-  const handleShowWelcome = () => {
-    setShowWelcome(true);
-  };
-
-  if (showWelcome) {
-    return <WelcomeBack name={userName} onComplete={() => setShowWelcome(false)} />;
-  }
 
   return (
     <div className="min-h-[100dvh] flex items-center justify-center p-4">
@@ -69,7 +60,7 @@ export default function LoginPage() {
         {isAuthenticated ? (
           <div className="glass-card p-6 text-center">
             <button
-              onClick={handleShowWelcome}
+              onClick={onShowWelcome}
               className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-white font-semibold py-4 px-6 rounded-lg flex items-center justify-center gap-3 transition-all hover:scale-[1.02] backdrop-blur-sm active:scale-95 touch-manipulation text-base h-14"
             >
               <Rocket className="w-6 h-6" />
