@@ -195,53 +195,6 @@
   }
 }
 
-@keyframes doorLeft {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
-}
-
-@keyframes doorRight {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(100%); }
-}
-
-@keyframes contentFadeIn {
-  0% { 
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  50% { 
-    opacity: 0;
-  }
-  100% { 
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes glowPulse {
-  0% { opacity: 0; }
-  50% { opacity: 0.5; }
-  100% { opacity: 0; }
-}
-
-.animate-door-left {
-  animation: doorLeft 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-.animate-door-right {
-  animation: doorRight 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-.animate-content-fade-in {
-  animation: contentFadeIn 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  animation-delay: 0.75s;
-}
-
-.animate-glow-pulse {
-  animation: glowPulse 2s ease-in-out infinite;
-}
-
 /* Theme transition effects */
 body,
 .glass-card,

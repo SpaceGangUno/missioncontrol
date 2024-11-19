@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Rocket, Star, ArrowRight } from 'lucide-react';
 import { useStore } from '../../lib/store';
-import confetti from 'canvas-confetti';
 
 export default function WelcomeScreen() {
   const [name, setName] = useState('');
@@ -10,16 +9,7 @@ export default function WelcomeScreen() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-
     await updateUserProfile({ displayName: name });
-
-    // Trigger celebration confetti
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#38bdf8', '#818cf8', '#c084fc'],
-    });
   };
 
   return (
@@ -34,8 +24,8 @@ export default function WelcomeScreen() {
         <div className="text-center mb-8 relative">
           <div className="flex items-center justify-center gap-3 mb-3">
             <div className="relative">
-              <Rocket className="w-12 h-12 text-sky-400 animate-pulse" />
-              <Star className="absolute -right-1 -bottom-1 w-4 h-4 text-indigo-400 animate-data-flow" />
+              <Rocket className="w-12 h-12 text-sky-400" />
+              <Star className="absolute -right-1 -bottom-1 w-4 h-4 text-indigo-400" />
             </div>
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent mb-2">

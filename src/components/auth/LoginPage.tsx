@@ -50,8 +50,8 @@ export default function LoginPage() {
         <div className="text-center mb-8 relative">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="relative">
-              <Rocket className="w-12 h-12 text-sky-400 animate-pulse" />
-              <Star className="absolute -right-1 -bottom-1 w-5 h-5 text-indigo-400 animate-data-flow" />
+              <Rocket className="w-12 h-12 text-sky-400" />
+              <Star className="absolute -right-1 -bottom-1 w-5 h-5 text-indigo-400" />
             </div>
           </div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
