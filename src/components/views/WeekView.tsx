@@ -25,6 +25,7 @@ function DraggableGoal({ goal, isDayGoal = false }: { goal: Goal, isDayGoal?: bo
   
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    touchAction: 'none'
   } : undefined;
 
   return (
