@@ -68,9 +68,7 @@ export default function MonthlyView({ goals, onToggleGoal }: Props) {
               <button
                 key={goal.id}
                 onClick={() => setSelectedGoal(goal)}
-                className={`absolute -translate-x-1/2 -translate-y-1/2 transition-transform hover:scale-125 ${
-                  goal.completed ? 'opacity-50' : ''
-                }`}
+                className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300 group"
                 style={{
                   left: '50%',
                   top: '50%',
@@ -78,18 +76,27 @@ export default function MonthlyView({ goals, onToggleGoal }: Props) {
                 }}
               >
                 <div
-                  className={`w-6 h-6 rounded-full transition-all animate-float shadow-lg ${
-                    goal.completed ? 'bg-emerald-400' : getPriorityColor(priority)
-                  }`}
+                  className={`relative w-8 h-8 rounded-full transition-all duration-300 
+                    hover:scale-150 hover:z-50 ${goal.completed ? 'opacity-70' : ''}`}
                   style={{ 
-                    animationDelay: `${delay}s`,
-                    boxShadow: `0 0 15px ${getPriorityShadowColor(priority)}`
+                    background: getPriorityGradient(priority),
+                    boxShadow: `0 0 20px ${getPriorityShadowColor(priority)}`,
+                    animationDelay: `${delay}s`
                   }}
                 >
-                  <div className="absolute top-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                    <span className="text-xs text-white/80 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {goal.title}
-                    </span>
+                  {/* Glow effect */}
+                  <div 
+                    className="absolute inset-0 rounded-full animate-pulse-slow"
+                    style={{ 
+                      background: getPriorityGradient(priority),
+                      filter: 'blur(8px)',
+                      opacity: 0.5
+                    }}
+                  />
+                  
+                  {/* Title tooltip */}
+                  <div className="absolute left-1/2 -translate-x-1/2 -bottom-8 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap text-sm text-white bg-black/50 px-2 py-1 rounded">
+                    {goal.title}
                   </div>
                 </div>
               </button>
@@ -108,20 +115,20 @@ export default function MonthlyView({ goals, onToggleGoal }: Props) {
   );
 }
 
-function getPriorityColor(priority: string): string {
+function getPriorityGradient(priority: string): string {
   switch (priority) {
-    case 'high': return 'bg-rose-500';
-    case 'medium': return 'bg-amber-500';
-    case 'low': return 'bg-emerald-500';
-    default: return 'bg-sky-500';
+    case 'high': return 'linear-gradient(45deg, #ef4444, #f87171)';
+    case 'medium': return 'linear-gradient(45deg, #f59e0b, #fbbf24)';
+    case 'low': return 'linear-gradient(45deg, #10b981, #34d399)';
+    default: return 'linear-gradient(45deg, #0ea5e9, #38bdf8)';
   }
 }
 
 function getPriorityShadowColor(priority: string): string {
   switch (priority) {
-    case 'high': return 'rgba(244, 63, 94, 0.5)'; // rose-500
-    case 'medium': return 'rgba(245, 158, 11, 0.5)'; // amber-500
-    case 'low': return 'rgba(16, 185, 129, 0.5)'; // emerald-500
-    default: return 'rgba(14, 165, 233, 0.5)'; // sky-500
+    case 'high': return 'rgba(239, 68, 68, 0.5)';
+    case 'medium': return 'rgba(245, 158, 11, 0.5)';
+    case 'low': return 'rgba(16, 185, 129, 0.5)';
+    default: return 'rgba(14, 165, 233, 0.5)';
   }
 }
