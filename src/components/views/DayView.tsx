@@ -238,23 +238,13 @@ export default function DayView({ goals, onToggleGoal }: Props) {
 
       {/* Daily Header */}
       <div className="glass-card p-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-sky-100">
-            {new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </h2>
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 rounded-lg transition-colors"
-          >
-            <Save className="w-4 h-4" />
-            {isSaving ? 'Saving...' : 'Update'}
-          </button>
-        </div>
+        <h2 className="text-2xl font-bold text-sky-100">
+          {new Date().toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            month: 'long', 
+            day: 'numeric' 
+          })}
+        </h2>
       </div>
 
       <div className="space-y-6">
@@ -427,10 +417,19 @@ export default function DayView({ goals, onToggleGoal }: Props) {
         </div>
       </div>
 
-      {/* Start Day Button */}
-      {!isStarted && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-navy-900/95 backdrop-blur-md border-t border-sky-500/10">
-          <div className="max-w-2xl mx-auto">
+      {/* Bottom Fixed Buttons */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-navy-900/90 backdrop-blur-xl border-t border-sky-500/30 shadow-lg shadow-navy-900/50 z-[70]">
+        <div className="max-w-2xl mx-auto flex gap-3 justify-end">
+          {isStarted ? (
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="px-6 py-3 bg-indigo-500/30 hover:bg-indigo-500/40 text-white font-medium rounded-lg transition-all hover:scale-105 backdrop-blur-sm active:scale-95 touch-manipulation min-w-[100px] border border-indigo-500/30 hover:border-indigo-500/50 shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"
+            >
+              <Save className="w-5 h-5" />
+              {isSaving ? 'Saving...' : 'Update'}
+            </button>
+          ) : (
             <button
               onClick={handleStartDay}
               disabled={isStarting}
@@ -443,9 +442,9 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               )}
               {isStarting ? 'Starting Day...' : 'Start the Day'}
             </button>
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Import Goals Modal */}
       {showImportModal && (
