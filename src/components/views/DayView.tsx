@@ -598,3 +598,8 @@ export default function DayView({ goals, onToggleGoal }: Props) {
           goal={editingGoal}
           onClose={() => setEditingGoal(null)}
           onUpdateGoal={handleUpdateGoal}
+        />
+      )}
+    </div>
+  );
+}
