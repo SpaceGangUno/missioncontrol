@@ -65,8 +65,35 @@ export default function App() {
   };
 
   const handleViewChange = (view: ViewType) => {
+    console.log('Changing view to:', view);
     setCurrentView(view);
     setShowMobileMenu(false);
+  };
+
+  const renderMainContent = () => {
+    switch (currentView) {
+      case 'month':
+        return (
+          <MonthlyView 
+            goals={goals} 
+            onToggleGoal={toggleGoal} 
+            onUpdateGoal={updateGoal}
+            onAddGoal={addGoal}
+          />
+        );
+      case 'week':
+        return <WeekView goals={goals} onToggleGoal={toggleGoal} />;
+      case 'day':
+        return <DayView goals={goals} onToggleGoal={toggleGoal} />;
+      default:
+        return (
+          <>
+            <MissionOverview date={currentDate} missions={goals} view="month" />
+            <MissionPlanner onAddMission={addGoal} />
+            <MissionList missions={goals} onToggleMission={toggleGoal} />
+          </>
+        );
+    }
   };
 
   return (
@@ -101,7 +128,7 @@ export default function App() {
               }`}
             >
               <Rocket className="w-5 h-5" />
-              Mission Control
+              <span>Mission Control</span>
             </button>
             <button
               onClick={() => handleViewChange('month')}
@@ -110,7 +137,7 @@ export default function App() {
               }`}
             >
               <Calendar className="w-5 h-5" />
-              Month
+              <span>Month</span>
             </button>
             <button
               onClick={() => handleViewChange('week')}
@@ -119,7 +146,7 @@ export default function App() {
               }`}
             >
               <CalendarDays className="w-5 h-5" />
-              Week
+              <span>Week</span>
             </button>
             <button
               onClick={() => handleViewChange('day')}
@@ -128,7 +155,7 @@ export default function App() {
               }`}
             >
               <Clock className="w-5 h-5" />
-              Day
+              <span>Day</span>
             </button>
           </div>
 
@@ -232,30 +259,7 @@ export default function App() {
 
         {/* Main Content */}
         <main className="relative z-20">
-          {currentView === 'mission-control' && (
-            <>
-              <MissionOverview date={currentDate} missions={goals} view="month" />
-              <MissionPlanner onAddMission={addGoal} />
-              <MissionList missions={goals} onToggleMission={toggleGoal} />
-            </>
-          )}
-
-          {currentView === 'month' && (
-            <MonthlyView 
-              goals={goals} 
-              onToggleGoal={toggleGoal} 
-              onUpdateGoal={updateGoal}
-              onAddGoal={addGoal}
-            />
-          )}
-
-          {currentView === 'week' && (
-            <WeekView goals={goals} onToggleGoal={toggleGoal} />
-          )}
-
-          {currentView === 'day' && (
-            <DayView goals={goals} onToggleGoal={toggleGoal} />
-          )}
+          {renderMainContent()}
         </main>
       </div>
     </>

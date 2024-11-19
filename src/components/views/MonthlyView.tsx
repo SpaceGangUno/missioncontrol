@@ -77,13 +77,18 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
       </div>
 
       {/* Central planet (represents the month) */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
         <button 
           onClick={() => setShowAddGoal(true)}
-          className="relative w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-2xl animate-pulse-slow hover:scale-105 transition-transform"
+          className="group relative w-40 h-40 flex items-center justify-center cursor-pointer"
         >
-          <div className="absolute inset-0 rounded-full bg-black opacity-20"></div>
-          <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-white/80" />
+          <div className="absolute w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-2xl animate-pulse-slow group-hover:scale-110 transition-transform">
+            <div className="absolute inset-0 rounded-full bg-black opacity-20"></div>
+            <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-white/80" />
+          </div>
+          <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <span className="text-white text-sm font-medium">Add New Goal</span>
+          </div>
         </button>
       </div>
 
@@ -181,7 +186,7 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
 
       {/* Add Goal Form */}
       {showAddGoal && (
-        <div className="absolute inset-0 z-50">
+        <div className="fixed inset-0 z-50">
           <AddGoalForm onAddGoal={(goal) => {
             onAddGoal(goal);
             setShowAddGoal(false);
