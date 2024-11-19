@@ -12,11 +12,19 @@ export default function GoalDetailsModal({ goal, onClose, onToggleGoal }: Props)
   if (!goal) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="glass-card p-6 max-w-md w-full mx-4 relative">
+    <div 
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100]"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div 
+        className="glass-card p-6 max-w-md w-full mx-4 relative animate-content-fade-in"
+        onClick={e => e.stopPropagation()}
+      >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-white/60 hover:text-white"
+          className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -27,7 +35,7 @@ export default function GoalDetailsModal({ goal, onClose, onToggleGoal }: Props)
               onToggleGoal(goal.id);
               onClose();
             }}
-            className="mt-1"
+            className="mt-1 transition-transform hover:scale-110"
           >
             {goal.completed ? (
               <Star className="w-6 h-6 text-emerald-400 fill-emerald-400" />
@@ -46,11 +54,11 @@ export default function GoalDetailsModal({ goal, onClose, onToggleGoal }: Props)
             <div className="mt-2 space-y-2">
               <p className="text-white/80">{goal.description}</p>
               
-              <div className="flex gap-2 text-sm">
+              <div className="flex flex-wrap gap-2 text-sm">
                 <span className={`px-2 py-1 rounded ${getPriorityBadgeColor(goal.priority)}`}>
                   {goal.priority.charAt(0).toUpperCase() + goal.priority.slice(1)} Priority
                 </span>
-                <span className="px-2 py-1 rounded bg-sky-500/20">
+                <span className="px-2 py-1 rounded bg-sky-500/20 text-sky-300">
                   {goal.category}
                 </span>
               </div>
