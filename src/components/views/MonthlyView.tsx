@@ -61,7 +61,7 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
   return (
     <div className="relative min-h-[600px] overflow-hidden rounded-xl glass-card p-8">
       {/* Space background with stars */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(50)].map((_, i) => (
           <div
             key={i}
@@ -78,18 +78,16 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
 
       {/* Central planet (represents the month) */}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-        <button 
+        <div 
           onClick={() => setShowAddGoal(true)}
-          className="group relative w-40 h-40 flex items-center justify-center cursor-pointer"
+          className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-2xl animate-pulse-slow hover:scale-110 transition-transform cursor-pointer relative"
         >
-          <div className="absolute w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-2xl animate-pulse-slow group-hover:scale-110 transition-transform">
-            <div className="absolute inset-0 rounded-full bg-black opacity-20"></div>
-            <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-white/80" />
-          </div>
-          <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <span className="text-white text-sm font-medium">Add New Goal</span>
-          </div>
-        </button>
+          <div className="absolute inset-0 rounded-full bg-black opacity-20 pointer-events-none"></div>
+          <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-white/80 pointer-events-none" />
+          <span className="absolute inset-0 flex items-center justify-center text-white text-sm font-medium opacity-0 hover:opacity-100 transition-opacity">
+            Add New Goal
+          </span>
+        </div>
       </div>
 
       {/* Orbital paths */}
@@ -138,7 +136,7 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
                   >
                     {/* Glow effect */}
                     <div 
-                      className="absolute inset-0 rounded-full animate-pulse-slow"
+                      className="absolute inset-0 rounded-full animate-pulse-slow pointer-events-none"
                       style={{ 
                         background: `linear-gradient(45deg, ${goalColor}, ${adjustColor(goalColor, 20)})`,
                         filter: 'blur(8px)',
@@ -148,7 +146,7 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
                   </div>
 
                   {/* SVG for circular text */}
-                  <svg className="absolute -top-12 -left-12 w-24 h-24" viewBox="0 0 100 100">
+                  <svg className="absolute -top-12 -left-12 w-24 h-24 pointer-events-none" viewBox="0 0 100 100">
                     <defs>
                       <path
                         id={`textPath-${goal.id}`}
@@ -186,12 +184,13 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
 
       {/* Add Goal Form */}
       {showAddGoal && (
-        <div className="fixed inset-0 z-50">
-          <AddGoalForm onAddGoal={(goal) => {
+        <AddGoalForm 
+          onAddGoal={(goal) => {
             onAddGoal(goal);
             setShowAddGoal(false);
-          }} />
-        </div>
+          }}
+          onClose={() => setShowAddGoal(false)}
+        />
       )}
     </div>
   );
