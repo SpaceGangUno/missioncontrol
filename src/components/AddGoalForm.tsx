@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: Props) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(!showBanner); // Open immediately if no banner
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Goal['priority']>();
@@ -22,7 +22,7 @@ export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: P
 
   // Prevent body scroll when modal is open
   useEffect(() => {
-    if (isOpen || !showBanner) {
+    if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -30,7 +30,7 @@ export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: P
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, showBanner]);
+  }, [isOpen]);
 
   const calculateProgress = () => {
     let steps = 0;
