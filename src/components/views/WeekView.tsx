@@ -12,7 +12,7 @@ import {
   useDraggable,
   useDroppable
 } from '@dnd-kit/core';
-import { Calendar, Rocket } from 'lucide-react';
+import { Calendar, Rocket, CircleDot } from 'lucide-react';
 import { useStore } from '../../lib/store';
 
 interface Props {
@@ -20,7 +20,13 @@ interface Props {
   onToggleGoal: (id: string) => void;
 }
 
-function DraggableGoal({ goal, isDayGoal = false }: { goal: Goal, isDayGoal?: boolean }) {
+interface DraggableGoalProps {
+  goal: Goal | { id: string; title: string; description?: string; completed?: boolean };
+  isDayGoal?: boolean;
+  isTemp?: boolean;
+}
+
+function DraggableGoal({ goal, isDayGoal = false, isTemp = false }: DraggableGoalProps) {
   const {attributes, listeners, setNodeRef, transform} = useDraggable({
     id: goal.id,
   });
@@ -37,20 +43,26 @@ function DraggableGoal({ goal, isDayGoal = false }: { goal: Goal, isDayGoal?: bo
       {...attributes}
       className={`glass-card ${isDayGoal ? 'p-2' : 'p-3'} touch-manipulation ${
         goal.completed ? 'opacity-50' : ''
-      }`}
+      } ${isTemp ? 'border-l-2 border-sky-400/30' : ''}`}
     >
       <div className="flex items-start gap-2">
-        <Rocket className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+        {isTemp ? (
+          <CircleDot className="w-3 h-3 text-sky-400/60 shrink-0 mt-0.5" />
+        ) : (
+          <Rocket className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+        )}
         <div className="min-w-0 flex-1">
-          <div className={`text-sm font-medium truncate ${
+          <div className={`${isTemp ? 'text-xs' : 'text-sm'} font-medium truncate ${
             goal.completed ? 'line-through' : ''
-          }`}>
-            {goal.title}
+          } ${isTemp ? 'text-sky-400/80' : ''}`}>
+            {isTemp ? goal.id.replace('temp-', '') : goal.title}
           </div>
-          <div className="text-xs text-sky-400/60 line-clamp-2 mt-0.5">
-            {goal.description}
-          </div>
-          {!isDayGoal && (
+          {!isTemp && 'description' in goal && (
+            <div className="text-xs text-sky-400/60 line-clamp-2 mt-0.5">
+              {goal.description}
+            </div>
+          )}
+          {!isDayGoal && !isTemp && 'priority' in goal && 'category' in goal && (
             <div className="flex flex-wrap gap-1.5 mt-2">
               <span className={`text-xs px-2 py-0.5 rounded-full ${
                 goal.priority === 'high' ? 'bg-rose-500/20 text-rose-300' :
@@ -99,6 +111,17 @@ function DroppableDay({ day, index, dayPlan }: {
       
       <div className="space-y-2">
         {dayPlan?.topGoals?.map(goalId => {
+          if (goalId.startsWith('temp-')) {
+            return (
+              <DraggableGoal 
+                key={goalId} 
+                goal={{ id: goalId, title: goalId.replace('temp-', '') }}
+                isDayGoal={true}
+                isTemp={true}
+              />
+            );
+          }
+
           const goal = getGoalById(goalId);
           if (!goal) return null;
           
@@ -191,6 +214,19 @@ export default function WeekView({ goals, onToggleGoal }: Props) {
           {activeId ? (
             <div className="glass-card p-3 shadow-2xl max-w-[90vw]">
               {(() => {
+                if (activeId.startsWith('temp-')) {
+                  return (
+                    <div className="flex items-start gap-2">
+                      <CircleDot className="w-3 h-3 text-sky-400/60 shrink-0 mt-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-medium truncate text-sky-400/80">
+                          {activeId.replace('temp-', '')}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
                 const goal = getGoalById(activeId);
                 if (!goal) return null;
                 
