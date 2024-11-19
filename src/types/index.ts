@@ -6,6 +6,8 @@ export interface Goal {
   category: string;
   deadline?: Date;
   completed: boolean;
+  progress: number;
+  status: 'not_started' | 'in_progress' | 'completed';
   createdAt: Date;
 }
 

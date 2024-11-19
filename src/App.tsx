@@ -13,6 +13,7 @@ import DayView from './components/views/DayView';
 import ThemeSelector from './components/ThemeSelector';
 import { Rocket, Calendar, Clock, CalendarDays, User, LogOut, Settings, Menu, X } from 'lucide-react';
 import { auth } from './lib/firebase';
+import { Goal } from './types';
 
 type ViewType = 'mission-control' | 'month' | 'week' | 'day';
 
@@ -61,6 +62,10 @@ export default function App() {
     setShowMobileMenu(false);
   };
 
+  const handleUpdateProgress = async (id: string, status: Goal['status'], progress: number) => {
+    await updateGoal(id, { status, progress });
+  };
+
   const renderMainContent = () => {
     switch (currentView) {
       case 'month':
@@ -81,7 +86,11 @@ export default function App() {
           <>
             <MissionOverview date={currentDate} missions={goals} view="month" />
             <MissionPlanner onAddMission={addGoal} />
-            <MissionList missions={goals} onToggleMission={toggleGoal} />
+            <MissionList 
+              missions={goals} 
+              onToggleMission={toggleGoal} 
+              onUpdateProgress={handleUpdateProgress}
+            />
           </>
         );
     }

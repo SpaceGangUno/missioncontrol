@@ -55,6 +55,8 @@ export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: P
       priority,
       category,
       deadline: selectedDate,
+      progress: 0,
+      status: 'not_started'
     });
 
     confetti({
