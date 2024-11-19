@@ -123,15 +123,16 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGo
                   transform: `rotate(${angle}deg) translateX(${(index + 2) * 140}px) rotate(-${angle}deg)`,
                 }}
               >
-                <div className="relative">
+                <div className="relative flex flex-col items-center">
                   {/* Goal title */}
                   <div 
-                    className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-sm text-white font-medium px-2 py-1 rounded-lg bg-black/30 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="mb-2 text-sm text-white font-medium px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm z-20"
                     style={{
-                      textShadow: '0 0 4px rgba(0,0,0,0.5)',
-                      maxWidth: '200px',
+                      textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+                      maxWidth: '150px',
                       overflow: 'hidden',
-                      textOverflow: 'ellipsis'
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
                     }}
                   >
                     {goal.title}
