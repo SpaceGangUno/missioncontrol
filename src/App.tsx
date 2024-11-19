@@ -112,15 +112,10 @@ export default function App() {
 
           {/* Desktop Navigation */}
           <div className="hidden sm:flex items-center gap-6">
-            <button
-              onClick={() => handleViewChange('mission-control')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                currentView === 'mission-control' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60 hover:text-sky-400'
-              }`}
-            >
-              <Rocket className="w-5 h-5" />
-              <span>Mission Control</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <Rocket className="w-5 h-5 text-sky-400" />
+              <span className="font-medium">Mission Control</span>
+            </div>
             <button
               onClick={() => handleViewChange('month')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
@@ -150,7 +145,7 @@ export default function App() {
             </button>
           </div>
 
-          {/* Mobile Title - Only show when menu is collapsed */}
+          {/* Mobile Title */}
           {!showMobileMenu && (
             <div className="sm:hidden flex items-center gap-2">
               <Rocket className="w-5 h-5 text-sky-400" />
