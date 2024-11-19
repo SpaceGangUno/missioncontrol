@@ -286,35 +286,4 @@ export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: P
               Cancel
             </button>
             <button
-              type="submit"
-              onClick={handleSubmit}
-              className="px-6 py-3 bg-indigo-500/30 hover:bg-indigo-500/40 text-white font-medium rounded-lg transition-all hover:scale-105 backdrop-blur-sm active:scale-95 touch-manipulation min-w-[100px] border border-indigo-500/30 hover:border-indigo-500/50 shadow-lg shadow-indigo-500/20"
-            >
-              Create
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  if (!showBanner) {
-    return renderForm();
-  }
-
-  return (
-    <div className="relative z-20">
-      {!isOpen ? (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] backdrop-blur-sm neon-glow active:scale-95 touch-manipulation"
-        >
-          <Plus className="w-6 h-6" />
-          Create New Goal
-        </button>
-      ) : (
-        renderForm()
-      )}
-    </div>
-  );
-}
+          

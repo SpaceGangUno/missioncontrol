@@ -4,6 +4,7 @@ import LoginPage from './components/auth/LoginPage';
 import WelcomeScreen from './components/onboarding/WelcomeScreen';
 import WelcomeBack from './components/auth/WelcomeBack';
 import { useStore } from './lib/store';
+import MissionHeader from './components/MissionHeader';
 import MissionOverview from './components/MissionOverview';
 import MissionList from './components/MissionList';
 import MissionPlanner from './components/MissionPlanner';
@@ -84,6 +85,7 @@ export default function App() {
       default:
         return (
           <>
+            <MissionHeader />
             <MissionOverview date={currentDate} missions={goals} view="month" />
             <MissionPlanner onAddMission={addGoal} />
             <MissionList 
