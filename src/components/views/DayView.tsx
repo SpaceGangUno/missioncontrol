@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Goal } from '../../types';
-import { DndContext, DragEndEvent, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
-import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed } from 'lucide-react';
+import { DndContext, DragEndEvent, useSensor, useSensors, PointerSensor, DragOverlay } from '@dnd-kit/core';
+import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, GripHorizontal, Plus } from 'lucide-react';
 
 interface Props {
   goals: Goal[];
@@ -35,6 +35,10 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     },
   });
 
+  const [isDragging, setIsDragging] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [quickAddText, setQuickAddText] = useState('');
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
@@ -43,6 +47,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setIsDragging(false);
     if (!over || over.id !== 'top-goals') return;
 
     const goalId = active.id as string;
@@ -54,6 +59,10 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     }
   };
 
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
+
   const removeTopGoal = (goalId: string) => {
     setPlan(prev => ({
       ...prev,
@@ -62,6 +71,20 @@ export default function DayView({ goals, onToggleGoal }: Props) {
   };
 
   const getGoalById = (id: string) => goals.find(goal => goal.id === id);
+
+  const handleQuickAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (quickAddText.trim() && plan.topGoals.length < 5) {
+      // For quick-add, we'll create a temporary ID
+      const tempId = `temp-${Date.now()}`;
+      setPlan(prev => ({
+        ...prev,
+        topGoals: [...prev.topGoals, tempId],
+      }));
+      setQuickAddText('');
+      setShowQuickAdd(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -76,7 +99,11 @@ export default function DayView({ goals, onToggleGoal }: Props) {
         </h2>
       </div>
 
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <DndContext 
+        sensors={sensors} 
+        onDragEnd={handleDragEnd}
+        onDragStart={handleDragStart}
+      >
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
           {/* Main Content */}
           <div className="space-y-6">
@@ -142,17 +169,58 @@ export default function DayView({ goals, onToggleGoal }: Props) {
 
             {/* Top 5 Goals Section */}
             <div className="glass-card p-6">
-              <h3 className="text-lg font-semibold text-sky-100 mb-4 flex items-center gap-2">
-                <Target className="w-5 h-5 text-sky-400" />
-                Top 5 Goals
-              </h3>
-              <div id="top-goals" className="space-y-3 min-h-[100px]">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-sky-100 flex items-center gap-2">
+                  <Target className="w-5 h-5 text-sky-400" />
+                  Top 5 Goals
+                </h3>
+                {plan.topGoals.length < 5 && (
+                  <button
+                    onClick={() => setShowQuickAdd(true)}
+                    className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Quick Add
+                  </button>
+                )}
+              </div>
+              <div 
+                id="top-goals" 
+                className={`space-y-3 min-h-[100px] rounded-lg transition-colors ${
+                  isDragging ? 'bg-sky-900/20 border-2 border-dashed border-sky-400/50' : ''
+                }`}
+              >
+                {showQuickAdd && (
+                  <form onSubmit={handleQuickAdd} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={quickAddText}
+                      onChange={(e) => setQuickAddText(e.target.value)}
+                      placeholder="Enter a quick goal..."
+                      className="glass-input flex-1"
+                      autoFocus
+                    />
+                    <button 
+                      type="submit"
+                      className="px-3 py-2 bg-sky-500 text-white rounded hover:bg-sky-600 transition-colors"
+                    >
+                      Add
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setShowQuickAdd(false)}
+                      className="px-3 py-2 bg-sky-900/50 text-white rounded hover:bg-sky-900/70 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </form>
+                )}
                 {plan.topGoals.map(goalId => {
                   const goal = getGoalById(goalId);
-                  if (!goal) return null;
+                  const isTemp = goalId.startsWith('temp-');
                   return (
                     <div key={goalId} className="glass-card p-3 flex items-center justify-between">
-                      <span>{goal.title}</span>
+                      <span>{isTemp ? goalId.replace('temp-', '') : goal?.title}</span>
                       <button
                         onClick={() => removeTopGoal(goalId)}
                         className="text-sky-400/60 hover:text-sky-400"
@@ -201,16 +269,17 @@ export default function DayView({ goals, onToggleGoal }: Props) {
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Rocket className="w-5 h-5 text-sky-400" />
               Weekly Goals
+              <span className="text-sm text-sky-400/60">(drag to add)</span>
             </h3>
             <div className="space-y-3">
               {goals.map(goal => (
                 <div
                   key={goal.id}
-                  className="glass-card p-3 cursor-move"
+                  className="glass-card p-3 cursor-move hover:bg-sky-900/30 transition-colors group"
                   draggable
                 >
                   <div className="flex items-start gap-2">
-                    <Rocket className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+                    <GripHorizontal className="w-4 h-4 text-sky-400/40 group-hover:text-sky-400 shrink-0 mt-0.5" />
                     <div>
                       <div className="font-medium">{goal.title}</div>
                       <div className="text-sm text-sky-400/60 line-clamp-2">
