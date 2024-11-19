@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Goal } from '../../types';
-import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import, Play, Loader, Save } from 'lucide-react';
+import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import, Play, Loader, Save, Edit2 } from 'lucide-react';
 import { useStore } from '../../lib/store';
+import EditGoalForm from '../EditGoalForm';
 
 interface Props {
   goals: Goal[];
@@ -9,13 +10,14 @@ interface Props {
 }
 
 export default function DayView({ goals, onToggleGoal }: Props) {
-  const { dayPlan, saveDayPlan, getDayPlan, startDay, updateStartedDay, error } = useStore();
+  const { dayPlan, saveDayPlan, getDayPlan, startDay, updateStartedDay, error, updateGoal } = useStore();
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddText, setQuickAddText] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [localPlan, setLocalPlan] = useState({
     gratitude: '',
     wordOfDay: '',
@@ -215,6 +217,16 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     }
   };
 
+  const handleUpdateGoal = async (id: string, updates: Partial<Goal>) => {
+    try {
+      await updateGoal(id, updates);
+      setEditingGoal(null);
+    } catch (error) {
+      console.error('Error updating goal:', error);
+      setLocalError('Failed to update goal. Please try again.');
+    }
+  };
+
   const getGoalById = (id: string) => goals.find(goal => goal.id === id);
 
   // Filter goals to prioritize in_progress goals
@@ -374,12 +386,24 @@ export default function DayView({ goals, onToggleGoal }: Props) {
                   }`}
                 >
                   <span>{isTemp ? goalId.replace('temp-', '') : goal?.title}</span>
-                  <button
-                    onClick={() => removeTopGoal(goalId)}
-                    className="text-sky-400/60 hover:text-sky-400"
-                  >
-                    ×
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {!isTemp && goal && (
+                      <button
+                        onClick={() => setEditingGoal(goal)}
+                        className="text-sky-400/60 hover:text-sky-400 p-1"
+                        aria-label="Edit goal"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => removeTopGoal(goalId)}
+                      className="text-sky-400/60 hover:text-sky-400 p-1"
+                      aria-label="Remove goal"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -483,6 +507,15 @@ export default function DayView({ goals, onToggleGoal }: Props) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Goal Modal */}
+      {editingGoal && (
+        <EditGoalForm
+          goal={editingGoal}
+          onClose={() => setEditingGoal(null)}
+          onUpdateGoal={handleUpdateGoal}
+        />
       )}
     </div>
   );
