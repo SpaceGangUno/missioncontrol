@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Goal } from '../../types';
 import { Sparkles } from 'lucide-react';
 import EditGoalForm from '../EditGoalForm';
+import AddGoalForm from '../AddGoalForm';
 
 interface Props {
   goals: Goal[];
   onToggleGoal: (id: string) => void;
   onUpdateGoal: (id: string, updates: Partial<Goal>) => Promise<void>;
+  onAddGoal: (goal: Omit<Goal, 'id' | 'completed' | 'createdAt'>) => void;
 }
 
 // Generate a unique color based on index
@@ -42,8 +44,9 @@ function generateUniqueColor(index: number): string {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
-export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal }: Props) {
+export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal, onAddGoal }: Props) {
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+  const [showAddGoal, setShowAddGoal] = useState(false);
 
   // Group goals by priority for different orbital paths
   const priorityGoals = {
@@ -75,10 +78,13 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal }: Props
 
       {/* Central planet (represents the month) */}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-        <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-2xl animate-pulse-slow">
+        <button 
+          onClick={() => setShowAddGoal(true)}
+          className="relative w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-2xl animate-pulse-slow hover:scale-105 transition-transform"
+        >
           <div className="absolute inset-0 rounded-full bg-black opacity-20"></div>
           <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-white/80" />
-        </div>
+        </button>
       </div>
 
       {/* Orbital paths */}
@@ -137,18 +143,18 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal }: Props
                   </div>
 
                   {/* SVG for circular text */}
-                  <svg className="absolute -top-16 -left-16 w-32 h-32 pointer-events-none">
+                  <svg className="absolute -top-12 -left-12 w-24 h-24" viewBox="0 0 100 100">
                     <defs>
                       <path
                         id={`textPath-${goal.id}`}
-                        d="M16,32 A16,16 0 1,1 16,31.999999"
+                        d="M50,90 A40,40 0 1,1 50,89.9"
                         fill="none"
                       />
                     </defs>
-                    <text className="text-xs fill-white">
+                    <text className="text-[8px] fill-white">
                       <textPath
                         href={`#textPath-${goal.id}`}
-                        startOffset="0%"
+                        startOffset="25%"
                         style={{
                           textShadow: '0 0 4px rgba(0,0,0,0.5)'
                         }}
@@ -171,6 +177,16 @@ export default function MonthlyView({ goals, onToggleGoal, onUpdateGoal }: Props
           onClose={() => setSelectedGoal(null)}
           onUpdateGoal={onUpdateGoal}
         />
+      )}
+
+      {/* Add Goal Form */}
+      {showAddGoal && (
+        <div className="absolute inset-0 z-50">
+          <AddGoalForm onAddGoal={(goal) => {
+            onAddGoal(goal);
+            setShowAddGoal(false);
+          }} />
+        </div>
       )}
     </div>
   );

@@ -245,6 +245,7 @@ export default function App() {
               goals={goals} 
               onToggleGoal={toggleGoal} 
               onUpdateGoal={updateGoal}
+              onAddGoal={addGoal}
             />
           )}
 
