@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, X, Calendar } from 'lucide-react';
 import { Goal } from '../types';
 import StarProgress from './StarProgress';
@@ -19,6 +19,30 @@ export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: P
   const [category, setCategory] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Refs for each section
+  const descriptionRef = useRef<HTMLDivElement>(null);
+  const priorityRef = useRef<HTMLDivElement>(null);
+  const dateRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll effect when fields are filled
+  useEffect(() => {
+    if (title.length > 0) {
+      descriptionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [title]);
+
+  useEffect(() => {
+    if (description.length > 0) {
+      priorityRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [description]);
+
+  useEffect(() => {
+    if (priority && category) {
+      dateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [priority, category]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -123,7 +147,7 @@ export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: P
                 />
               </div>
 
-              <div>
+              <div ref={descriptionRef}>
                 <label className="block text-sm font-medium text-white/80 mb-2">
                   Description
                 </label>
@@ -136,7 +160,7 @@ export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: P
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div ref={priorityRef} className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-3">
                     Priority Level
@@ -206,7 +230,7 @@ export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: P
                 </div>
               </div>
 
-              <div className="relative">
+              <div ref={dateRef} className="relative">
                 <label className="block text-sm font-medium text-white/80 mb-2">
                   Target Date
                 </label>
