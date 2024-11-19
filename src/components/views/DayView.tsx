@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function DayView({ goals, onToggleGoal }: Props) {
-  const { dayPlan, saveDayPlan, getDayPlan, startDay, updateStartedDay, error, updateGoal } = useStore();
+  const { dayPlan, saveDayPlan, getDayPlan, startDay, updateStartedDay, error, updateGoal, addGoal } = useStore();
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddText, setQuickAddText] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
@@ -114,30 +114,45 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     e.preventDefault();
     if (quickAddText.trim() && localPlan.topGoals.length < 5) {
       try {
-        // For quick-add, we'll create a temporary ID
-        const tempId = `temp-${quickAddText}`;
-        const updatedGoals = [...localPlan.topGoals, tempId];
+        // Create a real goal instead of using a temporary ID
+        const newGoal = {
+          title: quickAddText,
+          description: '',
+          priority: 'medium' as const,
+          category: 'personal',
+          status: 'not_started' as const,
+          progress: 0
+        };
         
-        // Update local state immediately
-        setLocalPlan(prev => ({
-          ...prev,
-          topGoals: updatedGoals,
-        }));
+        // Add the goal to Firebase
+        await addGoal(newGoal);
+        
+        // Find the newly added goal in the goals array
+        const addedGoal = goals.find(g => g.title === quickAddText);
+        if (addedGoal) {
+          const updatedGoals = [...localPlan.topGoals, addedGoal.id];
+          
+          // Update local state immediately
+          setLocalPlan(prev => ({
+            ...prev,
+            topGoals: updatedGoals,
+          }));
 
-        // Save changes
-        const today = new Date().toISOString().split('T')[0];
-        if (dayPlan?.status === 'started') {
-          await updateStartedDay({
-            date: today,
-            ...localPlan,
-            topGoals: updatedGoals,
-          });
-        } else {
-          await saveDayPlan({
-            date: today,
-            ...localPlan,
-            topGoals: updatedGoals,
-          });
+          // Save changes
+          const today = new Date().toISOString().split('T')[0];
+          if (dayPlan?.status === 'started') {
+            await updateStartedDay({
+              date: today,
+              ...localPlan,
+              topGoals: updatedGoals,
+            });
+          } else {
+            await saveDayPlan({
+              date: today,
+              ...localPlan,
+              topGoals: updatedGoals,
+            });
+          }
         }
 
         setQuickAddText('');
@@ -387,7 +402,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
                 >
                   <span>{isTemp ? goalId.replace('temp-', '') : goal?.title}</span>
                   <div className="flex items-center gap-2">
-                    {!isTemp && goal && (
+                    {goal && (
                       <button
                         onClick={() => setEditingGoal(goal)}
                         className="text-sky-400/60 hover:text-sky-400 p-1"
