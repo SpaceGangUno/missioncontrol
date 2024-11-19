@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Goal } from '../../types';
-import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import } from 'lucide-react';
+import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import, Play, Check } from 'lucide-react';
 import { useStore } from '../../lib/store';
 
 interface Props {
@@ -54,6 +54,17 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     });
   };
 
+  const handleSubmitDay = async () => {
+    await handleSave();
+    // Additional submission logic here
+    console.log('Day sheet submitted');
+  };
+
+  const handleStartDay = () => {
+    // Start day logic here
+    console.log('Day started');
+  };
+
   // Auto-save on changes
   useEffect(() => {
     const timeoutId = setTimeout(handleSave, 1000);
@@ -93,7 +104,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       {/* Daily Header */}
       <div className="glass-card p-6">
         <h2 className="text-2xl font-bold text-sky-100 mb-4">
@@ -266,6 +277,26 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Bottom Action Buttons */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-navy-900/95 backdrop-blur-md border-t border-sky-500/10">
+        <div className="flex gap-4 max-w-2xl mx-auto">
+          <button
+            onClick={handleSubmitDay}
+            className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] backdrop-blur-sm neon-glow active:scale-95 touch-manipulation"
+          >
+            <Check className="w-6 h-6" />
+            Submit Day Sheet
+          </button>
+          <button
+            onClick={handleStartDay}
+            className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] backdrop-blur-sm neon-glow active:scale-95 touch-manipulation"
+          >
+            <Play className="w-6 h-6" />
+            Start the Day
+          </button>
         </div>
       </div>
 
