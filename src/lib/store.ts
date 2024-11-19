@@ -22,6 +22,7 @@ interface Store {
   saveDayPlan: (plan: Omit<DayPlan, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   getDayPlan: (date: string) => Promise<void>;
   startDay: (plan: StartedDayPlan) => Promise<void>;
+  updateStartedDay: (plan: Partial<DayPlan>) => Promise<void>;
 }
 
 function updateCSSVariables(theme: ThemeColors) {
@@ -290,6 +291,52 @@ export const useStore = create<Store>((set, get) => ({
     } catch (error) {
       console.error('Failed to start day:', error);
       set({ error: 'Failed to start day' });
+      throw error;
+    }
+  },
+
+  updateStartedDay: async (plan) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const dayPlanRef = doc(db, `users/${user.uid}/dayPlans/${plan.date}`);
+      const now = new Date().toISOString();
+
+      // Update the day plan while preserving started status
+      await updateDoc(dayPlanRef, {
+        ...plan,
+        updatedAt: now,
+        status: 'started' // Ensure we keep the started status
+      });
+
+      // Update goals if topGoals changed
+      if (plan.topGoals) {
+        const goalsRef = collection(db, `users/${user.uid}/goals`);
+        const updatePromises = plan.topGoals.map(async (goalId) => {
+          if (!goalId.startsWith('temp-')) {
+            const goalRef = doc(goalsRef, goalId);
+            return updateDoc(goalRef, {
+              status: 'in_progress',
+              progress: 50
+            });
+          }
+        }).filter(Boolean);
+
+        await Promise.all(updatePromises);
+      }
+
+      // Update local state
+      set(state => ({
+        dayPlan: state.dayPlan ? {
+          ...state.dayPlan,
+          ...plan,
+          updatedAt: now
+        } : null
+      }));
+    } catch (error) {
+      console.error('Failed to update started day:', error);
+      set({ error: 'Failed to update started day' });
       throw error;
     }
   }

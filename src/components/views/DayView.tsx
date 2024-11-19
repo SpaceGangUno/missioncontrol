@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function DayView({ goals, onToggleGoal }: Props) {
-  const { dayPlan, saveDayPlan, getDayPlan, startDay, error } = useStore();
+  const { dayPlan, saveDayPlan, getDayPlan, startDay, updateStartedDay, error } = useStore();
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddText, setQuickAddText] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
@@ -62,15 +62,17 @@ export default function DayView({ goals, onToggleGoal }: Props) {
 
   const handleSave = async () => {
     const today = new Date().toISOString().split('T')[0];
-    await saveDayPlan({
-      date: today,
-      ...localPlan,
-      // Preserve started status if it exists
-      ...(dayPlan?.status === 'started' ? { 
-        status: 'started',
-        startedAt: dayPlan.startedAt 
-      } : {})
-    });
+    if (dayPlan?.status === 'started') {
+      await updateStartedDay({
+        date: today,
+        ...localPlan,
+      });
+    } else {
+      await saveDayPlan({
+        date: today,
+        ...localPlan,
+      });
+    }
   };
 
   const handleStartDay = async () => {
@@ -226,28 +228,26 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               <Target className="w-5 h-5 text-sky-400" />
               Top 5 Goals
             </h3>
-            {!isStarted && (
-              <div className="flex gap-2">
-                {localPlan.topGoals.length < 5 && (
-                  <>
-                    <button
-                      onClick={() => setShowQuickAdd(true)}
-                      className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors px-3 py-1.5 rounded-md hover:bg-sky-400/10"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Quick Add
-                    </button>
-                    <button
-                      onClick={() => setShowImportModal(true)}
-                      className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors px-3 py-1.5 rounded-md hover:bg-sky-400/10"
-                    >
-                      <Import className="w-4 h-4" />
-                      Import Goals
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
+            <div className="flex gap-2">
+              {localPlan.topGoals.length < 5 && (
+                <>
+                  <button
+                    onClick={() => setShowQuickAdd(true)}
+                    className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors px-3 py-1.5 rounded-md hover:bg-sky-400/10"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Quick Add
+                  </button>
+                  <button
+                    onClick={() => setShowImportModal(true)}
+                    className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors px-3 py-1.5 rounded-md hover:bg-sky-400/10"
+                  >
+                    <Import className="w-4 h-4" />
+                    Import Goals
+                  </button>
+                </>
+              )}
+            </div>
           </div>
           <div className="space-y-3 min-h-[100px]">
             {showQuickAdd && (
@@ -281,14 +281,12 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               return (
                 <div key={goalId} className="glass-card p-3 flex items-center justify-between">
                   <span>{isTemp ? goalId.replace('temp-', '') : goal?.title}</span>
-                  {!isStarted && (
-                    <button
-                      onClick={() => removeTopGoal(goalId)}
-                      className="text-sky-400/60 hover:text-sky-400"
-                    >
-                      ×
-                    </button>
-                  )}
+                  <button
+                    onClick={() => removeTopGoal(goalId)}
+                    className="text-sky-400/60 hover:text-sky-400"
+                  >
+                    ×
+                  </button>
                 </div>
               );
             })}
