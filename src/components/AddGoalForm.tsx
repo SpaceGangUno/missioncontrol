@@ -87,13 +87,13 @@ export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: P
   };
 
   const renderForm = () => (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-50 flex flex-col">
       <div 
         className="fixed inset-0 bg-navy-900/80 backdrop-blur-sm" 
         onClick={handleClose}
       />
-      <div className="relative h-[100dvh] overflow-auto overscroll-contain pb-safe">
-        <div className="glass-card rounded-t-xl mx-auto max-w-2xl">
+      <div className="relative flex-1 overflow-auto">
+        <div className="glass-card rounded-t-xl mx-auto max-w-2xl min-h-screen flex flex-col">
           <div className="sticky top-0 z-30 flex justify-between items-center p-4 sm:p-6 bg-navy-900/95 backdrop-blur-md border-b border-sky-500/10">
             <h3 className="text-xl sm:text-2xl font-bold gradient-text">Create New Goal</h3>
             <button
@@ -105,10 +105,10 @@ export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: P
             </button>
           </div>
 
-          <div className="p-4 sm:p-6">
+          <div className="flex-1 p-4 sm:p-6">
             <StarProgress currentStep={currentProgress} totalSteps={totalSteps} />
 
-            <form onSubmit={handleSubmit} className="space-y-6 mb-24">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-2">
                   Goal Title
@@ -239,10 +239,13 @@ export default function AddGoalForm({ onAddGoal, onClose, showBanner = true }: P
                   </div>
                 )}
               </div>
+
+              {/* Add padding to ensure content is visible above buttons */}
+              <div className="h-24" />
             </form>
           </div>
 
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-navy-900/90 backdrop-blur-xl border-t border-sky-500/30 shadow-lg shadow-navy-900/50 flex gap-3 justify-end z-[70]">
+          <div className="sticky bottom-0 p-4 bg-navy-900/90 backdrop-blur-xl border-t border-sky-500/30 shadow-lg shadow-navy-900/50 flex gap-3 justify-end z-[70]">
             <button
               type="button"
               onClick={handleClose}
