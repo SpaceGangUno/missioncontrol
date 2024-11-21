@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Goal } from '../types';
 import { X, Save, AlertCircle } from 'lucide-react';
 
@@ -15,16 +15,41 @@ export default function EditGoalForm({ goal, onClose, onUpdateGoal }: Props) {
   const [category, setCategory] = useState(goal.category || 'personal');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Track changes
+  useEffect(() => {
+    const hasUpdates = 
+      title !== goal.title ||
+      description !== (goal.description || '') ||
+      priority !== goal.priority ||
+      category !== goal.category;
+    
+    setHasChanges(hasUpdates);
+  }, [title, description, priority, category, goal]);
+
+  // Clear error after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!hasChanges) {
+      onClose();
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
 
     try {
       await onUpdateGoal(goal.id, {
-        title,
-        description,
+        title: title.trim(),
+        description: description.trim(),
         priority,
         category
       });
@@ -32,19 +57,18 @@ export default function EditGoalForm({ goal, onClose, onUpdateGoal }: Props) {
     } catch (error) {
       console.error('Error updating goal:', error);
       setError('Failed to update goal');
-    } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[90]">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[90] backdrop-blur-sm">
       <div className="glass-card p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold text-sky-100">Edit Goal</h3>
           <button
             onClick={onClose}
-            className="text-sky-400/60 hover:text-sky-400 p-1"
+            className="text-sky-400/60 hover:text-sky-400 p-1 rounded-lg hover:bg-white/5 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -68,6 +92,7 @@ export default function EditGoalForm({ goal, onClose, onUpdateGoal }: Props) {
               onChange={(e) => setTitle(e.target.value)}
               className="glass-input"
               required
+              placeholder="Enter goal title"
             />
           </div>
 
@@ -127,8 +152,8 @@ export default function EditGoalForm({ goal, onClose, onUpdateGoal }: Props) {
             </button>
             <button
               type="submit"
-              disabled={isSaving}
-              className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded transition-colors flex items-center gap-2 disabled:opacity-50"
+              disabled={isSaving || !hasChanges}
+              className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded transition-colors flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-sky-500"
             >
               <Save className="w-4 h-4" />
               {isSaving ? 'Saving...' : 'Save Changes'}
