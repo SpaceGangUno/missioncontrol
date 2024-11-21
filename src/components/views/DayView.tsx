@@ -89,32 +89,34 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     if (pendingQuickAdd) {
       const newGoal = goals.find(g => g.title === pendingQuickAdd);
       if (newGoal) {
-        const updatedGoals = [...localPlan.topGoals, newGoal.id];
-        const today = new Date().toISOString().split('T')[0];
-        
-        setLocalPlan(prev => ({
-          ...prev,
-          topGoals: updatedGoals,
-        }));
+        setLocalPlan(prev => {
+          const updatedGoals = [...prev.topGoals, newGoal.id];
+          const today = new Date().toISOString().split('T')[0];
+          
+          if (dayPlan?.status === 'started') {
+            updateStartedDay({
+              date: today,
+              ...prev,
+              topGoals: updatedGoals,
+            });
+          } else {
+            saveDayPlan({
+              date: today,
+              ...prev,
+              topGoals: updatedGoals,
+            });
+          }
 
-        if (dayPlan?.status === 'started') {
-          updateStartedDay({
-            date: today,
-            ...localPlan,
+          return {
+            ...prev,
             topGoals: updatedGoals,
-          });
-        } else {
-          saveDayPlan({
-            date: today,
-            ...localPlan,
-            topGoals: updatedGoals,
-          });
-        }
+          };
+        });
 
         setPendingQuickAdd(null);
       }
     }
-  }, [goals, pendingQuickAdd, localPlan, dayPlan, updateStartedDay, saveDayPlan]);
+  }, [goals, pendingQuickAdd, dayPlan, updateStartedDay, saveDayPlan]);
 
   // Clear error after 5 seconds
   useEffect(() => {
@@ -193,27 +195,29 @@ export default function DayView({ goals, onToggleGoal }: Props) {
 
   const removeTopGoal = async (goalId: string) => {
     try {
-      const updatedGoals = localPlan.topGoals.filter(id => id !== goalId);
-      
-      setLocalPlan(prev => ({
-        ...prev,
-        topGoals: updatedGoals,
-      }));
+      setLocalPlan(prev => {
+        const updatedGoals = prev.topGoals.filter(id => id !== goalId);
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (dayPlan?.status === 'started') {
+          updateStartedDay({
+            date: today,
+            ...prev,
+            topGoals: updatedGoals,
+          });
+        } else {
+          saveDayPlan({
+            date: today,
+            ...prev,
+            topGoals: updatedGoals,
+          });
+        }
 
-      const today = new Date().toISOString().split('T')[0];
-      if (dayPlan?.status === 'started') {
-        await updateStartedDay({
-          date: today,
-          ...localPlan,
+        return {
+          ...prev,
           topGoals: updatedGoals,
-        });
-      } else {
-        await saveDayPlan({
-          date: today,
-          ...localPlan,
-          topGoals: updatedGoals,
-        });
-      }
+        };
+      });
     } catch (error) {
       console.error('Error removing goal:', error);
       setLocalError('Failed to remove goal. Please try again.');
@@ -223,27 +227,29 @@ export default function DayView({ goals, onToggleGoal }: Props) {
   const handleImportGoal = async (goalId: string) => {
     if (!localPlan.topGoals.includes(goalId) && localPlan.topGoals.length < 5) {
       try {
-        const updatedGoals = [...localPlan.topGoals, goalId];
-        
-        setLocalPlan(prev => ({
-          ...prev,
-          topGoals: updatedGoals,
-        }));
+        setLocalPlan(prev => {
+          const updatedGoals = [...prev.topGoals, goalId];
+          const today = new Date().toISOString().split('T')[0];
+          
+          if (dayPlan?.status === 'started') {
+            updateStartedDay({
+              date: today,
+              ...prev,
+              topGoals: updatedGoals,
+            });
+          } else {
+            saveDayPlan({
+              date: today,
+              ...prev,
+              topGoals: updatedGoals,
+            });
+          }
 
-        const today = new Date().toISOString().split('T')[0];
-        if (dayPlan?.status === 'started') {
-          await updateStartedDay({
-            date: today,
-            ...localPlan,
+          return {
+            ...prev,
             topGoals: updatedGoals,
-          });
-        } else {
-          await saveDayPlan({
-            date: today,
-            ...localPlan,
-            topGoals: updatedGoals,
-          });
-        }
+          };
+        });
 
         if (localPlan.topGoals.length === 4) {
           setShowImportModal(false);
@@ -259,6 +265,8 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     try {
       await updateGoal(id, updates);
       setEditingGoal(null);
+      // Force a save of the day plan to ensure all changes are persisted
+      await handleSave();
     } catch (error) {
       console.error('Error updating goal:', error);
       setLocalError('Failed to update goal. Please try again.');
@@ -536,7 +544,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-6 py-3 bg-indigo-500/30 hover:bg-indigo-500/40 text-white font-medium rounded-lg transition-all hover:scale-105 backdrop-blur-sm active:scale-95 touch-manipulation min-w-[100px] border border-indigo-500/30 hover:border-indigo-500/50 shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"
+              className="px-6 py-3 bg-indigo-500/20 hover:bg-indigo-500/30 text-white rounded-lg transition-all hover:scale-105 backdrop-blur-sm active:scale-95 touch-manipulation min-w-[100px]"
             >
               <Save className="w-5 h-5" />
               {isSaving ? 'Saving...' : 'Save Changes'}
