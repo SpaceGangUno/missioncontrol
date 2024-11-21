@@ -21,52 +21,82 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const setStoreUser = useStore(state => state.setUser);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   useEffect(() => {
-    console.log('Setting up auth state listener...'); // Debug log
-    
-    if (!auth) {
-      console.error('Firebase auth not initialized');
-      setError('Authentication service not available');
-      setLoading(false);
-      return;
-    }
+    let unsubscribe: (() => void) | undefined;
+    let timeoutId: NodeJS.Timeout;
 
-    try {
-      const unsubscribe = onAuthStateChanged(auth, 
-        (user) => {
-          console.log('Auth state changed:', user ? 'User logged in' : 'No user'); // Debug log
-          setUser(user);
-          setStoreUser(user);
-          setLoading(false);
-          setError(null);
-        },
-        (error) => {
-          console.error('Auth state error:', error);
-          setError('Authentication error: ' + error.message);
-          setLoading(false);
-        }
-      );
+    const initializeAuth = async () => {
+      try {
+        // Set up auth state listener
+        const authPromise = new Promise<void>((resolve, reject) => {
+          unsubscribe = onAuthStateChanged(auth, 
+            (user) => {
+              console.log('Auth state changed:', user ? 'User logged in' : 'No user');
+              setUser(user);
+              setStoreUser(user);
+              setLoading(false);
+              setAuthInitialized(true);
+              setError(null);
+              resolve();
+            },
+            (error) => {
+              console.error('Auth state error:', error);
+              setError('Authentication error: ' + error.message);
+              setLoading(false);
+              setAuthInitialized(true);
+              reject(error);
+            }
+          );
+        });
 
-      return () => unsubscribe();
-    } catch (error) {
-      console.error('Error setting up auth listener:', error);
-      setError('Failed to initialize authentication');
+        // Set a timeout to prevent infinite loading
+        const timeoutPromise = new Promise<void>((_, reject) => {
+          timeoutId = setTimeout(() => {
+            reject(new Error('Authentication service timed out'));
+          }, 10000); // 10 second timeout
+        });
+
+        // Race between auth initialization and timeout
+        await Promise.race([authPromise, timeoutPromise]);
+
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        setError(error instanceof Error ? error.message : 'Failed to initialize authentication');
+        setLoading(false);
+        setAuthInitialized(true);
+      }
+    };
+
+    // Initialize auth
+    initializeAuth().catch(error => {
+      console.error('Failed to initialize auth:', error);
+      setError(error instanceof Error ? error.message : 'Failed to initialize authentication');
       setLoading(false);
-    }
+      setAuthInitialized(true);
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+      clearTimeout(timeoutId);
+    };
   }, [setStoreUser]);
 
-  if (loading) {
+  // Show loading state only during initial auth check
+  if (loading && !authInitialized) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
           <Loader className="w-8 h-8 animate-spin text-sky-400" />
-          <p className="text-sky-400">Loading...</p>
+          <p className="text-sky-400">Initializing...</p>
+          <p className="text-sm text-sky-400/60">Setting up your mission control...</p>
         </div>
       </div>
     );
   }
 
+  // Show error state
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -94,4 +124,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

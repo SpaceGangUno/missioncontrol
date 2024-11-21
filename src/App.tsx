@@ -19,16 +19,34 @@ import { Goal } from './types';
 type ViewType = 'mission-control' | 'month' | 'week' | 'day';
 
 export default function App() {
-  const { user } = useAuth();
+  const { user, loading: authLoading, error: authError } = useAuth();
   const [currentView, setCurrentView] = useState<ViewType>('mission-control');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showWelcomeBack, setShowWelcomeBack] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [appError, setAppError] = useState<string | null>(null);
+  const [appInitialized, setAppInitialized] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const currentDate = new Date();
-  const { goals, loading, goalsLoading, dayPlanLoading, error, addGoal, toggleGoal, updateGoal } = useStore();
+  const { goals, loading: storeLoading, goalsLoading, dayPlanLoading, error: storeError, addGoal, toggleGoal, updateGoal } = useStore();
 
+  // Initialize app
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        // Add any additional initialization logic here
+        setAppInitialized(true);
+      } catch (error) {
+        console.error('Error initializing app:', error);
+        setAppError('Failed to initialize application');
+      }
+    };
+
+    initializeApp();
+  }, []);
+
+  // Handle click outside profile menu
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
@@ -41,15 +59,8 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (!user) {
-    return <LoginPage onShowWelcome={() => setShowWelcomeBack(true)} />;
-  }
-
-  if (!user.displayName) {
-    return <WelcomeScreen />;
-  }
-
-  if (loading || goalsLoading || dayPlanLoading) {
+  // Show loading state during initialization
+  if (authLoading || storeLoading || !appInitialized) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
@@ -60,7 +71,8 @@ export default function App() {
     );
   }
 
-  if (error) {
+  // Show error state
+  if (authError || storeError || appError) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="glass-card p-6 max-w-md mx-auto">
@@ -68,7 +80,7 @@ export default function App() {
             <AlertCircle className="w-6 h-6 shrink-0" />
             <h2 className="text-lg font-semibold">Error</h2>
           </div>
-          <p className="text-sky-400/80">{error}</p>
+          <p className="text-sky-400/80">{authError || storeError || appError}</p>
           <button 
             onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-lg transition-colors"
@@ -80,11 +92,20 @@ export default function App() {
     );
   }
 
+  if (!user) {
+    return <LoginPage onShowWelcome={() => setShowWelcomeBack(true)} />;
+  }
+
+  if (!user.displayName) {
+    return <WelcomeScreen />;
+  }
+
   const handleLogout = async () => {
     try {
       await auth.signOut();
     } catch (error) {
       console.error('Error signing out:', error);
+      setAppError('Failed to sign out');
     }
   };
 
@@ -95,10 +116,26 @@ export default function App() {
   };
 
   const handleUpdateProgress = async (id: string, status: Goal['status'], progress: number) => {
-    await updateGoal(id, { status, progress });
+    try {
+      await updateGoal(id, { status, progress });
+    } catch (error) {
+      console.error('Error updating goal progress:', error);
+      setAppError('Failed to update goal progress');
+    }
   };
 
   const renderMainContent = () => {
+    if (goalsLoading || dayPlanLoading) {
+      return (
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader className="w-8 h-8 animate-spin text-sky-400" />
+            <p className="text-sky-400">Loading...</p>
+          </div>
+        </div>
+      );
+    }
+
     switch (currentView) {
       case 'month':
         return (
