@@ -1,17 +1,27 @@
 import { ThemeColors } from '../types';
 
 export function hexToRgb(hex: string): string {
-  const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
-  hex = hex.replace(shorthandRegex, (_, r, g, b) => r + r + g + g + b + b);
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? 
-    `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}` : 
-    '56 189 248';
+  try {
+    const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+    hex = hex.replace(shorthandRegex, (_, r, g, b) => r + r + g + g + b + b);
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? 
+      `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}` : 
+      '56 189 248';
+  } catch (error) {
+    console.error('Error converting hex to RGB:', error);
+    return '56 189 248'; // Default to a nice blue color
+  }
 }
+
+let themeInitialized = false;
 
 export function updateCSSVariables(theme: ThemeColors): void {
   // Check if we're in a browser environment
-  if (typeof window === 'undefined' || !document?.documentElement) return;
+  if (typeof window === 'undefined' || !document?.documentElement) {
+    console.warn('Attempted to update CSS variables in non-browser environment');
+    return;
+  }
 
   try {
     const root = document.documentElement;
@@ -38,16 +48,49 @@ export function updateCSSVariables(theme: ThemeColors): void {
       link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@400;500;600;700&display=swap`;
       document.head.appendChild(link);
     }
-  } catch (error) {
-    console.error('Error updating CSS variables:', error);
-  }
-}
 
-// Initialize default theme if in browser environment
-if (typeof window !== 'undefined') {
-  import('./themes').then(({ themes }) => {
-    updateCSSVariables(themes[0]);
-  }).catch(error => {
-    console.error('Error loading default theme:', error);
-  });
+    if (!themeInitialized) {
+      // Add base styles to ensure proper theme application
+      const style = document.createElement('style');
+      style.textContent = `
+        :root {
+          color-scheme: dark;
+        }
+        
+        body {
+          margin: 0;
+          color: var(--theme-text-color);
+          font-family: var(--theme-font-family);
+          background: var(--theme-background);
+          background-image: var(--theme-background-gradient);
+          min-height: 100vh;
+        }
+
+        #root {
+          min-height: 100vh;
+        }
+
+        .glass-card {
+          background: var(--theme-card-background);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+        }
+
+        .glass-input {
+          background: var(--theme-card-background);
+          color: var(--theme-text-color);
+        }
+
+        .glass-input::placeholder {
+          color: var(--theme-text-secondary);
+        }
+      `;
+      document.head.appendChild(style);
+      themeInitialized = true;
+    }
+
+    console.log('Theme updated successfully');
+  } catch (error) {
+    console.error('Error updating theme:', error);
+  }
 }
