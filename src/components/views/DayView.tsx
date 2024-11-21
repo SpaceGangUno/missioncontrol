@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Goal } from '../../types';
-import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import, Play, Loader, Save, Edit2, HelpCircle } from 'lucide-react';
+import { Heart, Lightbulb, Target, Rocket, UtensilsCrossed, Plus, Import, Play, Loader, Save, Edit2, HelpCircle, AlertCircle } from 'lucide-react';
 import { useStore } from '../../lib/store';
 import EditGoalForm from '../EditGoalForm';
 
@@ -27,10 +27,7 @@ function Tooltip({ text }: { text: string }) {
 }
 
 export default function DayView({ goals, onToggleGoal }: Props) {
-  console.log('DayView rendering with goals:', goals); // Debug log
-
-  const { dayPlan, saveDayPlan, getDayPlan, startDay, updateStartedDay, updateGoal, addGoal, loading, goalsLoading, dayPlanLoading } = useStore();
-  console.log('DayView store state - dayPlan:', dayPlan, 'loading:', loading, 'goalsLoading:', goalsLoading, 'dayPlanLoading:', dayPlanLoading); // Debug log
+  const { dayPlan, saveDayPlan, getDayPlan, startDay, updateStartedDay, updateGoal, addGoal, loading, goalsLoading, dayPlanLoading, error } = useStore();
 
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -67,14 +64,17 @@ export default function DayView({ goals, onToggleGoal }: Props) {
 
   // Load day plan on mount
   useEffect(() => {
-    console.log('Loading day plan...'); // Debug log
-    const today = new Date().toISOString().split('T')[0];
-    getDayPlan(today);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      getDayPlan(today);
+    } catch (error) {
+      console.error('Error loading day plan:', error);
+      setLocalError('Failed to load day plan');
+    }
   }, [getDayPlan]);
 
   // Update local state when day plan changes
   useEffect(() => {
-    console.log('Day plan updated:', dayPlan); // Debug log
     if (dayPlan) {
       setLocalPlan({
         gratitude: dayPlan.gratitude || '',
@@ -92,40 +92,6 @@ export default function DayView({ goals, onToggleGoal }: Props) {
     }
   }, [dayPlan]);
 
-  // Handle pending quick add when goals update
-  useEffect(() => {
-    if (pendingQuickAdd) {
-      const newGoal = goals.find(g => g.title === pendingQuickAdd);
-      if (newGoal) {
-        setLocalPlan(prev => {
-          const updatedGoals = [...prev.topGoals, newGoal.id];
-          const today = new Date().toISOString().split('T')[0];
-          
-          if (dayPlan?.status === 'started') {
-            updateStartedDay({
-              date: today,
-              ...prev,
-              topGoals: updatedGoals,
-            });
-          } else {
-            saveDayPlan({
-              date: today,
-              ...prev,
-              topGoals: updatedGoals,
-            });
-          }
-
-          return {
-            ...prev,
-            topGoals: updatedGoals,
-          };
-        });
-
-        setPendingQuickAdd(null);
-      }
-    }
-  }, [goals, pendingQuickAdd, dayPlan, updateStartedDay, saveDayPlan]);
-
   // Clear error after 5 seconds
   useEffect(() => {
     if (localError) {
@@ -133,173 +99,6 @@ export default function DayView({ goals, onToggleGoal }: Props) {
       return () => clearTimeout(timer);
     }
   }, [localError]);
-
-  const handleSave = async () => {
-    try {
-      setIsSaving(true);
-      const today = new Date().toISOString().split('T')[0];
-      if (dayPlan?.status === 'started') {
-        await updateStartedDay({
-          date: today,
-          ...localPlan,
-        });
-      } else {
-        await saveDayPlan({
-          date: today,
-          ...localPlan,
-        });
-      }
-      setIsSaving(false);
-    } catch (error) {
-      console.error('Error saving day plan:', error);
-      setLocalError('Failed to save changes. Please try again.');
-      setIsSaving(false);
-    }
-  };
-
-  const handleStartDay = async () => {
-    try {
-      setIsStarting(true);
-      setLocalError(null);
-      await handleSave();
-      const today = new Date().toISOString().split('T')[0];
-      await startDay({
-        date: today,
-        ...localPlan,
-        status: 'started',
-        startedAt: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('Error starting day:', error);
-      setLocalError('Failed to start day. Please try again.');
-    } finally {
-      setIsStarting(false);
-    }
-  };
-
-  const handleQuickAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (quickAddText.trim() && localPlan.topGoals.length < 5) {
-      try {
-        const newGoal = {
-          title: quickAddText.trim(),
-          description: '',
-          priority: 'medium' as const,
-          category: 'personal',
-          status: 'not_started' as const,
-          progress: 0
-        };
-        
-        await addGoal(newGoal);
-        setPendingQuickAdd(newGoal.title);
-        setQuickAddText('');
-        setShowQuickAdd(false);
-      } catch (error) {
-        console.error('Error adding quick goal:', error);
-        setLocalError('Failed to add goal. Please try again.');
-      }
-    }
-  };
-
-  const removeTopGoal = async (goalId: string) => {
-    try {
-      setLocalPlan(prev => {
-        const updatedGoals = prev.topGoals.filter(id => id !== goalId);
-        const today = new Date().toISOString().split('T')[0];
-        
-        if (dayPlan?.status === 'started') {
-          updateStartedDay({
-            date: today,
-            ...prev,
-            topGoals: updatedGoals,
-          });
-        } else {
-          saveDayPlan({
-            date: today,
-            ...prev,
-            topGoals: updatedGoals,
-          });
-        }
-
-        return {
-          ...prev,
-          topGoals: updatedGoals,
-        };
-      });
-    } catch (error) {
-      console.error('Error removing goal:', error);
-      setLocalError('Failed to remove goal. Please try again.');
-    }
-  };
-
-  const handleImportGoal = async (goalId: string) => {
-    if (!localPlan.topGoals.includes(goalId) && localPlan.topGoals.length < 5) {
-      try {
-        setLocalPlan(prev => {
-          const updatedGoals = [...prev.topGoals, goalId];
-          const today = new Date().toISOString().split('T')[0];
-          
-          if (dayPlan?.status === 'started') {
-            updateStartedDay({
-              date: today,
-              ...prev,
-              topGoals: updatedGoals,
-            });
-          } else {
-            saveDayPlan({
-              date: today,
-              ...prev,
-              topGoals: updatedGoals,
-            });
-          }
-
-          return {
-            ...prev,
-            topGoals: updatedGoals,
-          };
-        });
-
-        if (localPlan.topGoals.length === 4) {
-          setShowImportModal(false);
-        }
-      } catch (error) {
-        console.error('Error importing goal:', error);
-        setLocalError('Failed to import goal. Please try again.');
-      }
-    }
-  };
-
-  const handleUpdateGoal = async (id: string, updates: Partial<Goal>) => {
-    try {
-      await updateGoal(id, updates);
-      setEditingGoal(null);
-      // Force a save of the day plan to ensure all changes are persisted
-      await handleSave();
-    } catch (error) {
-      console.error('Error updating goal:', error);
-      setLocalError('Failed to update goal. Please try again.');
-    }
-  };
-
-  const handleToggleGoal = (goalId: string) => {
-    const goal = goals.find(g => g.id === goalId);
-    const isCompleted = goal?.completed || goal?.status === 'completed';
-    setAnimatingGoal({
-      id: goalId,
-      action: isCompleted ? 'landing' : 'takeoff'
-    });
-    onToggleGoal(goalId);
-  };
-
-  // Sort goals to prioritize in_progress goals
-  const sortedGoals = [...goals].sort((a: Goal, b: Goal) => {
-    if (a.status === 'in_progress' && b.status !== 'in_progress') return -1;
-    if (b.status === 'in_progress' && a.status !== 'in_progress') return 1;
-    return 0;
-  });
-
-  // Check if day is started
-  const isStarted = dayPlan?.status === 'started';
 
   // Loading state
   if (loading || goalsLoading || dayPlanLoading || !initialLoadComplete) {
@@ -309,6 +108,25 @@ export default function DayView({ goals, onToggleGoal }: Props) {
           <Loader className="w-8 h-8 animate-spin text-sky-400" />
           <p className="text-sky-400">Loading your day...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || localError) {
+    return (
+      <div className="glass-card p-6">
+        <div className="flex items-center gap-3 text-rose-400 mb-4">
+          <AlertCircle className="w-6 h-6 shrink-0" />
+          <h2 className="text-lg font-semibold">Error</h2>
+        </div>
+        <p className="text-sky-400/80">{error || localError}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-lg transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -329,13 +147,6 @@ export default function DayView({ goals, onToggleGoal }: Props) {
           .landing { animation: landing 1s ease-in forwards; }
         `}
       </style>
-
-      {/* Error Message */}
-      {localError && (
-        <div className="fixed top-4 right-4 bg-red-500/90 text-white px-4 py-2 rounded-lg shadow-lg">
-          {localError}
-        </div>
-      )}
 
       {/* Daily Header */}
       <div className="glass-card p-6">
@@ -444,7 +255,27 @@ export default function DayView({ goals, onToggleGoal }: Props) {
         </div>
         <div className="space-y-3 min-h-[100px]">
           {showQuickAdd && (
-            <form onSubmit={handleQuickAdd} className="flex gap-2">
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              if (quickAddText.trim()) {
+                try {
+                  await addGoal({
+                    title: quickAddText.trim(),
+                    description: '',
+                    priority: 'medium',
+                    category: 'personal',
+                    status: 'not_started',
+                    progress: 0
+                  });
+                  setPendingQuickAdd(quickAddText.trim());
+                  setQuickAddText('');
+                  setShowQuickAdd(false);
+                } catch (error) {
+                  console.error('Error adding quick goal:', error);
+                  setLocalError('Failed to add goal');
+                }
+              }
+            }} className="flex gap-2">
               <input
                 type="text"
                 value={quickAddText}
@@ -491,7 +322,7 @@ export default function DayView({ goals, onToggleGoal }: Props) {
                   {goal && (
                     <>
                       <button
-                        onClick={() => handleToggleGoal(goal.id)}
+                        onClick={() => onToggleGoal(goal.id)}
                         className={`text-sky-400/60 hover:text-sky-400 p-1 ${isCompleted ? 'text-green-400' : ''}`}
                         aria-label={isCompleted ? "Mark as incomplete" : "Mark as complete"}
                       >
@@ -509,7 +340,21 @@ export default function DayView({ goals, onToggleGoal }: Props) {
                     </>
                   )}
                   <button
-                    onClick={() => removeTopGoal(goalId)}
+                    onClick={() => {
+                      const updatedGoals = localPlan.topGoals.filter(id => id !== goalId);
+                      setLocalPlan(prev => ({
+                        ...prev,
+                        topGoals: updatedGoals
+                      }));
+                      saveDayPlan({
+                        ...localPlan,
+                        topGoals: updatedGoals,
+                        date: new Date().toISOString().split('T')[0]
+                      }).catch(error => {
+                        console.error('Error removing goal:', error);
+                        setLocalError('Failed to remove goal');
+                      });
+                    }}
                     className="text-sky-400/60 hover:text-sky-400 p-1"
                     aria-label="Remove goal"
                   >
@@ -560,9 +405,23 @@ export default function DayView({ goals, onToggleGoal }: Props) {
       {/* Bottom Fixed Buttons */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-navy-900/90 backdrop-blur-xl border-t border-sky-500/30 shadow-lg shadow-navy-900/50 z-[70]">
         <div className="max-w-2xl mx-auto flex gap-3 justify-end">
-          {isStarted ? (
+          {dayPlan?.status === 'started' ? (
             <button
-              onClick={handleSave}
+              onClick={async () => {
+                try {
+                  setIsSaving(true);
+                  const today = new Date().toISOString().split('T')[0];
+                  await updateStartedDay({
+                    date: today,
+                    ...localPlan,
+                  });
+                  setIsSaving(false);
+                } catch (error) {
+                  console.error('Error saving day plan:', error);
+                  setLocalError('Failed to save changes');
+                  setIsSaving(false);
+                }
+              }}
               disabled={isSaving}
               className="px-6 py-3 bg-indigo-500/20 hover:bg-indigo-500/30 text-white rounded-lg transition-all hover:scale-105 backdrop-blur-sm active:scale-95 touch-manipulation min-w-[100px] flex items-center gap-2"
             >
@@ -571,7 +430,23 @@ export default function DayView({ goals, onToggleGoal }: Props) {
             </button>
           ) : (
             <button
-              onClick={handleStartDay}
+              onClick={async () => {
+                try {
+                  setIsStarting(true);
+                  const today = new Date().toISOString().split('T')[0];
+                  await startDay({
+                    date: today,
+                    ...localPlan,
+                    status: 'started',
+                    startedAt: new Date().toISOString()
+                  });
+                  setIsStarting(false);
+                } catch (error) {
+                  console.error('Error starting day:', error);
+                  setLocalError('Failed to start day');
+                  setIsStarting(false);
+                }
+              }}
               disabled={isStarting}
               className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] backdrop-blur-sm neon-glow active:scale-95 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
@@ -600,10 +475,29 @@ export default function DayView({ goals, onToggleGoal }: Props) {
               </button>
             </div>
             <div className="space-y-3">
-              {sortedGoals.map(goal => (
+              {goals.map(goal => (
                 <button
                   key={goal.id}
-                  onClick={() => handleImportGoal(goal.id)}
+                  onClick={async () => {
+                    try {
+                      const updatedGoals = [...localPlan.topGoals, goal.id];
+                      setLocalPlan(prev => ({
+                        ...prev,
+                        topGoals: updatedGoals
+                      }));
+                      await saveDayPlan({
+                        ...localPlan,
+                        topGoals: updatedGoals,
+                        date: new Date().toISOString().split('T')[0]
+                      });
+                      if (updatedGoals.length === 5) {
+                        setShowImportModal(false);
+                      }
+                    } catch (error) {
+                      console.error('Error importing goal:', error);
+                      setLocalError('Failed to import goal');
+                    }
+                  }}
                   disabled={localPlan.topGoals.includes(goal.id)}
                   className={`w-full glass-card p-3 text-left hover:bg-sky-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                     goal.status === 'in_progress' ? 'border-l-4 border-sky-400' : ''
@@ -625,7 +519,21 @@ export default function DayView({ goals, onToggleGoal }: Props) {
         <EditGoalForm
           goal={editingGoal}
           onClose={() => setEditingGoal(null)}
-          onUpdateGoal={handleUpdateGoal}
+          onUpdateGoal={async (id, updates) => {
+            try {
+              await updateGoal(id, updates);
+              setEditingGoal(null);
+              // Force a save of the day plan to ensure all changes are persisted
+              const today = new Date().toISOString().split('T')[0];
+              await saveDayPlan({
+                ...localPlan,
+                date: today
+              });
+            } catch (error) {
+              console.error('Error updating goal:', error);
+              setLocalError('Failed to update goal');
+            }
+          }}
         />
       )}
     </div>

@@ -20,7 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { setUser: setStoreUser } = useStore();
+  const setStoreUser = useStore(state => state.setUser);
 
   useEffect(() => {
     console.log('Setting up auth state listener...'); // Debug log
