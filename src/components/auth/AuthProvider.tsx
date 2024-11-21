@@ -23,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setStoreUser = useStore(state => state.setUser);
   const [authInitialized, setAuthInitialized] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -57,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           timeoutId = setTimeout(() => {
             setLoadingTimeout(true);
             reject(new Error('Authentication service timed out'));
-          }, 10000); // 10 second timeout
+          }, 30000); // 30 second timeout
         });
 
         // Race between auth initialization and timeout
@@ -83,7 +84,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (unsubscribe) unsubscribe();
       clearTimeout(timeoutId);
     };
-  }, [setStoreUser]);
+  }, [setStoreUser, retryCount]);
+
+  const handleRetry = () => {
+    setLoading(true);
+    setError(null);
+    setAuthInitialized(false);
+    setLoadingTimeout(false);
+    setRetryCount(count => count + 1);
+  };
 
   // Show loading state only during initial auth check
   if (loading && !authInitialized) {
@@ -94,12 +103,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           <p className="text-sky-400">Initializing...</p>
           <p className="text-sm text-sky-400/60">Setting up your mission control...</p>
           {loadingTimeout && (
-            <button 
-              onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-lg transition-colors"
-            >
-              Taking too long? Click to retry
-            </button>
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-sm text-rose-400">Connection seems slow.</p>
+              <button 
+                onClick={handleRetry}
+                className="px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-lg transition-colors"
+              >
+                Retry Connection
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -115,12 +127,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             <AlertCircle className="w-6 h-6 shrink-0" />
             <h2 className="text-lg font-semibold">Authentication Error</h2>
           </div>
-          <p className="text-sky-400/80">{error}</p>
+          <p className="text-sky-400/80 mb-4">{error}</p>
+          <p className="text-sm text-sky-400/60 mb-4">
+            This could be due to:
+            <ul className="list-disc list-inside mt-2">
+              <li>Slow internet connection</li>
+              <li>Firewall or security settings</li>
+              <li>Temporary service disruption</li>
+            </ul>
+          </p>
           <button 
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-lg transition-colors"
+            onClick={handleRetry}
+            className="px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-lg transition-colors"
           >
-            Retry
+            Try Again
           </button>
         </div>
       </div>
