@@ -36,18 +36,6 @@ export function updateCSSVariables(theme: ThemeColors): void {
     root.style.setProperty('--theme-text-color', theme.textColor);
     root.style.setProperty('--theme-text-secondary', theme.secondaryTextColor);
     root.style.setProperty('--theme-font-family', theme.fontFamily);
-    
-    // Load font if needed
-    const fontName = theme.fontFamily.split(',')[0].replace(/['"]/g, '');
-    const fontId = `theme-font-${fontName.toLowerCase().replace(/\s+/g, '-')}`;
-    
-    if (!document.getElementById(fontId)) {
-      const link = document.createElement('link');
-      link.id = fontId;
-      link.rel = 'stylesheet';
-      link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@400;500;600;700&display=swap`;
-      document.head.appendChild(link);
-    }
 
     if (!themeInitialized) {
       // Add base styles to ensure proper theme application
@@ -60,7 +48,7 @@ export function updateCSSVariables(theme: ThemeColors): void {
         body {
           margin: 0;
           color: var(--theme-text-color);
-          font-family: var(--theme-font-family);
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
           background: var(--theme-background);
           background-image: var(--theme-background-gradient);
           min-height: 100vh;
