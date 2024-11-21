@@ -3,7 +3,7 @@ export interface Goal {
   title: string;
   description: string;
   priority: 'high' | 'medium' | 'low';
-  category: string;
+  category: 'personal' | 'work' | 'health' | 'learning' | 'creative';
   deadline?: Date | string;
   completed: boolean;
   progress: number;
@@ -63,4 +63,37 @@ export interface UserSettings {
   theme: string;
   displayName: string;
   photoURL?: string;
+}
+
+export interface Position {
+  x: number;
+  y: number;
+}
+
+export interface Velocity {
+  x: number;
+  y: number;
+}
+
+export interface AnimatingGoal {
+  id: string;
+  action: 'takeoff' | 'landing';
+}
+
+export interface DayCardProps {
+  date: string;
+  goals: Goal[];
+  onToggleGoal: (id: string) => void;
+}
+
+export interface TooltipProps {
+  text: string;
+  children?: React.ReactNode;
+}
+
+export interface Props {
+  goals: Goal[];
+  onToggleGoal: (id: string) => void;
+  onUpdateGoal?: (id: string, updates: Partial<Goal>) => Promise<void>;
+  onAddGoal?: (goal: Omit<Goal, 'id' | 'completed' | 'createdAt'>) => Promise<void>;
 }

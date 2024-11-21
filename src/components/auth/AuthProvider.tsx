@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const setStoreUser = useStore(state => state.setUser);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -54,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Set a timeout to prevent infinite loading
         const timeoutPromise = new Promise<void>((_, reject) => {
           timeoutId = setTimeout(() => {
+            setLoadingTimeout(true);
             reject(new Error('Authentication service timed out'));
           }, 10000); // 10 second timeout
         });
@@ -91,6 +93,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           <Loader className="w-8 h-8 animate-spin text-sky-400" />
           <p className="text-sky-400">Initializing...</p>
           <p className="text-sm text-sky-400/60">Setting up your mission control...</p>
+          {loadingTimeout && (
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-lg transition-colors"
+            >
+              Taking too long? Click to retry
+            </button>
+          )}
         </div>
       </div>
     );
