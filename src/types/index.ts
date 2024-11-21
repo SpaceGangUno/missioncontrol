@@ -4,11 +4,11 @@ export interface Goal {
   description: string;
   priority: 'high' | 'medium' | 'low';
   category: string;
-  deadline?: Date;
+  deadline?: Date | string;
   completed: boolean;
   progress: number;
   status: 'not_started' | 'in_progress' | 'completed';
-  createdAt: Date;
+  createdAt: Date | string;
 }
 
 export interface DayPlan {

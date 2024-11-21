@@ -2,7 +2,7 @@ import React from 'react';
 import { Goal } from '../types';
 import GoalList from './GoalList';
 import { useStore } from '../lib/store';
-import { Heart, Lightbulb, Target, Rocket } from 'lucide-react';
+import { Heart, Lightbulb, Target, Rocket, Loader } from 'lucide-react';
 
 interface Props {
   missions: Goal[];
@@ -11,12 +11,32 @@ interface Props {
 }
 
 export default function MissionList({ missions, onToggleMission, onUpdateProgress }: Props) {
-  const { dayPlan, goals } = useStore();
+  const { dayPlan, goals, loading, goalsLoading, dayPlanLoading } = useStore();
+  const [initialLoadComplete, setInitialLoadComplete] = React.useState(false);
+
+  // Set initial load complete when both goals and day plan are loaded
+  React.useEffect(() => {
+    if (goals.length > 0 && dayPlan) {
+      setInitialLoadComplete(true);
+    }
+  }, [goals, dayPlan]);
 
   const getGoalById = (id: string) => goals.find(goal => goal.id === id);
 
   // Enforce 5 goal maximum for top goals
   const topGoals = dayPlan?.topGoals.slice(0, 5) || [];
+
+  // Loading state
+  if (loading || goalsLoading || dayPlanLoading || !initialLoadComplete) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader className="w-8 h-8 animate-spin text-sky-400" />
+          <p className="text-sky-400">Loading your missions...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-8 space-y-8">
@@ -86,36 +106,16 @@ export default function MissionList({ missions, onToggleMission, onUpdateProgres
                 Meals for the day
               </h3>
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    Breakfast:
-                  </label>
-                  <input
-                    type="text"
-                    className="glass-input w-full"
-                    placeholder="Enter breakfast"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    Lunch:
-                  </label>
-                  <input
-                    type="text"
-                    className="glass-input w-full"
-                    placeholder="Enter lunch"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    Dinner:
-                  </label>
-                  <input
-                    type="text"
-                    className="glass-input w-full"
-                    placeholder="Enter dinner"
-                  />
-                </div>
+                {Object.entries(dayPlan.meals || {}).map(([meal, value]) => (
+                  <div key={meal}>
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      {meal.charAt(0).toUpperCase() + meal.slice(1)}:
+                    </label>
+                    <div className="glass-input w-full px-3 py-2">
+                      {value || `No ${meal} planned yet`}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

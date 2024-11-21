@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Circle, AlertCircle, Clock, Tag, PlayCircle, Rocket } from 'lucide-react';
+import { Circle, AlertCircle, Clock, Tag, PlayCircle, Rocket, Target } from 'lucide-react';
 import { Goal } from '../types';
 
 interface Props {
@@ -78,6 +78,21 @@ export default function GoalList({ goals, onToggleGoal, onUpdateProgress }: Prop
     onUpdateProgress(goal.id, nextStatus, progress);
   };
 
+  // Empty state
+  if (goals.length === 0) {
+    return (
+      <div className="glass-card p-8 text-center">
+        <div className="flex flex-col items-center gap-4">
+          <Target className="w-12 h-12 text-sky-400/40" />
+          <div>
+            <h3 className="text-lg font-semibold text-sky-100 mb-2">No Goals Yet</h3>
+            <p className="text-sky-400/60">Start by adding some goals to track your progress</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <style>
@@ -150,7 +165,9 @@ export default function GoalList({ goals, onToggleGoal, onUpdateProgress }: Prop
                 {goal.title}
               </h3>
               
-              <p className="text-white/60 mt-1">{goal.description}</p>
+              {goal.description && (
+                <p className="text-white/60 mt-1">{goal.description}</p>
+              )}
               
               <div className="flex flex-wrap gap-4 mt-4">
                 <div className="flex items-center gap-2">
