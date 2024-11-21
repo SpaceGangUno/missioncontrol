@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../../lib/firebase';
+import { auth, firebaseInitialized } from '../../lib/firebase';
 import { useStore } from '../../lib/store';
-import { Loader, AlertCircle } from 'lucide-react';
+import { Loader, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface AuthContextType {
   user: User | null;
@@ -31,6 +31,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
+        // Wait for Firebase to initialize
+        await firebaseInitialized;
+
         // Set up auth state listener
         const authPromise = new Promise<void>((resolve, reject) => {
           unsubscribe = onAuthStateChanged(auth, 
@@ -69,16 +72,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setError(error instanceof Error ? error.message : 'Failed to initialize authentication');
         setLoading(false);
         setAuthInitialized(true);
+        // Retry initialization if it failed
+        if (retryCount < 3) {
+          setTimeout(() => {
+            setRetryCount(count => count + 1);
+            setLoading(true);
+            setError(null);
+          }, 1000); // Wait 1 second before retrying
+        }
       }
     };
 
     // Initialize auth
-    initializeAuth().catch(error => {
-      console.error('Failed to initialize auth:', error);
-      setError(error instanceof Error ? error.message : 'Failed to initialize authentication');
-      setLoading(false);
-      setAuthInitialized(true);
-    });
+    initializeAuth();
 
     return () => {
       if (unsubscribe) unsubscribe();
@@ -91,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     setAuthInitialized(false);
     setLoadingTimeout(false);
-    setRetryCount(count => count + 1);
+    setRetryCount(0);
   };
 
   // Show loading state only during initial auth check
@@ -107,8 +113,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               <p className="text-sm text-rose-400">Connection seems slow.</p>
               <button 
                 onClick={handleRetry}
-                className="px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-lg transition-colors"
+                className="px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-lg transition-colors flex items-center gap-2"
               >
+                <RefreshCw className="w-4 h-4" />
                 Retry Connection
               </button>
             </div>
@@ -125,7 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         <div className="glass-card p-6 max-w-md mx-auto">
           <div className="flex items-center gap-3 text-rose-400 mb-4">
             <AlertCircle className="w-6 h-6 shrink-0" />
-            <h2 className="text-lg font-semibold">Authentication Error</h2>
+            <h2 className="text-lg font-semibold">Houston, we have a problem</h2>
           </div>
           <p className="text-sky-400/80 mb-4">{error}</p>
           <p className="text-sm text-sky-400/60 mb-4">
@@ -138,8 +145,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           </p>
           <button 
             onClick={handleRetry}
-            className="px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-lg transition-colors"
+            className="px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-lg transition-colors flex items-center gap-2"
           >
+            <RefreshCw className="w-4 h-4" />
             Try Again
           </button>
         </div>

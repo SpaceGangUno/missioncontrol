@@ -1,6 +1,6 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import { getAuth, Auth, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, Firestore, collection, getDocs, limit, query } from 'firebase/firestore';
 
 // Initialize Firebase configuration
 const firebaseConfig = {
@@ -21,41 +21,92 @@ if (missingFields.length > 0) {
   throw new Error(`Missing required Firebase config fields: ${missingFields.join(', ')}`);
 }
 
-// Initialize Firebase
-let app: FirebaseApp;
-if (!getApps().length) {
-  try {
-    app = initializeApp(firebaseConfig);
-    console.log('Firebase initialized successfully');
-  } catch (error) {
-    console.error('Error initializing Firebase:', error);
-    throw new Error('Failed to initialize Firebase');
+// Initialize Firebase with retry mechanism
+async function initializeFirebase(): Promise<{ app: FirebaseApp; auth: Auth; db: Firestore }> {
+  let retryCount = 0;
+  const maxRetries = 3;
+  const retryDelay = 1000; // 1 second
+
+  while (retryCount < maxRetries) {
+    try {
+      let app: FirebaseApp;
+      if (!getApps().length) {
+        app = initializeApp(firebaseConfig);
+        console.log('Firebase initialized successfully');
+      } else {
+        app = getApps()[0];
+        console.log('Using existing Firebase instance');
+      }
+
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Test auth initialization
+      await new Promise<void>((resolve, reject) => {
+        const unsubscribe = onAuthStateChanged(
+          auth,
+          () => {
+            unsubscribe();
+            resolve();
+          },
+          (error) => {
+            unsubscribe();
+            reject(error);
+          }
+        );
+
+        // Set a timeout for auth initialization
+        setTimeout(() => {
+          unsubscribe();
+          reject(new Error('Auth initialization timeout'));
+        }, 5000);
+      });
+
+      // Test Firestore connection
+      await new Promise<void>(async (resolve, reject) => {
+        try {
+          // Try to read a single document from any collection
+          const testQuery = query(collection(db, 'test'), limit(1));
+          await getDocs(testQuery);
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      });
+
+      console.log('Firebase services initialized successfully');
+      return { app, auth, db };
+    } catch (error) {
+      console.error(`Firebase initialization attempt ${retryCount + 1} failed:`, error);
+      retryCount++;
+
+      if (retryCount === maxRetries) {
+        throw new Error('Failed to initialize Firebase after multiple attempts');
+      }
+
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    }
   }
-} else {
-  app = getApps()[0];
-  console.log('Using existing Firebase instance');
+
+  throw new Error('Failed to initialize Firebase');
 }
 
-// Initialize Auth and Firestore
+// Initialize Firebase services
 let auth: Auth;
 let db: Firestore;
 
-try {
-  auth = getAuth(app);
-  db = getFirestore(app);
-
-  // Log initialization status
-  console.log('Firebase services initialized:', {
-    auth: auth ? '✓' : '✗',
-    db: db ? '✓' : '✗'
+// Initialize immediately and export a promise that resolves when initialization is complete
+export const firebaseInitialized = initializeFirebase()
+  .then(({ auth: initializedAuth, db: initializedDb }) => {
+    auth = initializedAuth;
+    db = initializedDb;
+    return { auth, db };
+  })
+  .catch(error => {
+    console.error('Failed to initialize Firebase:', error);
+    throw error;
   });
-} catch (error) {
-  console.error('Error initializing Firebase services:', error);
-  throw new Error('Failed to initialize Firebase services');
-}
 
-if (!auth || !db) {
-  throw new Error('Firebase services not properly initialized');
-}
-
+// Export auth and db with proper error handling
 export { auth, db };
