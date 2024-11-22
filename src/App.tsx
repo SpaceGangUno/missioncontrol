@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './components/auth/AuthProvider';
 import LoginPage from './components/auth/LoginPage';
 import WelcomeScreen from './components/onboarding/WelcomeScreen';
@@ -17,8 +16,11 @@ import { Rocket, Calendar, Clock, CalendarDays, User, LogOut, Settings, Menu, X 
 import { auth } from './lib/firebase';
 import { Goal } from './types';
 
-function AppContent() {
+type ViewType = 'mission-control' | 'month' | 'week' | 'day';
+
+export default function App() {
   const { user } = useAuth();
+  const [currentView, setCurrentView] = useState<ViewType>('mission-control');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showWelcomeBack, setShowWelcomeBack] = useState(false);
@@ -26,9 +28,8 @@ function AppContent() {
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const currentDate = new Date();
   const { goals, addGoal, toggleGoal, updateGoal } = useStore();
-  const navigate = useNavigate();
-  const location = useLocation();
 
+  // Handle click outside profile menu
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
@@ -55,8 +56,8 @@ function AppContent() {
     });
   };
 
-  const handleViewChange = (path: string) => {
-    navigate(path);
+  const handleViewChange = (view: ViewType) => {
+    setCurrentView(view);
     setShowMobileMenu(false);
   };
 
@@ -64,6 +65,37 @@ function AppContent() {
     updateGoal(id, { status, progress }).catch(error => {
       console.error('Error updating goal progress:', error);
     });
+  };
+
+  const renderMainContent = () => {
+    switch (currentView) {
+      case 'month':
+        return (
+          <MonthlyView 
+            goals={goals} 
+            onToggleGoal={toggleGoal} 
+            onUpdateGoal={updateGoal}
+            onAddGoal={addGoal}
+          />
+        );
+      case 'week':
+        return <WeekView goals={goals} onToggleGoal={toggleGoal} />;
+      case 'day':
+        return <DayView goals={goals} onToggleGoal={toggleGoal} />;
+      default:
+        return (
+          <>
+            <MissionHeader />
+            <MissionOverview date={currentDate} missions={goals} view="month" />
+            <MissionPlanner onAddMission={addGoal} />
+            <MissionList 
+              missions={goals} 
+              onToggleMission={toggleGoal} 
+              onUpdateProgress={handleUpdateProgress}
+            />
+          </>
+        );
+    }
   };
 
   return (
@@ -91,45 +123,45 @@ function AppContent() {
 
           {/* Desktop Navigation */}
           <div className="hidden sm:flex items-center gap-6">
-            <Link to="/" className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <Rocket className="w-5 h-5 text-sky-400" />
               <span className="font-medium">Mission Control</span>
-            </Link>
-            <Link
-              to="/month"
+            </div>
+            <button
+              onClick={() => handleViewChange('month')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                location.pathname === '/month' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60 hover:text-sky-400'
+                currentView === 'month' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60 hover:text-sky-400'
               }`}
             >
               <Calendar className="w-5 h-5" />
               <span>Month</span>
-            </Link>
-            <Link
-              to="/week"
+            </button>
+            <button
+              onClick={() => handleViewChange('week')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                location.pathname === '/week' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60 hover:text-sky-400'
+                currentView === 'week' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60 hover:text-sky-400'
               }`}
             >
               <CalendarDays className="w-5 h-5" />
               <span>Week</span>
-            </Link>
-            <Link
-              to="/day"
+            </button>
+            <button
+              onClick={() => handleViewChange('day')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                location.pathname === '/day' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60 hover:text-sky-400'
+                currentView === 'day' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60 hover:text-sky-400'
               }`}
             >
               <Clock className="w-5 h-5" />
               <span>Day</span>
-            </Link>
+            </button>
           </div>
 
           {/* Mobile Title */}
           {!showMobileMenu && (
-            <Link to="/" className="sm:hidden flex items-center gap-2">
+            <div className="sm:hidden flex items-center gap-2">
               <Rocket className="w-5 h-5 text-sky-400" />
               <span className="font-medium">Mission Control</span>
-            </Link>
+            </div>
           )}
 
           <div className="relative" ref={profileMenuRef}>
@@ -186,36 +218,36 @@ function AppContent() {
         {showMobileMenu && (
           <div className="sm:hidden glass-card mb-6 p-2 rounded-xl">
             <button
-              onClick={() => handleViewChange('/')}
+              onClick={() => handleViewChange('mission-control')}
               className={`w-full flex items-center gap-2 px-4 py-3 rounded-lg transition-all ${
-                location.pathname === '/' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60'
+                currentView === 'mission-control' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60'
               }`}
             >
               <Rocket className="w-5 h-5" />
               Mission Control
             </button>
             <button
-              onClick={() => handleViewChange('/month')}
+              onClick={() => handleViewChange('month')}
               className={`w-full flex items-center gap-2 px-4 py-3 rounded-lg transition-all ${
-                location.pathname === '/month' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60'
+                currentView === 'month' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60'
               }`}
             >
               <Calendar className="w-5 h-5" />
               Month
             </button>
             <button
-              onClick={() => handleViewChange('/week')}
+              onClick={() => handleViewChange('week')}
               className={`w-full flex items-center gap-2 px-4 py-3 rounded-lg transition-all ${
-                location.pathname === '/week' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60'
+                currentView === 'week' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60'
               }`}
             >
               <CalendarDays className="w-5 h-5" />
               Week
             </button>
             <button
-              onClick={() => handleViewChange('/day')}
+              onClick={() => handleViewChange('day')}
               className={`w-full flex items-center gap-2 px-4 py-3 rounded-lg transition-all ${
-                location.pathname === '/day' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60'
+                currentView === 'day' ? 'bg-indigo-500/20 text-white' : 'text-sky-400/60'
               }`}
             >
               <Clock className="w-5 h-5" />
@@ -226,44 +258,9 @@ function AppContent() {
 
         {/* Main Content */}
         <main className="relative z-20">
-          <Routes>
-            <Route path="/" element={
-              <>
-                <MissionHeader />
-                <MissionOverview date={currentDate} missions={goals} view="month" />
-                <MissionPlanner onAddMission={addGoal} />
-                <MissionList 
-                  missions={goals} 
-                  onToggleMission={toggleGoal} 
-                  onUpdateProgress={handleUpdateProgress}
-                />
-              </>
-            } />
-            <Route path="/month" element={
-              <MonthlyView 
-                goals={goals} 
-                onToggleGoal={toggleGoal} 
-                onUpdateGoal={updateGoal}
-                onAddGoal={addGoal}
-              />
-            } />
-            <Route path="/week" element={
-              <WeekView goals={goals} onToggleGoal={toggleGoal} />
-            } />
-            <Route path="/day" element={
-              <DayView goals={goals} onToggleGoal={toggleGoal} />
-            } />
-          </Routes>
+          {renderMainContent()}
         </main>
       </div>
     </>
-  );
-}
-
-export default function App() {
-  return (
-    <Router>
-      <AppContent />
-    </Router>
   );
 }
