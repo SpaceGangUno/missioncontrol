@@ -12,35 +12,22 @@ import MonthlyView from './components/views/MonthlyView';
 import WeekView from './components/views/WeekView';
 import DayView from './components/views/DayView';
 import ThemeSelector from './components/ThemeSelector';
-import { Rocket, Calendar, Clock, CalendarDays, User, LogOut, Settings, Menu, X, Loader, AlertCircle, RefreshCw } from 'lucide-react';
+import { Rocket, Calendar, Clock, CalendarDays, User, LogOut, Settings, Menu, X } from 'lucide-react';
 import { auth } from './lib/firebase';
 import { Goal } from './types';
 
 type ViewType = 'mission-control' | 'month' | 'week' | 'day';
 
 export default function App() {
-  const { user, loading: authLoading, error: authError } = useAuth();
+  const { user } = useAuth();
   const [currentView, setCurrentView] = useState<ViewType>('mission-control');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showWelcomeBack, setShowWelcomeBack] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [appError, setAppError] = useState<string | null>(null);
-  const [loadingTimeout, setLoadingTimeout] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const currentDate = new Date();
-  const { goals, loading: storeLoading, goalsLoading, dayPlanLoading, error: storeError, initialized, addGoal, toggleGoal, updateGoal } = useStore();
-
-  // Set a timeout for loading
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (storeLoading || goalsLoading || dayPlanLoading) {
-        setLoadingTimeout(true);
-      }
-    }, 30000); // 30 second timeout
-
-    return () => clearTimeout(timeoutId);
-  }, [storeLoading, goalsLoading, dayPlanLoading]);
+  const { goals, addGoal, toggleGoal, updateGoal } = useStore();
 
   // Handle click outside profile menu
   useEffect(() => {
@@ -55,61 +42,6 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Show loading state
-  if (authLoading || (!initialized && (storeLoading || goalsLoading || dayPlanLoading))) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-4">
-          <Loader className="w-8 h-8 animate-spin text-sky-400" />
-          <p className="text-sky-400">Loading your missions...</p>
-          <p className="text-sm text-sky-400/60">Preparing for launch...</p>
-          {loadingTimeout && (
-            <div className="flex flex-col items-center gap-2">
-              <p className="text-sm text-rose-400">Connection seems slow.</p>
-              <button 
-                onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-lg transition-colors flex items-center gap-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Retry Connection
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (authError || storeError || appError) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="glass-card p-6 max-w-md mx-auto">
-          <div className="flex items-center gap-3 text-rose-400 mb-4">
-            <AlertCircle className="w-6 h-6 shrink-0" />
-            <h2 className="text-lg font-semibold">Houston, we have a problem</h2>
-          </div>
-          <p className="text-sky-400/80 mb-4">{authError || storeError || appError}</p>
-          <p className="text-sm text-sky-400/60 mb-4">
-            This could be due to:
-            <ul className="list-disc list-inside mt-2">
-              <li>Slow internet connection</li>
-              <li>Firewall or security settings</li>
-              <li>Temporary service disruption</li>
-            </ul>
-          </p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-lg transition-colors flex items-center gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   if (!user) {
     return <LoginPage onShowWelcome={() => setShowWelcomeBack(true)} />;
   }
@@ -123,12 +55,10 @@ export default function App() {
       await auth.signOut();
     } catch (error) {
       console.error('Error signing out:', error);
-      setAppError('Failed to sign out. Please try again.');
     }
   };
 
   const handleViewChange = (view: ViewType) => {
-    console.log('Changing view to:', view);
     setCurrentView(view);
     setShowMobileMenu(false);
   };
@@ -138,7 +68,6 @@ export default function App() {
       await updateGoal(id, { status, progress });
     } catch (error) {
       console.error('Error updating goal progress:', error);
-      setAppError('Failed to update goal progress. Please try again.');
     }
   };
 
