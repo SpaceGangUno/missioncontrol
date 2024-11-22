@@ -29,7 +29,6 @@ function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Handle click outside profile menu
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
@@ -50,12 +49,10 @@ function AppContent() {
     return <WelcomeScreen />;
   }
 
-  const handleLogout = async () => {
-    try {
-      await auth.signOut();
-    } catch (error) {
+  const handleLogout = () => {
+    auth.signOut().catch(error => {
       console.error('Error signing out:', error);
-    }
+    });
   };
 
   const handleViewChange = (path: string) => {
@@ -63,12 +60,10 @@ function AppContent() {
     setShowMobileMenu(false);
   };
 
-  const handleUpdateProgress = async (id: string, status: Goal['status'], progress: number) => {
-    try {
-      await updateGoal(id, { status, progress });
-    } catch (error) {
+  const handleUpdateProgress = (id: string, status: Goal['status'], progress: number) => {
+    updateGoal(id, { status, progress }).catch(error => {
       console.error('Error updating goal progress:', error);
-    }
+    });
   };
 
   return (

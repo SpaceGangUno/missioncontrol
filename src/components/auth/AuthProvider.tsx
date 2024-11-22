@@ -17,8 +17,6 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const setStoreUser = useStore(state => state.setUser);
 
   useEffect(() => {
@@ -26,25 +24,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (user) => {
         setUser(user);
         setStoreUser(user);
-        setLoading(false);
-        setError(null);
       },
       (error) => {
         console.error('Auth state error:', error);
-        setError('Authentication error');
-        setLoading(false);
       }
     );
 
     return () => unsubscribe();
   }, [setStoreUser]);
 
-  if (!user) {
-    return children;
-  }
-
   return (
-    <AuthContext.Provider value={{ user, loading, error }}>
+    <AuthContext.Provider value={{ user, loading: false, error: null }}>
       {children}
     </AuthContext.Provider>
   );
