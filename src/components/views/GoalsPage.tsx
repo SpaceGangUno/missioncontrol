@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Goal } from '../../types';
 import AddGoalForm from '../AddGoalForm';
-import { Plus, CheckCircle } from 'lucide-react';
+import { Plus, CheckCircle, Save } from 'lucide-react';
 
 type TimeFrame = 'yearly' | 'monthly' | 'weekly' | 'daily';
 
@@ -26,6 +26,7 @@ export default function GoalsPage() {
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeFrame>('monthly');
   const [showAddGoal, setShowAddGoal] = useState(false);
   const [goals, setGoals] = useState<GoalWithTimeframe[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   const [dailyPlan, setDailyPlan] = useState<DailyPlan>({
     gratitude: '',
     makeItEleven: '',
@@ -89,6 +90,33 @@ export default function GoalsPage() {
       ...prev,
       topGoals: prev.topGoals.map((goal, i) => i === index ? value : goal)
     }));
+  };
+
+  const handleSaveDailyPlan = async () => {
+    setIsSaving(true);
+    try {
+      // Here you would typically save to your backend
+      console.log('Saving daily plan:', dailyPlan);
+      // Mock successful save
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // Clear form after successful save
+      setDailyPlan({
+        gratitude: '',
+        makeItEleven: '',
+        greatDay: '',
+        topGoals: ['', '', '', '', ''],
+        sideQuest: '',
+        meals: {
+          breakfast: '',
+          lunch: '',
+          dinner: ''
+        }
+      });
+    } catch (error) {
+      console.error('Error saving daily plan:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const filteredGoals = goals.filter(goal => goal.timeframe === selectedTimeframe);
@@ -199,6 +227,17 @@ export default function GoalsPage() {
                 />
               </div>
             </div>
+          </div>
+
+          <div className="flex justify-end pt-4">
+            <button
+              onClick={handleSaveDailyPlan}
+              disabled={isSaving}
+              className="px-6 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
+            >
+              <Save className="w-5 h-5" />
+              {isSaving ? 'Saving...' : 'Save Day'}
+            </button>
           </div>
         </div>
       </div>
