@@ -32,7 +32,7 @@ export default function App() {
         <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-3xl font-bold mb-1">
-              Hey {user.displayName.split(' ')[0]} 👋
+              Greetings {user.displayName.split(' ')[0]} 👽
             </h1>
             <p className="text-indigo-200/80 text-sm">Your financial wellness journey</p>
           </div>
