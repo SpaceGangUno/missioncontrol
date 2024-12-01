@@ -39,13 +39,30 @@ export default function AddGoalForm({ onClose, onAddGoal }: Props) {
     }
   };
 
+  const handleClose = (e: React.MouseEvent) => {
+    // Prevent event from bubbling up to parent elements
+    e.stopPropagation();
+    onClose();
+  };
+
+  const handleModalClick = (e: React.MouseEvent) => {
+    // Prevent clicks inside the modal from closing it
+    e.stopPropagation();
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[90] backdrop-blur-sm">
-      <div className="glass-card p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[90] backdrop-blur-sm"
+      onClick={handleClose}
+    >
+      <div 
+        className="glass-card p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        onClick={handleModalClick}
+      >
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold text-sky-100">Add New Goal</h3>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-sky-400/60 hover:text-sky-400 p-1 rounded-lg hover:bg-white/5 transition-colors"
           >
             <X className="w-5 h-5" />
@@ -124,7 +141,7 @@ export default function AddGoalForm({ onClose, onAddGoal }: Props) {
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 text-sky-400 hover:bg-sky-400/10 rounded transition-colors"
             >
               Cancel

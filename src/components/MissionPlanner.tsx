@@ -11,8 +11,12 @@ export default function MissionPlanner({ onAddMission }: Props) {
   const [showAddForm, setShowAddForm] = useState(false);
 
   const handleAddGoal = async (goal: Omit<Goal, 'id' | 'completed' | 'createdAt'>) => {
-    await onAddMission(goal);
-    setShowAddForm(false);
+    try {
+      await onAddMission(goal);
+      setShowAddForm(false);
+    } catch (error) {
+      console.error('Error adding goal:', error);
+    }
   };
 
   return (
@@ -27,9 +31,11 @@ export default function MissionPlanner({ onAddMission }: Props) {
           Add Goal
         </button>
       </div>
+      
+      {/* Only render AddGoalForm when showAddForm is true */}
       {showAddForm && (
         <AddGoalForm 
-          onAddGoal={handleAddGoal} 
+          onAddGoal={handleAddGoal}
           onClose={() => setShowAddForm(false)}
         />
       )}
