@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Goal } from '../../types';
 import AddGoalForm from '../AddGoalForm';
-import { Plus, CheckCircle, Save, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Plus, CheckCircle, Save, ChevronLeft, ChevronRight, Calendar, Edit2 } from 'lucide-react';
 
 type TimeFrame = 'yearly' | 'monthly' | 'weekly' | 'daily';
 
@@ -30,6 +30,7 @@ export default function GoalsPage() {
   const [goals, setGoals] = useState<GoalWithTimeframe[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [savedDailyPlans, setSavedDailyPlans] = useState<DailyPlan[]>([]);
   const [dailyPlan, setDailyPlan] = useState<DailyPlan>({
@@ -52,15 +53,11 @@ export default function GoalsPage() {
   const totalGoals = goals.length;
   const progressPercentage = totalGoals > 0 ? (completedGoals / totalGoals) * 100 : 0;
 
-  // Mock function to simulate loading saved plans
-  // In a real app, this would fetch from your backend
   useEffect(() => {
     const loadSavedPlans = async () => {
       setIsLoading(true);
       try {
-        // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 500));
-        // For demo purposes, we'll create some mock data
         const mockPlans: DailyPlan[] = [
           {
             id: '1',
@@ -79,7 +76,6 @@ export default function GoalsPage() {
         ];
         setSavedDailyPlans(mockPlans);
         
-        // Load the plan for the selected date if it exists
         const existingPlan = mockPlans.find(plan => plan.date === selectedDate);
         if (existingPlan) {
           setDailyPlan(existingPlan);
@@ -102,7 +98,6 @@ export default function GoalsPage() {
     if (existingPlan) {
       setDailyPlan(existingPlan);
     } else {
-      // Reset form for new date
       setDailyPlan({
         date: newDate,
         gratitude: '',
@@ -175,15 +170,10 @@ export default function GoalsPage() {
   const handleSaveDailyPlan = async () => {
     setIsSaving(true);
     try {
-      // Here you would typically save to your backend
       console.log('Saving daily plan:', dailyPlan);
-      // Mock successful save
       await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Update saved plans
       const updatedPlans = savedDailyPlans.filter(plan => plan.date !== dailyPlan.date);
       setSavedDailyPlans([...updatedPlans, { ...dailyPlan, id: dailyPlan.id || Date.now().toString() }]);
-      
     } catch (error) {
       console.error('Error saving daily plan:', error);
     } finally {
@@ -192,6 +182,130 @@ export default function GoalsPage() {
   };
 
   const filteredGoals = goals.filter(goal => goal.timeframe === selectedTimeframe);
+
+  const renderReadOnlyDay = () => (
+    <div className="space-y-6">
+      {/* Date Navigation */}
+      <div className="flex items-center justify-between mb-4 glass-card p-4 rounded-lg">
+        <button
+          onClick={() => handleNavigateDay('prev')}
+          className="p-2 hover:bg-sky-500/10 rounded-lg transition-colors"
+        >
+          <ChevronLeft className="w-5 h-5 text-sky-300" />
+        </button>
+        
+        <div className="flex items-center gap-2">
+          <Calendar className="w-5 h-5 text-sky-300" />
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => handleDateChange(e.target.value)}
+            className="glass-input py-1 px-2"
+          />
+        </div>
+
+        <button
+          onClick={() => handleNavigateDay('next')}
+          className="p-2 hover:bg-sky-500/10 rounded-lg transition-colors"
+        >
+          <ChevronRight className="w-5 h-5 text-sky-300" />
+        </button>
+      </div>
+
+      <div className="glass-card p-6 rounded-lg relative">
+        <button
+          onClick={() => setIsEditMode(true)}
+          className="absolute top-4 right-4 p-2 hover:bg-sky-500/10 rounded-lg transition-colors text-sky-300 hover:text-sky-400"
+        >
+          <Edit2 className="w-5 h-5" />
+        </button>
+
+        <div className="space-y-8">
+          <div>
+            <h3 className="text-lg font-medium text-sky-100 mb-2 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300">
+                🙏
+              </span>
+              Gratitude
+            </h3>
+            <p className="text-sky-300 pl-10">{dailyPlan.gratitude || 'No gratitude entry for today'}</p>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-medium text-sky-100 mb-2 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300">
+                💫
+              </span>
+              Make it an 11
+            </h3>
+            <p className="text-sky-300 pl-10">{dailyPlan.makeItEleven || 'No entry for making today an 11'}</p>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-medium text-sky-100 mb-2 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300">
+                ⭐️
+              </span>
+              Great Day Goals
+            </h3>
+            <p className="text-sky-300 pl-10">{dailyPlan.greatDay || 'No great day goals set'}</p>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-medium text-sky-100 mb-2 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300">
+                🎯
+              </span>
+              Top 5 Goals
+            </h3>
+            <div className="space-y-2 pl-10">
+              {dailyPlan.topGoals.map((goal, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-sky-500/10 flex items-center justify-center text-sky-300 text-sm">
+                    {index + 1}
+                  </div>
+                  <p className="text-sky-300">{goal || 'No goal set'}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-medium text-sky-100 mb-2 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300">
+                ⚔️
+              </span>
+              Side Quest
+            </h3>
+            <p className="text-sky-300 pl-10">{dailyPlan.sideQuest || 'No side quest set'}</p>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-medium text-sky-100 mb-2 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300">
+                🍽️
+              </span>
+              Meals
+            </h3>
+            <div className="space-y-2 pl-10">
+              <div>
+                <span className="text-sky-300/60 text-sm">Breakfast:</span>
+                <p className="text-sky-300">{dailyPlan.meals.breakfast || 'No breakfast planned'}</p>
+              </div>
+              <div>
+                <span className="text-sky-300/60 text-sm">Lunch:</span>
+                <p className="text-sky-300">{dailyPlan.meals.lunch || 'No lunch planned'}</p>
+              </div>
+              <div>
+                <span className="text-sky-300/60 text-sm">Dinner:</span>
+                <p className="text-sky-300">{dailyPlan.meals.dinner || 'No dinner planned'}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   const renderDailyTemplate = () => (
     <div className="space-y-6">
@@ -334,14 +448,25 @@ export default function GoalsPage() {
             </div>
 
             <div className="flex justify-end pt-4">
-              <button
-                onClick={handleSaveDailyPlan}
-                disabled={isSaving}
-                className="px-6 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
-              >
-                <Save className="w-5 h-5" />
-                {isSaving ? 'Saving...' : 'Save Day'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsEditMode(false)}
+                  className="px-4 py-2 text-sky-300 hover:bg-sky-500/10 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    await handleSaveDailyPlan();
+                    setIsEditMode(false);
+                  }}
+                  disabled={isSaving}
+                  className="px-6 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  <Save className="w-5 h-5" />
+                  {isSaving ? 'Saving...' : 'Save Day'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -376,7 +501,12 @@ export default function GoalsPage() {
         {timeframes.map((timeframe) => (
           <button
             key={timeframe}
-            onClick={() => setSelectedTimeframe(timeframe)}
+            onClick={() => {
+              setSelectedTimeframe(timeframe);
+              if (timeframe === 'daily') {
+                setIsEditMode(false);
+              }
+            }}
             className={`flex-1 py-2 px-4 rounded-md transition-colors capitalize
               ${selectedTimeframe === timeframe 
                 ? 'bg-sky-500 text-white' 
@@ -389,7 +519,7 @@ export default function GoalsPage() {
 
       {/* Content Section */}
       {selectedTimeframe === 'daily' ? (
-        renderDailyTemplate()
+        isEditMode ? renderDailyTemplate() : renderReadOnlyDay()
       ) : (
         <div className="space-y-4">
           {filteredGoals.map((goal) => (
