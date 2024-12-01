@@ -3,9 +3,9 @@ import { useAuth } from './components/auth/AuthProvider';
 import LoginPage from './components/auth/LoginPage';
 import WelcomeScreen from './components/onboarding/WelcomeScreen';
 import { useStore } from './lib/store';
-import { Home, Heart, Wallet, Brain, User, Sparkles } from 'lucide-react';
+import { Home, Heart, Wallet, Target, User, Sparkles } from 'lucide-react';
 
-type ViewType = 'home' | 'wellbeing' | 'finance' | 'insights' | 'profile';
+type ViewType = 'home' | 'wellbeing' | 'finance' | 'goals' | 'profile';
 
 export default function App() {
   const { user } = useAuth();
@@ -92,7 +92,7 @@ export default function App() {
             </p>
           </div>
           <div className="glass-card p-4 rounded-[20px] hover-card">
-            <Brain className="w-6 h-6 text-cyan-400 mb-3" />
+            <Target className="w-6 h-6 text-cyan-400 mb-3" />
             <h3 className="font-medium text-sm mb-1">Money Mindful</h3>
             <p className="text-xs text-indigo-200/60">
               You've saved 15% more than usual
@@ -122,7 +122,7 @@ export default function App() {
             { icon: Home, label: 'Home', view: 'home' },
             { icon: Heart, label: 'Wellbeing', view: 'wellbeing' },
             { icon: Wallet, label: 'Finance', view: 'finance' },
-            { icon: Brain, label: 'Insights', view: 'insights' },
+            { icon: Target, label: 'Goals', view: 'goals' },
             { icon: User, label: 'Profile', view: 'profile' },
           ].map(({ icon: Icon, label, view }) => (
             <button 
