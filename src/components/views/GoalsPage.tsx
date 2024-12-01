@@ -24,7 +24,7 @@ interface GoalWithTimeframe extends Goal {
   timeframe: TimeFrame;
 }
 
-export default function GoalsPage() {
+export default function GoalsPage(): JSX.Element {
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeFrame>('monthly');
   const [showAddGoal, setShowAddGoal] = useState(false);
   const [goals, setGoals] = useState<GoalWithTimeframe[]>([]);
@@ -142,8 +142,7 @@ export default function GoalsPage() {
     setGoals(goals.filter(goal => goal.id !== goalId));
   };
 
-  const handleDailyPlanChange = (field: keyof DailyPlan, value: string) => {
-    if (field === 'meals') return;
+  const handleDailyPlanChange = (field: keyof Omit<DailyPlan, 'id' | 'date' | 'meals'>, value: string) => {
     setDailyPlan(prev => ({
       ...prev,
       [field]: value
@@ -221,84 +220,90 @@ export default function GoalsPage() {
         </button>
 
         <div className="space-y-8">
-          <div>
-            <h3 className="text-lg font-medium text-sky-100 mb-2 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300">
-                🙏
-              </span>
-              Gratitude
-            </h3>
-            <p className="text-sky-300 pl-10">{dailyPlan.gratitude || 'No gratitude entry for today'}</p>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-medium text-sky-100 mb-2 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300">
-                💫
-              </span>
-              Make it an 11
-            </h3>
-            <p className="text-sky-300 pl-10">{dailyPlan.makeItEleven || 'No entry for making today an 11'}</p>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-medium text-sky-100 mb-2 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300">
-                ⭐️
-              </span>
-              Great Day Goals
-            </h3>
-            <p className="text-sky-300 pl-10">{dailyPlan.greatDay || 'No great day goals set'}</p>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-medium text-sky-100 mb-2 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300">
-                🎯
-              </span>
-              Top 5 Goals
-            </h3>
-            <div className="space-y-2 pl-10">
-              {dailyPlan.topGoals.map((goal, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-sky-500/10 flex items-center justify-center text-sky-300 text-sm">
-                    {index + 1}
-                  </div>
-                  <p className="text-sky-300">{goal || 'No goal set'}</p>
-                </div>
-              ))}
+          {/* Gratitude */}
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300 shrink-0">
+              🙏
+            </div>
+            <div>
+              <h3 className="text-xl font-medium text-sky-100 mb-2">Gratitude</h3>
+              <p className="text-lg text-sky-300 leading-relaxed">{dailyPlan.gratitude || 'No gratitude entry for today'}</p>
             </div>
           </div>
 
-          <div>
-            <h3 className="text-lg font-medium text-sky-100 mb-2 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300">
-                ⚔️
-              </span>
-              Side Quest
-            </h3>
-            <p className="text-sky-300 pl-10">{dailyPlan.sideQuest || 'No side quest set'}</p>
+          {/* Make it an 11 */}
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300 shrink-0">
+              💫
+            </div>
+            <div>
+              <h3 className="text-xl font-medium text-sky-100 mb-2">Make it an 11</h3>
+              <p className="text-lg text-sky-300 leading-relaxed">{dailyPlan.makeItEleven || 'No entry for making today an 11'}</p>
+            </div>
           </div>
 
-          <div>
-            <h3 className="text-lg font-medium text-sky-100 mb-2 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300">
-                🍽️
-              </span>
-              Meals
-            </h3>
-            <div className="space-y-2 pl-10">
-              <div>
-                <span className="text-sky-300/60 text-sm">Breakfast:</span>
-                <p className="text-sky-300">{dailyPlan.meals.breakfast || 'No breakfast planned'}</p>
+          {/* Great Day Goals */}
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300 shrink-0">
+              ⭐️
+            </div>
+            <div>
+              <h3 className="text-xl font-medium text-sky-100 mb-2">Great Day Goals</h3>
+              <p className="text-lg text-sky-300 leading-relaxed">{dailyPlan.greatDay || 'No great day goals set'}</p>
+            </div>
+          </div>
+
+          {/* Top 5 Goals */}
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300 shrink-0">
+              🎯
+            </div>
+            <div>
+              <h3 className="text-xl font-medium text-sky-100 mb-2">Top 5 Goals</h3>
+              <div className="space-y-3">
+                {dailyPlan.topGoals.map((goal, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg">
+                      {index + 1}
+                    </div>
+                    <p className="text-lg text-sky-300">{goal || 'No goal set'}</p>
+                  </div>
+                ))}
               </div>
-              <div>
-                <span className="text-sky-300/60 text-sm">Lunch:</span>
-                <p className="text-sky-300">{dailyPlan.meals.lunch || 'No lunch planned'}</p>
-              </div>
-              <div>
-                <span className="text-sky-300/60 text-sm">Dinner:</span>
-                <p className="text-sky-300">{dailyPlan.meals.dinner || 'No dinner planned'}</p>
+            </div>
+          </div>
+
+          {/* Side Quest */}
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300 shrink-0">
+              ⚔️
+            </div>
+            <div>
+              <h3 className="text-xl font-medium text-sky-100 mb-2">Side Quest</h3>
+              <p className="text-lg text-sky-300 leading-relaxed">{dailyPlan.sideQuest || 'No side quest set'}</p>
+            </div>
+          </div>
+
+          {/* Meals */}
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300 shrink-0">
+              🍽️
+            </div>
+            <div>
+              <h3 className="text-xl font-medium text-sky-100 mb-2">Meals</h3>
+              <div className="space-y-3">
+                <div>
+                  <h4 className="text-lg text-sky-300/80 mb-1">Breakfast</h4>
+                  <p className="text-lg text-sky-300">{dailyPlan.meals.breakfast || 'No breakfast planned'}</p>
+                </div>
+                <div>
+                  <h4 className="text-lg text-sky-300/80 mb-1">Lunch</h4>
+                  <p className="text-lg text-sky-300">{dailyPlan.meals.lunch || 'No lunch planned'}</p>
+                </div>
+                <div>
+                  <h4 className="text-lg text-sky-300/80 mb-1">Dinner</h4>
+                  <p className="text-lg text-sky-300">{dailyPlan.meals.dinner || 'No dinner planned'}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -342,107 +347,147 @@ export default function GoalsPage() {
         </div>
       ) : (
         <div className="glass-card p-6 rounded-lg">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-sky-100 mb-2">
-                Today I'm grateful for:
-              </label>
-              <textarea
-                value={dailyPlan.gratitude}
-                onChange={(e) => handleDailyPlanChange('gratitude', e.target.value)}
-                className="glass-input min-h-[80px]"
-                placeholder="Express your gratitude..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-sky-100 mb-2">
-                How am I going to make today an 11:
-              </label>
-              <textarea
-                value={dailyPlan.makeItEleven}
-                onChange={(e) => handleDailyPlanChange('makeItEleven', e.target.value)}
-                className="glass-input min-h-[80px]"
-                placeholder="What will make today exceptional?"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-sky-100 mb-2">
-                Today would be great if I:
-              </label>
-              <textarea
-                value={dailyPlan.greatDay}
-                onChange={(e) => handleDailyPlanChange('greatDay', e.target.value)}
-                className="glass-input min-h-[80px]"
-                placeholder="What would make today great?"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-sky-100 mb-2">
-                Top 5 Goals for the day:
-              </label>
-              <div className="space-y-2">
-                {dailyPlan.topGoals.map((goal, index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    value={goal}
-                    onChange={(e) => handleTopGoalChange(index, e.target.value)}
-                    className="glass-input"
-                    placeholder={`Goal ${index + 1}`}
-                  />
-                ))}
+          <div className="space-y-8">
+            {/* Gratitude */}
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300 shrink-0">
+                🙏
+              </div>
+              <div className="flex-1">
+                <label className="block text-xl font-medium text-sky-100 mb-2">
+                  Gratitude
+                </label>
+                <textarea
+                  value={dailyPlan.gratitude}
+                  onChange={(e) => handleDailyPlanChange('gratitude', e.target.value)}
+                  className="glass-input min-h-[80px] text-lg"
+                  placeholder="What are you grateful for today?"
+                />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-sky-100 mb-2">
-                Side Quest:
-              </label>
-              <textarea
-                value={dailyPlan.sideQuest}
-                onChange={(e) => handleDailyPlanChange('sideQuest', e.target.value)}
-                className="glass-input min-h-[80px]"
-                placeholder="Any additional goals or quests?"
-              />
+            {/* Make it an 11 */}
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300 shrink-0">
+                💫
+              </div>
+              <div className="flex-1">
+                <label className="block text-xl font-medium text-sky-100 mb-2">
+                  Make it an 11
+                </label>
+                <textarea
+                  value={dailyPlan.makeItEleven}
+                  onChange={(e) => handleDailyPlanChange('makeItEleven', e.target.value)}
+                  className="glass-input min-h-[80px] text-lg"
+                  placeholder="How will you make today exceptional?"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-sky-100 mb-2">
-                Meals:
-              </label>
-              <div className="space-y-2">
-                <div>
-                  <label className="block text-xs text-sky-300 mb-1">Breakfast:</label>
-                  <input
-                    type="text"
-                    value={dailyPlan.meals.breakfast}
-                    onChange={(e) => handleMealChange('breakfast', e.target.value)}
-                    className="glass-input"
-                    placeholder="What's for breakfast?"
-                  />
+            {/* Great Day Goals */}
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300 shrink-0">
+                ⭐️
+              </div>
+              <div className="flex-1">
+                <label className="block text-xl font-medium text-sky-100 mb-2">
+                  Great Day Goals
+                </label>
+                <textarea
+                  value={dailyPlan.greatDay}
+                  onChange={(e) => handleDailyPlanChange('greatDay', e.target.value)}
+                  className="glass-input min-h-[80px] text-lg"
+                  placeholder="What would make today great?"
+                />
+              </div>
+            </div>
+
+            {/* Top 5 Goals */}
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300 shrink-0">
+                🎯
+              </div>
+              <div className="flex-1">
+                <label className="block text-xl font-medium text-sky-100 mb-2">
+                  Top 5 Goals
+                </label>
+                <div className="space-y-3">
+                  {dailyPlan.topGoals.map((goal, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg">
+                        {index + 1}
+                      </div>
+                      <input
+                        type="text"
+                        value={goal}
+                        onChange={(e) => handleTopGoalChange(index, e.target.value)}
+                        className="glass-input text-lg flex-1"
+                        placeholder={`Goal ${index + 1}`}
+                      />
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <label className="block text-xs text-sky-300 mb-1">Lunch:</label>
-                  <input
-                    type="text"
-                    value={dailyPlan.meals.lunch}
-                    onChange={(e) => handleMealChange('lunch', e.target.value)}
-                    className="glass-input"
-                    placeholder="What's for lunch?"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-sky-300 mb-1">Dinner:</label>
-                  <input
-                    type="text"
-                    value={dailyPlan.meals.dinner}
-                    onChange={(e) => handleMealChange('dinner', e.target.value)}
-                    className="glass-input"
-                    placeholder="What's for dinner?"
-                  />
+              </div>
+            </div>
+
+            {/* Side Quest */}
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300 shrink-0">
+                ⚔️
+              </div>
+              <div className="flex-1">
+                <label className="block text-xl font-medium text-sky-100 mb-2">
+                  Side Quest
+                </label>
+                <textarea
+                  value={dailyPlan.sideQuest}
+                  onChange={(e) => handleDailyPlanChange('sideQuest', e.target.value)}
+                  className="glass-input min-h-[80px] text-lg"
+                  placeholder="Any additional goals or quests?"
+                />
+              </div>
+            </div>
+
+            {/* Meals */}
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300 shrink-0">
+                🍽️
+              </div>
+              <div className="flex-1">
+                <label className="block text-xl font-medium text-sky-100 mb-2">
+                  Meals
+                </label>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-lg text-sky-300/80 mb-1">Breakfast</label>
+                    <input
+                      type="text"
+                      value={dailyPlan.meals.breakfast}
+                      onChange={(e) => handleMealChange('breakfast', e.target.value)}
+                      className="glass-input text-lg"
+                      placeholder="What's for breakfast?"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-lg text-sky-300/80 mb-1">Lunch</label>
+                    <input
+                      type="text"
+                      value={dailyPlan.meals.lunch}
+                      onChange={(e) => handleMealChange('lunch', e.target.value)}
+                      className="glass-input text-lg"
+                      placeholder="What's for lunch?"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-lg text-sky-300/80 mb-1">Dinner</label>
+                    <input
+                      type="text"
+                      value={dailyPlan.meals.dinner}
+                      onChange={(e) => handleMealChange('dinner', e.target.value)}
+                      className="glass-input text-lg"
+                      placeholder="What's for dinner?"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -451,7 +496,7 @@ export default function GoalsPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setIsEditMode(false)}
-                  className="px-4 py-2 text-sky-300 hover:bg-sky-500/10 rounded-lg transition-colors"
+                  className="px-6 py-3 text-lg text-sky-300 hover:bg-sky-500/10 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
@@ -461,7 +506,7 @@ export default function GoalsPage() {
                     setIsEditMode(false);
                   }}
                   disabled={isSaving}
-                  className="px-6 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
+                  className="px-8 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 text-lg"
                 >
                   <Save className="w-5 h-5" />
                   {isSaving ? 'Saving...' : 'Save Day'}
