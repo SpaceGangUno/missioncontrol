@@ -183,87 +183,87 @@ const GoalsPage: React.FC = () => {
   const filteredGoals = goals.filter(goal => goal.timeframe === selectedTimeframe);
 
   const renderReadOnlyDay = () => (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Date Navigation */}
-      <div className="flex items-center justify-between glass-card p-6 rounded-xl">
+      <div className="mobile-date-nav glass-card">
         <button
           onClick={() => handleNavigateDay('prev')}
-          className="p-3 hover:bg-sky-500/10 rounded-xl transition-colors"
+          className="mobile-nav-button"
         >
-          <ChevronLeft className="w-6 h-6 text-sky-300" />
+          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-sky-300" />
         </button>
         
-        <div className="flex items-center gap-4">
-          <Calendar className="w-6 h-6 text-sky-300" />
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-sky-300" />
           <input
             type="date"
             value={selectedDate}
             onChange={(e) => handleDateChange(e.target.value)}
-            className="glass-input dyslexic-input py-2 px-4 rounded-xl"
+            className="glass-input dyslexic-input py-2 px-3 sm:px-4 rounded-xl"
           />
         </div>
 
         <button
           onClick={() => handleNavigateDay('next')}
-          className="p-3 hover:bg-sky-500/10 rounded-xl transition-colors"
+          className="mobile-nav-button"
         >
-          <ChevronRight className="w-6 h-6 text-sky-300" />
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-sky-300" />
         </button>
       </div>
 
       <div className="glass-card dyslexic-card rounded-xl relative">
         <button
           onClick={() => setIsEditMode(true)}
-          className="absolute top-6 right-6 p-3 hover:bg-sky-500/10 rounded-xl transition-colors text-sky-300 hover:text-sky-400"
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 p-3 hover:bg-sky-500/10 rounded-xl transition-colors text-sky-300 hover:text-sky-400"
         >
-          <Edit2 className="w-6 h-6" />
+          <Edit2 className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
 
-        <div className="space-y-12">
+        <div className="space-y-8 sm:space-y-12">
           {/* Gratitude */}
-          <div className="flex items-start gap-6">
-            <div className="w-12 h-12 rounded-xl bg-sky-500/20 flex items-center justify-center text-2xl shrink-0">
+          <div className="mobile-input-group">
+            <div className="mobile-icon">
               🙏
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h3 className="dyslexic-heading text-sky-100">Gratitude</h3>
               <p className="dyslexic-text text-sky-300">{dailyPlan.gratitude || 'No gratitude entry for today'}</p>
             </div>
           </div>
 
           {/* Make it an 11 */}
-          <div className="flex items-start gap-6">
-            <div className="w-12 h-12 rounded-xl bg-sky-500/20 flex items-center justify-center text-2xl shrink-0">
+          <div className="mobile-input-group">
+            <div className="mobile-icon">
               💫
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h3 className="dyslexic-heading text-sky-100">Make it an 11</h3>
               <p className="dyslexic-text text-sky-300">{dailyPlan.makeItEleven || 'No entry for making today an 11'}</p>
             </div>
           </div>
 
           {/* Great Day Goals */}
-          <div className="flex items-start gap-6">
-            <div className="w-12 h-12 rounded-xl bg-sky-500/20 flex items-center justify-center text-2xl shrink-0">
+          <div className="mobile-input-group">
+            <div className="mobile-icon">
               ⭐️
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h3 className="dyslexic-heading text-sky-100">Great Day Goals</h3>
               <p className="dyslexic-text text-sky-300">{dailyPlan.greatDay || 'No great day goals set'}</p>
             </div>
           </div>
 
           {/* Top 5 Goals */}
-          <div className="flex items-start gap-6">
-            <div className="w-12 h-12 rounded-xl bg-sky-500/20 flex items-center justify-center text-2xl shrink-0">
+          <div className="mobile-input-group">
+            <div className="mobile-icon">
               🎯
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h3 className="dyslexic-heading text-sky-100">Top 5 Goals</h3>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {dailyPlan.topGoals.map((goal, index) => (
-                  <div key={index} className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-xl">
+                  <div key={index} className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg sm:text-xl">
                       {index + 1}
                     </div>
                     <p className="dyslexic-text text-sky-300">{goal || 'No goal set'}</p>
@@ -274,34 +274,34 @@ const GoalsPage: React.FC = () => {
           </div>
 
           {/* Side Quest */}
-          <div className="flex items-start gap-6">
-            <div className="w-12 h-12 rounded-xl bg-sky-500/20 flex items-center justify-center text-2xl shrink-0">
+          <div className="mobile-input-group">
+            <div className="mobile-icon">
               ⚔️
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h3 className="dyslexic-heading text-sky-100">Side Quest</h3>
               <p className="dyslexic-text text-sky-300">{dailyPlan.sideQuest || 'No side quest set'}</p>
             </div>
           </div>
 
           {/* Meals */}
-          <div className="flex items-start gap-6">
-            <div className="w-12 h-12 rounded-xl bg-sky-500/20 flex items-center justify-center text-2xl shrink-0">
+          <div className="mobile-input-group">
+            <div className="mobile-icon">
               🍽️
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h3 className="dyslexic-heading text-sky-100">Meals</h3>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <h4 className="text-xl text-sky-300/80 mb-2">Breakfast</h4>
+                  <h4 className="text-lg sm:text-xl text-sky-300/80 mb-1 sm:mb-2">Breakfast</h4>
                   <p className="dyslexic-text text-sky-300">{dailyPlan.meals.breakfast || 'No breakfast planned'}</p>
                 </div>
                 <div>
-                  <h4 className="text-xl text-sky-300/80 mb-2">Lunch</h4>
+                  <h4 className="text-lg sm:text-xl text-sky-300/80 mb-1 sm:mb-2">Lunch</h4>
                   <p className="dyslexic-text text-sky-300">{dailyPlan.meals.lunch || 'No lunch planned'}</p>
                 </div>
                 <div>
-                  <h4 className="text-xl text-sky-300/80 mb-2">Dinner</h4>
+                  <h4 className="text-lg sm:text-xl text-sky-300/80 mb-1 sm:mb-2">Dinner</h4>
                   <p className="dyslexic-text text-sky-300">{dailyPlan.meals.dinner || 'No dinner planned'}</p>
                 </div>
               </div>
@@ -313,48 +313,48 @@ const GoalsPage: React.FC = () => {
   );
 
   const renderDailyTemplate = () => (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Date Navigation */}
-      <div className="flex items-center justify-between glass-card p-6 rounded-xl">
+      <div className="mobile-date-nav glass-card">
         <button
           onClick={() => handleNavigateDay('prev')}
-          className="p-3 hover:bg-sky-500/10 rounded-xl transition-colors"
+          className="mobile-nav-button"
         >
-          <ChevronLeft className="w-6 h-6 text-sky-300" />
+          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-sky-300" />
         </button>
         
-        <div className="flex items-center gap-4">
-          <Calendar className="w-6 h-6 text-sky-300" />
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-sky-300" />
           <input
             type="date"
             value={selectedDate}
             onChange={(e) => handleDateChange(e.target.value)}
-            className="glass-input dyslexic-input py-2 px-4 rounded-xl"
+            className="glass-input dyslexic-input py-2 px-3 sm:px-4 rounded-xl"
           />
         </div>
 
         <button
           onClick={() => handleNavigateDay('next')}
-          className="p-3 hover:bg-sky-500/10 rounded-xl transition-colors"
+          className="mobile-nav-button"
         >
-          <ChevronRight className="w-6 h-6 text-sky-300" />
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-sky-300" />
         </button>
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12 text-sky-300 dyslexic-text">
+        <div className="text-center py-8 sm:py-12 text-sky-300 dyslexic-text">
           Loading...
         </div>
       ) : (
         <div className="glass-card dyslexic-card rounded-xl">
-          <div className="space-y-12">
+          <div className="space-y-8 sm:space-y-12">
             {/* Gratitude */}
-            <div className="flex items-start gap-6">
-              <div className="w-12 h-12 rounded-xl bg-sky-500/20 flex items-center justify-center text-2xl shrink-0">
+            <div className="mobile-input-group">
+              <div className="mobile-icon">
                 🙏
               </div>
-              <div className="flex-1">
-                <label className="dyslexic-label block mb-4">
+              <div className="flex-1 min-w-0">
+                <label className="dyslexic-label block">
                   Gratitude
                 </label>
                 <textarea
@@ -367,12 +367,12 @@ const GoalsPage: React.FC = () => {
             </div>
 
             {/* Make it an 11 */}
-            <div className="flex items-start gap-6">
-              <div className="w-12 h-12 rounded-xl bg-sky-500/20 flex items-center justify-center text-2xl shrink-0">
+            <div className="mobile-input-group">
+              <div className="mobile-icon">
                 💫
               </div>
-              <div className="flex-1">
-                <label className="dyslexic-label block mb-4">
+              <div className="flex-1 min-w-0">
+                <label className="dyslexic-label block">
                   Make it an 11
                 </label>
                 <textarea
@@ -385,12 +385,12 @@ const GoalsPage: React.FC = () => {
             </div>
 
             {/* Great Day Goals */}
-            <div className="flex items-start gap-6">
-              <div className="w-12 h-12 rounded-xl bg-sky-500/20 flex items-center justify-center text-2xl shrink-0">
+            <div className="mobile-input-group">
+              <div className="mobile-icon">
                 ⭐️
               </div>
-              <div className="flex-1">
-                <label className="dyslexic-label block mb-4">
+              <div className="flex-1 min-w-0">
+                <label className="dyslexic-label block">
                   Great Day Goals
                 </label>
                 <textarea
@@ -403,18 +403,18 @@ const GoalsPage: React.FC = () => {
             </div>
 
             {/* Top 5 Goals */}
-            <div className="flex items-start gap-6">
-              <div className="w-12 h-12 rounded-xl bg-sky-500/20 flex items-center justify-center text-2xl shrink-0">
+            <div className="mobile-input-group">
+              <div className="mobile-icon">
                 🎯
               </div>
-              <div className="flex-1">
-                <label className="dyslexic-label block mb-4">
+              <div className="flex-1 min-w-0">
+                <label className="dyslexic-label block">
                   Top 5 Goals
                 </label>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {dailyPlan.topGoals.map((goal, index) => (
-                    <div key={index} className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-xl">
+                    <div key={index} className="flex items-center gap-3 sm:gap-4">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg sm:text-xl">
                         {index + 1}
                       </div>
                       <input
@@ -431,12 +431,12 @@ const GoalsPage: React.FC = () => {
             </div>
 
             {/* Side Quest */}
-            <div className="flex items-start gap-6">
-              <div className="w-12 h-12 rounded-xl bg-sky-500/20 flex items-center justify-center text-2xl shrink-0">
+            <div className="mobile-input-group">
+              <div className="mobile-icon">
                 ⚔️
               </div>
-              <div className="flex-1">
-                <label className="dyslexic-label block mb-4">
+              <div className="flex-1 min-w-0">
+                <label className="dyslexic-label block">
                   Side Quest
                 </label>
                 <textarea
@@ -449,17 +449,17 @@ const GoalsPage: React.FC = () => {
             </div>
 
             {/* Meals */}
-            <div className="flex items-start gap-6">
-              <div className="w-12 h-12 rounded-xl bg-sky-500/20 flex items-center justify-center text-2xl shrink-0">
+            <div className="mobile-input-group">
+              <div className="mobile-icon">
                 🍽️
               </div>
-              <div className="flex-1">
-                <label className="dyslexic-label block mb-4">
+              <div className="flex-1 min-w-0">
+                <label className="dyslexic-label block">
                   Meals
                 </label>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div>
-                    <label className="text-xl text-sky-300/80 mb-2 block">Breakfast</label>
+                    <label className="text-lg sm:text-xl text-sky-300/80 mb-1 sm:mb-2 block">Breakfast</label>
                     <input
                       type="text"
                       value={dailyPlan.meals.breakfast}
@@ -469,7 +469,7 @@ const GoalsPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="text-xl text-sky-300/80 mb-2 block">Lunch</label>
+                    <label className="text-lg sm:text-xl text-sky-300/80 mb-1 sm:mb-2 block">Lunch</label>
                     <input
                       type="text"
                       value={dailyPlan.meals.lunch}
@@ -479,7 +479,7 @@ const GoalsPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="text-xl text-sky-300/80 mb-2 block">Dinner</label>
+                    <label className="text-lg sm:text-xl text-sky-300/80 mb-1 sm:mb-2 block">Dinner</label>
                     <input
                       type="text"
                       value={dailyPlan.meals.dinner}
@@ -492,26 +492,24 @@ const GoalsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex justify-end pt-6">
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setIsEditMode(false)}
-                  className="px-8 py-4 text-xl text-sky-300 hover:bg-sky-500/10 rounded-xl transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={async () => {
-                    await handleSaveDailyPlan();
-                    setIsEditMode(false);
-                  }}
-                  disabled={isSaving}
-                  className="px-10 py-4 bg-sky-500 hover:bg-sky-600 text-white rounded-xl flex items-center gap-3 transition-colors disabled:opacity-50 text-xl"
-                >
-                  <Save className="w-6 h-6" />
-                  {isSaving ? 'Saving...' : 'Save Day'}
-                </button>
-              </div>
+            <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-4 sm:pt-6">
+              <button
+                onClick={() => setIsEditMode(false)}
+                className="mobile-button text-sky-300 hover:bg-sky-500/10"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  await handleSaveDailyPlan();
+                  setIsEditMode(false);
+                }}
+                disabled={isSaving}
+                className="mobile-button bg-sky-500 hover:bg-sky-600 text-white disabled:opacity-50"
+              >
+                <Save className="w-5 h-5 sm:w-6 sm:h-6" />
+                {isSaving ? 'Saving...' : 'Save Day'}
+              </button>
             </div>
           </div>
         </div>
@@ -520,29 +518,29 @@ const GoalsPage: React.FC = () => {
   );
 
   return (
-    <div className="container mx-auto px-6 py-12">
+    <div className="mobile-container">
       {/* Header Section */}
-      <div className="flex justify-between items-center mb-12">
+      <div className="mobile-header flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="dyslexic-heading text-4xl text-sky-100 mb-3">Goals</h1>
-          <div className="flex items-center gap-3 text-xl text-sky-300">
-            <CheckCircle className="w-6 h-6" />
+          <h1 className="dyslexic-heading text-3xl sm:text-4xl text-sky-100 mb-2 sm:mb-3">Goals</h1>
+          <div className="flex items-center gap-2 sm:gap-3 text-lg sm:text-xl text-sky-300">
+            <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />
             <span>{completedGoals} of {totalGoals} goals completed ({Math.round(progressPercentage)}%)</span>
           </div>
         </div>
         {selectedTimeframe !== 'daily' && (
           <button
             onClick={() => setShowAddGoal(true)}
-            className="px-6 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl flex items-center gap-3 transition-colors text-xl"
+            className="mobile-button bg-sky-500 hover:bg-sky-600 text-white"
           >
-            <Plus className="w-6 h-6" />
+            <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
             Add Goal
           </button>
         )}
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex space-x-2 mb-8 bg-sky-950/50 p-2 rounded-xl">
+      <div className="mobile-tabs">
         {timeframes.map((timeframe) => (
           <button
             key={timeframe}
@@ -552,10 +550,11 @@ const GoalsPage: React.FC = () => {
                 setIsEditMode(false);
               }
             }}
-            className={`flex-1 py-3 px-6 rounded-lg transition-colors capitalize text-xl
-              ${selectedTimeframe === timeframe 
+            className={`mobile-tab ${
+              selectedTimeframe === timeframe 
                 ? 'bg-sky-500 text-white' 
-                : 'text-sky-300 hover:bg-sky-900/50'}`}
+                : 'text-sky-300 hover:bg-sky-900/50'
+            }`}
           >
             {timeframe}
           </button>
@@ -570,26 +569,26 @@ const GoalsPage: React.FC = () => {
           {filteredGoals.map((goal) => (
             <div
               key={goal.id}
-              className="glass-card p-6 rounded-xl flex items-center justify-between gap-6"
+              className="mobile-goal-card glass-card"
             >
-              <div className="flex items-center gap-4 flex-1">
+              <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
                 <input
                   type="checkbox"
                   checked={goal.completed}
                   onChange={() => handleToggleGoal(goal.id)}
-                  className="w-6 h-6 rounded-lg border-sky-500 text-sky-500 focus:ring-sky-500"
+                  className="mobile-checkbox"
                 />
-                <div>
-                  <h3 className={`dyslexic-text ${goal.completed ? 'line-through text-sky-300/60' : 'text-sky-100'}`}>
+                <div className="min-w-0">
+                  <h3 className={`dyslexic-text truncate ${goal.completed ? 'line-through text-sky-300/60' : 'text-sky-100'}`}>
                     {goal.title}
                   </h3>
                   {goal.description && (
-                    <p className="text-lg text-sky-300/80 mt-1">{goal.description}</p>
+                    <p className="text-base sm:text-lg text-sky-300/80 mt-1 line-clamp-2">{goal.description}</p>
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className={`px-4 py-2 rounded-lg text-lg
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                <span className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-base sm:text-lg flex-1 sm:flex-none text-center
                   ${goal.priority === 'high' ? 'bg-rose-500/20 text-rose-300' :
                     goal.priority === 'medium' ? 'bg-amber-500/20 text-amber-300' :
                       'bg-emerald-500/20 text-emerald-300'}`}>
@@ -597,7 +596,7 @@ const GoalsPage: React.FC = () => {
                 </span>
                 <button
                   onClick={() => handleDeleteGoal(goal.id)}
-                  className="p-2 text-sky-300/60 hover:text-sky-300 hover:bg-white/5 rounded-lg transition-colors"
+                  className="p-2 text-sky-300/60 hover:text-sky-300 hover:bg-white/5 rounded-lg transition-colors flex-1 sm:flex-none"
                 >
                   Delete
                 </button>
@@ -605,7 +604,7 @@ const GoalsPage: React.FC = () => {
             </div>
           ))}
           {filteredGoals.length === 0 && (
-            <div className="text-center py-12 text-sky-300/60 dyslexic-text">
+            <div className="text-center py-8 sm:py-12 text-sky-300/60 dyslexic-text">
               No {selectedTimeframe} goals yet. Click the "Add Goal" button to create one.
             </div>
           )}
