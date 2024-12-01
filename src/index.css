@@ -2,136 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --primary: #6366f1;
-  --primary-dark: #4f46e5;
-  --secondary: #22d3ee;
-  --background: #3b0764;
-  --background-dark: #2e1065;
+@layer base {
+  body {
+    @apply bg-slate-900;
+  }
 }
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(180deg, var(--background) 0%, var(--background-dark) 100%);
-  min-height: 100vh;
-  color: white;
-}
+@layer components {
+  .glass-card {
+    @apply bg-slate-900/50 backdrop-blur-xl border border-sky-500/10;
+  }
 
-.glass-card {
-  background: rgba(30, 41, 59, 0.5);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
-}
+  .glass-input {
+    @apply w-full bg-slate-900/50 border border-sky-500/20 rounded-lg px-4 py-3 
+    text-sky-100 placeholder-sky-400/50 focus:outline-none focus:border-sky-500
+    transition-colors;
+    line-height: 1.8;
+    letter-spacing: 0.02em;
+  }
 
-.glass-button {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.2s;
-}
+  .glass-button {
+    @apply bg-slate-900/50 border border-sky-500/20;
+  }
 
-.glass-button:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-1px);
-}
+  .nav-glass {
+    @apply bg-slate-900/80 backdrop-blur-xl border-t border-sky-500/10;
+  }
 
-.glass-button:active {
-  transform: translateY(0);
-}
+  .nav-item-active {
+    @apply text-sky-400;
+  }
 
-.gradient-text {
-  background: linear-gradient(to right, var(--secondary), var(--primary));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
+  .progress-bar {
+    width: var(--progress);
+  }
 
-.glass-input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: rgba(30, 41, 59, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1rem;
-  color: white;
-  outline: none;
-  transition: all 0.2s;
-}
+  .hover-card {
+    @apply transition-all duration-200 hover:bg-sky-500/5;
+  }
 
-.glass-input:focus {
-  border-color: var(--secondary);
-  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2);
-}
+  /* Dyslexia-friendly styles */
+  .dyslexic-text {
+    @apply text-xl leading-relaxed tracking-wide;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
 
-.glass-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
-}
+  .dyslexic-heading {
+    @apply text-2xl font-medium mb-4 tracking-wide;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
 
-/* Bottom Navigation Bar */
-.nav-glass {
-  background: rgba(30, 41, 59, 0.8);
-  backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
+  .dyslexic-label {
+    @apply text-xl font-medium mb-3 tracking-wide text-sky-100;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
 
-/* Progress Bar Animation */
-@keyframes progress {
-  from { width: 0%; }
-  to { width: var(--progress); }
-}
+  .dyslexic-input {
+    @apply text-xl leading-relaxed tracking-wide py-4;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
 
-.progress-bar {
-  --progress: 0%;
-  animation: progress 1s ease-out forwards;
-}
-
-/* Card Hover Effects */
-.hover-card {
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.hover-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.3);
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Active Navigation Item */
-.nav-item-active {
-  color: #22d3ee;
-  position: relative;
-}
-
-.nav-item-active::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  background: #22d3ee;
-  border-radius: 50%;
+  .dyslexic-card {
+    @apply p-8 space-y-8;
+  }
 }
