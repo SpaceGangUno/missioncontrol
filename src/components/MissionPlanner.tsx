@@ -10,6 +10,11 @@ interface Props {
 export default function MissionPlanner({ onAddMission }: Props) {
   const [showAddForm, setShowAddForm] = useState(false);
 
+  const handleAddGoal = async (goal: Omit<Goal, 'id' | 'completed' | 'createdAt'>) => {
+    await onAddMission(goal);
+    setShowAddForm(false);
+  };
+
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-6">
@@ -24,7 +29,7 @@ export default function MissionPlanner({ onAddMission }: Props) {
       </div>
       {showAddForm && (
         <AddGoalForm 
-          onAddGoal={onAddMission} 
+          onAddGoal={handleAddGoal} 
           onClose={() => setShowAddForm(false)}
         />
       )}
