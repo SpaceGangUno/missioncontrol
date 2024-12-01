@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Goal } from '../types';
 import { X, Plus, AlertCircle } from 'lucide-react';
 
+type TimeFrame = 'yearly' | 'monthly' | 'weekly' | 'daily';
+
 interface Props {
   onClose: () => void;
-  onAddGoal: (goal: Omit<Goal, 'id' | 'completed' | 'createdAt'>) => Promise<void>;
+  onAddGoal: (goal: Omit<Goal, 'id' | 'completed' | 'createdAt'> & { timeframe: TimeFrame }) => Promise<void>;
 }
 
 export default function AddGoalForm({ onClose, onAddGoal }: Props) {
@@ -12,6 +14,8 @@ export default function AddGoalForm({ onClose, onAddGoal }: Props) {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Goal['priority']>('medium');
   const [category, setCategory] = useState<Goal['category']>('personal');
+  const [timeframe, setTimeframe] = useState<TimeFrame>('monthly');
+  const [deadline, setDeadline] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +32,8 @@ export default function AddGoalForm({ onClose, onAddGoal }: Props) {
         description: description.trim(),
         priority,
         category,
+        timeframe,
+        deadline: deadline || undefined,
         status: 'not_started',
         progress: 0
       });
@@ -40,13 +46,11 @@ export default function AddGoalForm({ onClose, onAddGoal }: Props) {
   };
 
   const handleClose = (e: React.MouseEvent) => {
-    // Prevent event from bubbling up to parent elements
     e.stopPropagation();
     onClose();
   };
 
   const handleModalClick = (e: React.MouseEvent) => {
-    // Prevent clicks inside the modal from closing it
     e.stopPropagation();
   };
 
@@ -107,6 +111,22 @@ export default function AddGoalForm({ onClose, onAddGoal }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-sky-100 mb-1">
+                Timeframe
+              </label>
+              <select
+                value={timeframe}
+                onChange={(e) => setTimeframe(e.target.value as TimeFrame)}
+                className="glass-input"
+              >
+                <option value="yearly">Yearly</option>
+                <option value="monthly">Monthly</option>
+                <option value="weekly">Weekly</option>
+                <option value="daily">Daily</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-sky-100 mb-1">
                 Priority
               </label>
               <select
@@ -119,7 +139,9 @@ export default function AddGoalForm({ onClose, onAddGoal }: Props) {
                 <option value="high">High</option>
               </select>
             </div>
+          </div>
 
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-sky-100 mb-1">
                 Category
@@ -135,6 +157,19 @@ export default function AddGoalForm({ onClose, onAddGoal }: Props) {
                 <option value="learning">Learning</option>
                 <option value="creative">Creative</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-sky-100 mb-1">
+                Deadline (Optional)
+              </label>
+              <input
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className="glass-input"
+                min={new Date().toISOString().split('T')[0]}
+              />
             </div>
           </div>
 
