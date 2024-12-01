@@ -2,126 +2,62 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --theme-primary: 56 189 248;
-    --theme-secondary: 129 140 248;
-    --theme-accent: 192 132 252;
-    --theme-background: #0f172a;
-    --theme-background-gradient: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
-    --theme-card-background: rgba(30, 41, 59, 0.7);
-    --theme-text-color: #e2e8f0;
-    --theme-text-secondary: #94a3b8;
-    --theme-font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  }
-
-  html {
-    @apply antialiased;
-    color-scheme: dark;
-  }
-
-  body {
-    margin: 0;
-    color: var(--theme-text-color);
-    font-family: var(--theme-font-family);
-    background: var(--theme-background);
-    background-image: var(--theme-background-gradient);
-    min-height: 100vh;
-  }
-
-  #root {
-    min-height: 100vh;
-  }
-
-  input, textarea, select {
-    font-family: inherit;
-  }
+:root {
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --secondary: #38bdf8;
+  --background: #312e81;
 }
 
-@layer components {
-  .glass-card {
-    background: var(--theme-card-background);
-    @apply rounded-xl backdrop-blur-md border border-white/10;
-  }
-
-  .glass-input {
-    background: var(--theme-card-background);
-    color: var(--theme-text-color);
-    @apply w-full backdrop-blur-md border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-transparent transition-shadow;
-  }
-
-  .glass-input::placeholder {
-    color: var(--theme-text-secondary);
-  }
-
-  .mobile-container {
-    @apply max-w-2xl mx-auto;
-  }
-
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  .neon-glow {
-    box-shadow: 0 0 20px rgba(var(--theme-primary), 0.3);
-  }
-
-  .hide-scrollbar {
-    -ms-overflow-style: none;  /* Internet Explorer 10+ */
-    scrollbar-width: none;  /* Firefox */
-  }
-  
-  .hide-scrollbar::-webkit-scrollbar { 
-    display: none;  /* Safari and Chrome */
-  }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(to bottom, #312e81, #4c1d95);
+  min-height: 100vh;
+  color: white;
 }
 
-@layer utilities {
-  .touch-manipulation {
-    touch-action: manipulation;
-  }
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
 }
 
-/* Animation keyframes */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.gradient-text {
+  background: linear-gradient(to right, var(--secondary), var(--primary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
-@keyframes pulse {
-  50% {
-    opacity: .5;
-  }
+.glass-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  color: white;
+  outline: none;
+  transition: all 0.2s;
 }
 
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(-25%);
-    animation-timing-function: cubic-bezier(0.8,0,1,1);
-  }
-  50% {
-    transform: none;
-    animation-timing-function: cubic-bezier(0,0,0.2,1);
-  }
+.glass-input:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
 }
 
-/* Custom scrollbar for webkit browsers */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+.glass-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
 }
 
-::-webkit-scrollbar-track {
-  background: rgba(var(--theme-primary), 0.1);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(var(--theme-primary), 0.3);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--theme-primary), 0.5);
+/* Bottom Navigation Bar */
+.nav-glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
