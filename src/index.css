@@ -3,10 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --primary: #6366f1;
-  --primary-dark: #4f46e5;
+  --primary: #8b5cf6;
+  --primary-dark: #7c3aed;
   --secondary: #38bdf8;
-  --background: #312e81;
+  --background: #4c1d95;
+  --background-dark: #2e1065;
 }
 
 body {
@@ -16,14 +17,14 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(to bottom, #312e81, #4c1d95);
+  background: linear-gradient(180deg, var(--background) 0%, var(--background-dark) 100%);
   min-height: 100vh;
   color: white;
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
 }
@@ -40,7 +41,7 @@ body {
   padding: 0.75rem 1rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.5rem;
+  border-radius: 1rem;
   color: white;
   outline: none;
   transition: all 0.2s;
@@ -57,7 +58,46 @@ body {
 
 /* Bottom Navigation Bar */
 .nav-glass {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.07);
   backdrop-filter: blur(20px);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Progress Bar Animation */
+@keyframes progress {
+  from { width: 0%; }
+  to { width: var(--progress); }
+}
+
+.progress-bar {
+  --progress: 0%;
+  animation: progress 1s ease-out forwards;
+}
+
+/* Card Hover Effects */
+.hover-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.hover-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.45);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
