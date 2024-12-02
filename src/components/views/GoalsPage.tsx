@@ -35,7 +35,7 @@ const GoalsPage: React.FC = () => {
     wordOfDay: ''
   });
 
-  const { saveDayPlan, weekPlans } = useStore();
+  const { saveDayPlan, weekPlans, getWeekPlans } = useStore();
 
   const timeframes: TimeFrame[] = ['yearly', 'monthly', 'weekly', 'daily'];
 
@@ -178,6 +178,8 @@ const GoalsPage: React.FC = () => {
         meals: dailyPlan.meals,
         wordOfDay: dailyPlan.wordOfDay
       });
+      // Refresh week plans after saving
+      await getWeekPlans();
     } catch (error) {
       console.error('Error saving daily plan:', error);
     } finally {

@@ -14,12 +14,12 @@ export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>('home');
   const { goals, weekPlans, getWeekPlans } = useStore();
 
-  // Load week plans when component mounts
+  // Load week plans when component mounts or user changes
   useEffect(() => {
     if (user) {
       getWeekPlans();
     }
-  }, [user]);
+  }, [user, getWeekPlans]);
 
   if (!user) {
     return <LoginPage onShowWelcome={() => {}} />;
