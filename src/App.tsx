@@ -4,7 +4,7 @@ import LoginPage from './components/auth/LoginPage';
 import WelcomeScreen from './components/onboarding/WelcomeScreen';
 import GoalsPage from './components/views/GoalsPage';
 import { useStore } from './lib/store';
-import { Home, Heart, Wallet, Target, User, Sparkles } from 'lucide-react';
+import { Home, Heart, Wallet, Target, User, Sparkles, CheckCircle2 } from 'lucide-react';
 import { DayPlan } from './types';
 
 type ViewType = 'home' | 'wellbeing' | 'finance' | 'goals' | 'profile';
@@ -12,7 +12,7 @@ type ViewType = 'home' | 'wellbeing' | 'finance' | 'goals' | 'profile';
 export default function App() {
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState<ViewType>('home');
-  const { goals, weekPlans, getWeekPlans } = useStore();
+  const { goals, weekPlans, getWeekPlans, toggleGoal } = useStore();
 
   // Load week plans when component mounts or user changes
   useEffect(() => {
@@ -38,6 +38,20 @@ export default function App() {
   const today = new Date().toISOString().split('T')[0];
   const todaysPlan = weekPlans[today];
   const topGoals = todaysPlan?.topGoals || ['', '', '', '', ''];
+
+  // Find goal completion status from goals array
+  const getGoalStatus = (goalText: string) => {
+    const goal = goals.find(g => g.title === goalText);
+    return goal?.completed || false;
+  };
+
+  // Handle goal toggle
+  const handleToggleGoal = async (goalText: string) => {
+    const goal = goals.find(g => g.title === goalText);
+    if (goal) {
+      await toggleGoal(goal.id);
+    }
+  };
 
   const renderView = () => {
     switch (currentView) {
@@ -87,10 +101,23 @@ export default function App() {
               <div className="space-y-4">
                 {topGoals.map((goal: string, index: number) => (
                   <div key={index} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg">
-                      {index + 1}
-                    </div>
-                    <p className="text-sm text-indigo-200/80">
+                    {goal ? (
+                      <button
+                        onClick={() => handleToggleGoal(goal)}
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+                          getGoalStatus(goal)
+                            ? 'bg-sky-500 text-white'
+                            : 'bg-sky-500/10 text-sky-300 hover:bg-sky-500/20'
+                        }`}
+                      >
+                        <CheckCircle2 className="w-5 h-5" />
+                      </button>
+                    ) : (
+                      <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg">
+                        {index + 1}
+                      </div>
+                    )}
+                    <p className={`text-sm text-indigo-200/80 ${getGoalStatus(goal) ? 'line-through' : ''}`}>
                       {goal || 'No goal set'}
                     </p>
                   </div>
