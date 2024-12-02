@@ -10,6 +10,11 @@ interface GoalWithTimeframe extends Goal {
   timeframe: TimeFrame;
 }
 
+interface DailyPlanWithText extends Omit<DayPlan, 'topGoals'> {
+  topGoals: string[];
+  topGoalTexts: string[];
+}
+
 const GoalsPage: React.FC = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeFrame>('daily');
   const [showAddGoal, setShowAddGoal] = useState(false);
@@ -18,13 +23,14 @@ const GoalsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [dailyPlan, setDailyPlan] = useState<DayPlan>({
+  const [dailyPlan, setDailyPlan] = useState<DailyPlanWithText>({
     id: '',
     date: selectedDate,
     gratitude: '',
     makeItEleven: '',
     greatDay: '',
     topGoals: ['', '', '', '', ''],
+    topGoalTexts: ['', '', '', '', ''],
     meals: {
       breakfast: '',
       lunch: '',
@@ -51,6 +57,12 @@ const GoalsPage: React.FC = () => {
         // Use the existing plan from weekPlans if available
         const existingPlan = weekPlans[selectedDate];
         if (existingPlan) {
+          // Convert goal IDs to texts for editing
+          const goalTexts = existingPlan.topGoals.map(goalId => {
+            const goal = storeGoals.find(g => g.id === goalId);
+            return goal?.title || '';
+          });
+
           setDailyPlan({
             ...existingPlan,
             // Ensure all required fields exist
@@ -58,6 +70,7 @@ const GoalsPage: React.FC = () => {
             makeItEleven: existingPlan.makeItEleven || '',
             greatDay: existingPlan.greatDay || '',
             topGoals: existingPlan.topGoals || ['', '', '', '', ''],
+            topGoalTexts: goalTexts,
             meals: existingPlan.meals || {
               breakfast: '',
               lunch: '',
@@ -74,18 +87,25 @@ const GoalsPage: React.FC = () => {
     };
 
     loadInitialData();
-  }, [selectedDate, weekPlans]);
+  }, [selectedDate, weekPlans, storeGoals]);
 
   const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate);
     const existingPlan = weekPlans[newDate];
     if (existingPlan) {
+      // Convert goal IDs to texts for editing
+      const goalTexts = existingPlan.topGoals.map(goalId => {
+        const goal = storeGoals.find(g => g.id === goalId);
+        return goal?.title || '';
+      });
+
       setDailyPlan({
         ...existingPlan,
         gratitude: existingPlan.gratitude || '',
         makeItEleven: existingPlan.makeItEleven || '',
         greatDay: existingPlan.greatDay || '',
         topGoals: existingPlan.topGoals || ['', '', '', '', ''],
+        topGoalTexts: goalTexts,
         meals: existingPlan.meals || {
           breakfast: '',
           lunch: '',
@@ -101,6 +121,7 @@ const GoalsPage: React.FC = () => {
         makeItEleven: '',
         greatDay: '',
         topGoals: ['', '', '', '', ''],
+        topGoalTexts: ['', '', '', '', ''],
         meals: {
           breakfast: '',
           lunch: '',
@@ -161,7 +182,7 @@ const GoalsPage: React.FC = () => {
   const handleTopGoalChange = (index: number, value: string) => {
     setDailyPlan(prev => ({
       ...prev,
-      topGoals: prev.topGoals.map((goal, i) => i === index ? value : goal)
+      topGoalTexts: prev.topGoalTexts.map((text, i) => i === index ? value : text)
     }));
   };
 
@@ -170,7 +191,7 @@ const GoalsPage: React.FC = () => {
     try {
       // Create goals for any new goal text that doesn't correspond to an existing goal
       const goalIds = await Promise.all(
-        dailyPlan.topGoals.map(async (goalText) => {
+        dailyPlan.topGoalTexts.map(async (goalText) => {
           if (!goalText) return '';
 
           // Check if this text matches an existing goal
@@ -458,23 +479,20 @@ const GoalsPage: React.FC = () => {
                     Top 5 Goals
                   </label>
                   <div className="space-y-3 sm:space-y-4">
-                    {dailyPlan.topGoals.map((goalId, index) => {
-                      const goalTitle = getGoalTitle(goalId);
-                      return (
-                        <div key={index} className="flex items-center gap-3 sm:gap-4">
-                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg sm:text-xl">
-                            {index + 1}
-                          </div>
-                          <input
-                            type="text"
-                            value={goalTitle}
-                            onChange={(e) => handleTopGoalChange(index, e.target.value)}
-                            className="glass-input dyslexic-input flex-1"
-                            placeholder="..."
-                          />
+                    {dailyPlan.topGoalTexts.map((goalText, index) => (
+                      <div key={index} className="flex items-center gap-3 sm:gap-4">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg sm:text-xl">
+                          {index + 1}
                         </div>
-                      );
-                    })}
+                        <input
+                          type="text"
+                          value={goalText}
+                          onChange={(e) => handleTopGoalChange(index, e.target.value)}
+                          className="glass-input dyslexic-input flex-1"
+                          placeholder="..."
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
