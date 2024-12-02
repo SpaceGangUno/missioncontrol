@@ -26,6 +26,13 @@ export default function App() {
   const totalGoals = goals.length;
   const progressScore = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 18; // Default to 18 for demo
 
+  // Get top 5 incomplete goals sorted by priority
+  const priorityOrder = { high: 0, medium: 1, low: 2 };
+  const topGoals = goals
+    .filter(goal => !goal.completed)
+    .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
+    .slice(0, 5);
+
   const renderView = () => {
     switch (currentView) {
       case 'goals':
@@ -68,23 +75,31 @@ export default function App() {
               </div>
             </div>
 
-            {/* Balance Card */}
+            {/* Top Goals Card */}
             <div className="glass-card p-6 mb-4 rounded-[24px]">
-              <div className="flex justify-between items-start mb-2">
-                <h2 className="text-sm text-indigo-200/80">Total Balance</h2>
-                <span className="text-xs px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full">
-                  +2.4%
-                </span>
-              </div>
-              <div className="text-3xl font-bold mb-6">$2,547.89</div>
-              <div className="grid grid-cols-2 gap-3">
-                <button className="glass-button py-3 rounded-2xl text-center text-sm text-cyan-400 hover:text-cyan-300">
-                  Send Money
-                </button>
-                <button className="glass-button py-3 rounded-2xl text-center text-sm text-cyan-400 hover:text-cyan-300">
-                  Add Funds
-                </button>
-              </div>
+              <h2 className="text-sm text-indigo-200/80 mb-4">Top Goals for Today</h2>
+              {topGoals.length > 0 ? (
+                <div className="space-y-4">
+                  {topGoals.map((goal) => (
+                    <div key={goal.id} className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${
+                        goal.priority === 'high' ? 'bg-rose-400' :
+                        goal.priority === 'medium' ? 'bg-amber-400' :
+                        'bg-emerald-400'
+                      }`} />
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium">{goal.title}</h3>
+                        <p className="text-xs text-indigo-200/60">{goal.category}</p>
+                      </div>
+                      <div className="text-xs px-2 py-1 bg-slate-800/50 rounded-full">
+                        {goal.progress}%
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-indigo-200/60 text-center">No active goals. Add some goals to get started!</p>
+              )}
             </div>
 
             {/* Insight Cards */}
