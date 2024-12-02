@@ -25,8 +25,8 @@ interface GoalWithTimeframe extends Goal {
   timeframe: TimeFrame;
 }
 
-const GoalsPage = () => {
-  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeFrame>('monthly');
+const GoalsPage: React.FC = () => {
+  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeFrame>('daily');
   const [showAddGoal, setShowAddGoal] = useState(false);
   const [goals, setGoals] = useState<GoalWithTimeframe[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -55,11 +55,11 @@ const GoalsPage = () => {
   const totalGoals = goals.length;
   const progressPercentage = totalGoals > 0 ? (completedGoals / totalGoals) * 100 : 0;
 
+  // Load initial data when component mounts
   useEffect(() => {
-    const loadSavedPlans = async () => {
+    const loadInitialData = async () => {
       setIsLoading(true);
       try {
-        await new Promise(resolve => setTimeout(resolve, 500));
         const mockPlans: DailyPlan[] = [
           {
             id: '1',
@@ -84,16 +84,35 @@ const GoalsPage = () => {
           setDailyPlan(existingPlan);
         }
       } catch (error) {
-        console.error('Error loading saved plans:', error);
+        console.error('Error loading initial data:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
+    loadInitialData();
+  }, []); // Run only once when component mounts
+
+  // Load saved plans when timeframe changes to daily
+  useEffect(() => {
     if (selectedTimeframe === 'daily') {
+      const loadSavedPlans = async () => {
+        setIsLoading(true);
+        try {
+          const existingPlan = savedDailyPlans.find(plan => plan.date === selectedDate);
+          if (existingPlan) {
+            setDailyPlan(existingPlan);
+          }
+        } catch (error) {
+          console.error('Error loading saved plans:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
       loadSavedPlans();
     }
-  }, [selectedTimeframe, selectedDate]);
+  }, [selectedTimeframe, selectedDate, savedDailyPlans]);
 
   const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate);
