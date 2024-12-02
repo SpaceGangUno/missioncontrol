@@ -64,16 +64,16 @@ const GoalsPage: React.FC = () => {
           {
             id: '1',
             date: new Date().toISOString().split('T')[0],
-            gratitude: 'Sample gratitude entry',
-            makeItEleven: 'Sample make it eleven entry',
-            greatDay: 'Sample great day entry',
-            topGoals: ['Goal 1', 'Goal 2', 'Goal 3', 'Goal 4', 'Goal 5'],
-            sideQuest: 'Sample side quest',
-            notes: 'Sample notes for the day',
+            gratitude: '',
+            makeItEleven: '',
+            greatDay: '',
+            topGoals: ['', '', '', '', ''],
+            sideQuest: '',
+            notes: '',
             meals: {
-              breakfast: 'Oatmeal',
-              lunch: 'Salad',
-              dinner: 'Grilled chicken'
+              breakfast: '',
+              lunch: '',
+              dinner: ''
             }
           }
         ];
@@ -398,7 +398,7 @@ const GoalsPage: React.FC = () => {
                     value={dailyPlan.gratitude}
                     onChange={(e) => handleDailyPlanChange('gratitude', e.target.value)}
                     className="glass-input dyslexic-input min-h-[120px]"
-                    placeholder="What are you grateful for today?"
+                    placeholder="..."
                   />
                 </div>
               </div>
@@ -416,7 +416,7 @@ const GoalsPage: React.FC = () => {
                     value={dailyPlan.makeItEleven}
                     onChange={(e) => handleDailyPlanChange('makeItEleven', e.target.value)}
                     className="glass-input dyslexic-input min-h-[120px]"
-                    placeholder="How will you make today exceptional?"
+                    placeholder="..."
                   />
                 </div>
               </div>
@@ -434,7 +434,7 @@ const GoalsPage: React.FC = () => {
                     value={dailyPlan.greatDay}
                     onChange={(e) => handleDailyPlanChange('greatDay', e.target.value)}
                     className="glass-input dyslexic-input min-h-[120px]"
-                    placeholder="What would make today great?"
+                    placeholder="..."
                   />
                 </div>
               </div>
@@ -459,7 +459,7 @@ const GoalsPage: React.FC = () => {
                           value={goal}
                           onChange={(e) => handleTopGoalChange(index, e.target.value)}
                           className="glass-input dyslexic-input flex-1"
-                          placeholder={`Goal ${index + 1}`}
+                          placeholder="..."
                         />
                       </div>
                     ))}
@@ -480,7 +480,7 @@ const GoalsPage: React.FC = () => {
                     value={dailyPlan.sideQuest}
                     onChange={(e) => handleDailyPlanChange('sideQuest', e.target.value)}
                     className="glass-input dyslexic-input min-h-[120px]"
-                    placeholder="Any additional goals or quests?"
+                    placeholder="..."
                   />
                 </div>
               </div>
@@ -498,7 +498,7 @@ const GoalsPage: React.FC = () => {
                     value={dailyPlan.notes}
                     onChange={(e) => handleDailyPlanChange('notes', e.target.value)}
                     className="glass-input dyslexic-input min-h-[160px]"
-                    placeholder="Any additional notes, thoughts, or reflections for the day?"
+                    placeholder="..."
                   />
                 </div>
               </div>
@@ -520,7 +520,7 @@ const GoalsPage: React.FC = () => {
                         value={dailyPlan.meals.breakfast}
                         onChange={(e) => handleMealChange('breakfast', e.target.value)}
                         className="glass-input dyslexic-input"
-                        placeholder="What's for breakfast?"
+                        placeholder="..."
                       />
                     </div>
                     <div>
@@ -530,7 +530,7 @@ const GoalsPage: React.FC = () => {
                         value={dailyPlan.meals.lunch}
                         onChange={(e) => handleMealChange('lunch', e.target.value)}
                         className="glass-input dyslexic-input"
-                        placeholder="What's for lunch?"
+                        placeholder="..."
                       />
                     </div>
                     <div>
@@ -540,7 +540,7 @@ const GoalsPage: React.FC = () => {
                         value={dailyPlan.meals.dinner}
                         onChange={(e) => handleMealChange('dinner', e.target.value)}
                         className="glass-input dyslexic-input"
-                        placeholder="What's for dinner?"
+                        placeholder="..."
                       />
                     </div>
                   </div>
