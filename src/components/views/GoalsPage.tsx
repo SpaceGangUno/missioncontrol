@@ -35,7 +35,7 @@ const GoalsPage: React.FC = () => {
     wordOfDay: ''
   });
 
-  const { saveDayPlan, weekPlans, getWeekPlans } = useStore();
+  const { saveDayPlan, weekPlans, getWeekPlans, addGoal, goals: storeGoals } = useStore();
 
   const timeframes: TimeFrame[] = ['yearly', 'monthly', 'weekly', 'daily'];
 
@@ -168,23 +168,59 @@ const GoalsPage: React.FC = () => {
   const handleSaveDailyPlan = async () => {
     setIsSaving(true);
     try {
-      // Save using the store's saveDayPlan method
+      // Create goals for any new goal text that doesn't correspond to an existing goal
+      const goalIds = await Promise.all(
+        dailyPlan.topGoals.map(async (goalText) => {
+          if (!goalText) return '';
+
+          // Check if this text matches an existing goal
+          const existingGoal = storeGoals.find(g => g.title === goalText);
+          if (existingGoal) {
+            return existingGoal.id;
+          }
+
+          // Create a new goal if the text doesn't match any existing goal
+          if (goalText.trim()) {
+            await addGoal({
+              title: goalText,
+              description: '',
+              priority: 'medium',
+              category: 'personal',
+              progress: 0,
+              status: 'not_started'
+            });
+            // Find the newly created goal
+            const newGoal = storeGoals.find(g => g.title === goalText);
+            return newGoal ? newGoal.id : '';
+          }
+
+          return '';
+        })
+      );
+
+      // Save the daily plan with goal IDs
       await saveDayPlan({
         date: dailyPlan.date,
         gratitude: dailyPlan.gratitude,
         makeItEleven: dailyPlan.makeItEleven,
         greatDay: dailyPlan.greatDay,
-        topGoals: dailyPlan.topGoals,
+        topGoals: goalIds,
         meals: dailyPlan.meals,
         wordOfDay: dailyPlan.wordOfDay
       });
-      // Refresh week plans after saving
+
+      // Refresh week plans to update the UI
       await getWeekPlans();
     } catch (error) {
       console.error('Error saving daily plan:', error);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const getGoalTitle = (goalId: string): string => {
+    const goal = storeGoals.find(g => g.id === goalId);
+    return goal?.title || '';
   };
 
   const filteredGoals = goals.filter(goal => goal.timeframe === selectedTimeframe);
@@ -269,12 +305,12 @@ const GoalsPage: React.FC = () => {
               <div className="flex-1 min-w-0">
                 <h3 className="dyslexic-heading text-sky-100">Top 5 Goals</h3>
                 <div className="space-y-3 sm:space-y-4">
-                  {dailyPlan.topGoals.map((goal, index) => (
+                  {dailyPlan.topGoals.map((goalId, index) => (
                     <div key={index} className="flex items-center gap-3 sm:gap-4">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg sm:text-xl">
                         {index + 1}
                       </div>
-                      <p className="dyslexic-text text-sky-300">{goal || 'No goal set'}</p>
+                      <p className="dyslexic-text text-sky-300">{getGoalTitle(goalId) || 'No goal set'}</p>
                     </div>
                   ))}
                 </div>
@@ -422,20 +458,23 @@ const GoalsPage: React.FC = () => {
                     Top 5 Goals
                   </label>
                   <div className="space-y-3 sm:space-y-4">
-                    {dailyPlan.topGoals.map((goal, index) => (
-                      <div key={index} className="flex items-center gap-3 sm:gap-4">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg sm:text-xl">
-                          {index + 1}
+                    {dailyPlan.topGoals.map((goalId, index) => {
+                      const goalTitle = getGoalTitle(goalId);
+                      return (
+                        <div key={index} className="flex items-center gap-3 sm:gap-4">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg sm:text-xl">
+                            {index + 1}
+                          </div>
+                          <input
+                            type="text"
+                            value={goalTitle}
+                            onChange={(e) => handleTopGoalChange(index, e.target.value)}
+                            className="glass-input dyslexic-input flex-1"
+                            placeholder="..."
+                          />
                         </div>
-                        <input
-                          type="text"
-                          value={goal}
-                          onChange={(e) => handleTopGoalChange(index, e.target.value)}
-                          className="glass-input dyslexic-input flex-1"
-                          placeholder="..."
-                        />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
