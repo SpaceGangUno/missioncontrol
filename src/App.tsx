@@ -1,17 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './components/auth/AuthProvider';
 import LoginPage from './components/auth/LoginPage';
 import WelcomeScreen from './components/onboarding/WelcomeScreen';
 import GoalsPage from './components/views/GoalsPage';
 import { useStore } from './lib/store';
 import { Home, Heart, Wallet, Target, User, Sparkles } from 'lucide-react';
+import { DayPlan } from './types';
 
 type ViewType = 'home' | 'wellbeing' | 'finance' | 'goals' | 'profile';
 
 export default function App() {
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState<ViewType>('home');
-  const { goals } = useStore();
+  const { goals, weekPlans, getWeekPlans } = useStore();
+
+  // Load week plans when component mounts
+  useEffect(() => {
+    if (user) {
+      getWeekPlans();
+    }
+  }, [user]);
 
   if (!user) {
     return <LoginPage onShowWelcome={() => {}} />;
@@ -26,12 +34,10 @@ export default function App() {
   const totalGoals = goals.length;
   const progressScore = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 18; // Default to 18 for demo
 
-  // Get top 5 incomplete goals sorted by priority
-  const priorityOrder = { high: 0, medium: 1, low: 2 };
-  const topGoals = goals
-    .filter(goal => !goal.completed)
-    .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
-    .slice(0, 5);
+  // Get today's daily plan
+  const today = new Date().toISOString().split('T')[0];
+  const todaysPlan = weekPlans[today];
+  const topGoals = todaysPlan?.topGoals || ['', '', '', '', ''];
 
   const renderView = () => {
     switch (currentView) {
@@ -78,28 +84,18 @@ export default function App() {
             {/* Top Goals Card */}
             <div className="glass-card p-6 mb-4 rounded-[24px]">
               <h2 className="text-sm text-indigo-200/80 mb-4">Top Goals for Today</h2>
-              {topGoals.length > 0 ? (
-                <div className="space-y-4">
-                  {topGoals.map((goal) => (
-                    <div key={goal.id} className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${
-                        goal.priority === 'high' ? 'bg-rose-400' :
-                        goal.priority === 'medium' ? 'bg-amber-400' :
-                        'bg-emerald-400'
-                      }`} />
-                      <div className="flex-1">
-                        <h3 className="text-sm font-medium">{goal.title}</h3>
-                        <p className="text-xs text-indigo-200/60">{goal.category}</p>
-                      </div>
-                      <div className="text-xs px-2 py-1 bg-slate-800/50 rounded-full">
-                        {goal.progress}%
-                      </div>
+              <div className="space-y-4">
+                {topGoals.map((goal: string, index: number) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg">
+                      {index + 1}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-indigo-200/60 text-center">No active goals. Add some goals to get started!</p>
-              )}
+                    <p className="text-sm text-indigo-200/80">
+                      {goal || 'No goal set'}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Insight Cards */}
