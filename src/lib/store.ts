@@ -1,3 +1,4 @@
+// First, let's modify the store to return the created goal ID
 import { create } from 'zustand';
 import { doc, collection, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
@@ -16,7 +17,7 @@ interface Store {
   setUser: (user: any) => void;
   updateUserProfile: (profile: { displayName?: string; photoURL?: string }) => Promise<void>;
   updateUserTheme: (themeId: string) => Promise<void>;
-  addGoal: (goal: Omit<Goal, 'id' | 'completed' | 'createdAt'>) => Promise<void>;
+  addGoal: (goal: Omit<Goal, 'id' | 'completed' | 'createdAt'>) => Promise<{ id: string }>;
   updateGoal: (id: string, updates: Partial<Goal>) => Promise<void>;
   toggleGoal: (id: string) => Promise<void>;
   deleteGoal: (id: string) => Promise<void>;
@@ -99,15 +100,17 @@ export const useStore = create<Store>((set, get) => ({
 
   addGoal: async (goal) => {
     const user = auth.currentUser;
-    if (!user) return;
+    if (!user) throw new Error('No user logged in');
 
     const goalsRef = collection(db, `users/${user.uid}/goals`);
     const newGoalRef = doc(goalsRef);
-    await setDoc(newGoalRef, {
+    const newGoal = {
       ...goal,
       completed: false,
       createdAt: new Date().toISOString()
-    });
+    };
+    await setDoc(newGoalRef, newGoal);
+    return { id: newGoalRef.id };
   },
 
   updateGoal: async (id, updates) => {
