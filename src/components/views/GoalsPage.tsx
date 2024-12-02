@@ -1,25 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Goal } from '../../types';
+import { Goal, DayPlan } from '../../types';
 import AddGoalForm from '../AddGoalForm';
 import { Plus, CheckCircle, Save, ChevronLeft, ChevronRight, Calendar, Edit2 } from 'lucide-react';
+import { useStore } from '../../lib/store';
 
 type TimeFrame = 'yearly' | 'monthly' | 'weekly' | 'daily';
-
-interface DailyPlan {
-  id?: string;
-  date: string;
-  gratitude: string;
-  makeItEleven: string;
-  greatDay: string;
-  topGoals: string[];
-  sideQuest: string;
-  notes: string;
-  meals: {
-    breakfast: string;
-    lunch: string;
-    dinner: string;
-  };
-}
 
 interface GoalWithTimeframe extends Goal {
   timeframe: TimeFrame;
@@ -33,21 +18,24 @@ const GoalsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [savedDailyPlans, setSavedDailyPlans] = useState<DailyPlan[]>([]);
-  const [dailyPlan, setDailyPlan] = useState<DailyPlan>({
+  const [dailyPlan, setDailyPlan] = useState<DayPlan>({
+    id: '',
     date: selectedDate,
     gratitude: '',
     makeItEleven: '',
     greatDay: '',
     topGoals: ['', '', '', '', ''],
-    sideQuest: '',
-    notes: '',
     meals: {
       breakfast: '',
       lunch: '',
       dinner: ''
-    }
+    },
+    createdAt: '',
+    updatedAt: '',
+    wordOfDay: ''
   });
+
+  const { saveDayPlan, weekPlans } = useStore();
 
   const timeframes: TimeFrame[] = ['yearly', 'monthly', 'weekly', 'daily'];
 
@@ -60,28 +48,23 @@ const GoalsPage: React.FC = () => {
     const loadInitialData = async () => {
       setIsLoading(true);
       try {
-        const mockPlans: DailyPlan[] = [
-          {
-            id: '1',
-            date: new Date().toISOString().split('T')[0],
-            gratitude: '',
-            makeItEleven: '',
-            greatDay: '',
-            topGoals: ['', '', '', '', ''],
-            sideQuest: '',
-            notes: '',
-            meals: {
+        // Use the existing plan from weekPlans if available
+        const existingPlan = weekPlans[selectedDate];
+        if (existingPlan) {
+          setDailyPlan({
+            ...existingPlan,
+            // Ensure all required fields exist
+            gratitude: existingPlan.gratitude || '',
+            makeItEleven: existingPlan.makeItEleven || '',
+            greatDay: existingPlan.greatDay || '',
+            topGoals: existingPlan.topGoals || ['', '', '', '', ''],
+            meals: existingPlan.meals || {
               breakfast: '',
               lunch: '',
               dinner: ''
-            }
-          }
-        ];
-        setSavedDailyPlans(mockPlans);
-        
-        const existingPlan = mockPlans.find(plan => plan.date === selectedDate);
-        if (existingPlan) {
-          setDailyPlan(existingPlan);
+            },
+            wordOfDay: existingPlan.wordOfDay || ''
+          });
         }
       } catch (error) {
         console.error('Error loading initial data:', error);
@@ -91,48 +74,41 @@ const GoalsPage: React.FC = () => {
     };
 
     loadInitialData();
-  }, []); // Run only once when component mounts
-
-  // Load saved plans when timeframe changes to daily
-  useEffect(() => {
-    if (selectedTimeframe === 'daily') {
-      const loadSavedPlans = async () => {
-        setIsLoading(true);
-        try {
-          const existingPlan = savedDailyPlans.find(plan => plan.date === selectedDate);
-          if (existingPlan) {
-            setDailyPlan(existingPlan);
-          }
-        } catch (error) {
-          console.error('Error loading saved plans:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      loadSavedPlans();
-    }
-  }, [selectedTimeframe, selectedDate, savedDailyPlans]);
+  }, [selectedDate, weekPlans]);
 
   const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate);
-    const existingPlan = savedDailyPlans.find(plan => plan.date === newDate);
+    const existingPlan = weekPlans[newDate];
     if (existingPlan) {
-      setDailyPlan(existingPlan);
+      setDailyPlan({
+        ...existingPlan,
+        gratitude: existingPlan.gratitude || '',
+        makeItEleven: existingPlan.makeItEleven || '',
+        greatDay: existingPlan.greatDay || '',
+        topGoals: existingPlan.topGoals || ['', '', '', '', ''],
+        meals: existingPlan.meals || {
+          breakfast: '',
+          lunch: '',
+          dinner: ''
+        },
+        wordOfDay: existingPlan.wordOfDay || ''
+      });
     } else {
       setDailyPlan({
+        id: '',
         date: newDate,
         gratitude: '',
         makeItEleven: '',
         greatDay: '',
         topGoals: ['', '', '', '', ''],
-        sideQuest: '',
-        notes: '',
         meals: {
           breakfast: '',
           lunch: '',
           dinner: ''
-        }
+        },
+        createdAt: '',
+        updatedAt: '',
+        wordOfDay: ''
       });
     }
   };
@@ -165,14 +141,14 @@ const GoalsPage: React.FC = () => {
     setGoals(goals.filter(goal => goal.id !== goalId));
   };
 
-  const handleDailyPlanChange = (field: keyof Omit<DailyPlan, 'id' | 'date' | 'meals'>, value: string) => {
+  const handleDailyPlanChange = (field: keyof Omit<DayPlan, 'id' | 'date' | 'meals' | 'createdAt' | 'updatedAt'>, value: string) => {
     setDailyPlan(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleMealChange = (meal: keyof DailyPlan['meals'], value: string) => {
+  const handleMealChange = (meal: keyof DayPlan['meals'], value: string) => {
     setDailyPlan(prev => ({
       ...prev,
       meals: {
@@ -192,10 +168,16 @@ const GoalsPage: React.FC = () => {
   const handleSaveDailyPlan = async () => {
     setIsSaving(true);
     try {
-      console.log('Saving daily plan:', dailyPlan);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const updatedPlans = savedDailyPlans.filter(plan => plan.date !== dailyPlan.date);
-      setSavedDailyPlans([...updatedPlans, { ...dailyPlan, id: dailyPlan.id || Date.now().toString() }]);
+      // Save using the store's saveDayPlan method
+      await saveDayPlan({
+        date: dailyPlan.date,
+        gratitude: dailyPlan.gratitude,
+        makeItEleven: dailyPlan.makeItEleven,
+        greatDay: dailyPlan.greatDay,
+        topGoals: dailyPlan.topGoals,
+        meals: dailyPlan.meals,
+        wordOfDay: dailyPlan.wordOfDay
+      });
     } catch (error) {
       console.error('Error saving daily plan:', error);
     } finally {
@@ -297,25 +279,14 @@ const GoalsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Side Quest */}
+            {/* Word of the Day */}
             <div className="mobile-input-group">
               <div className="mobile-icon">
-                ⚔️
+                📖
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="dyslexic-heading text-sky-100">Side Quest</h3>
-                <p className="dyslexic-text text-sky-300">{dailyPlan.sideQuest || 'No side quest set'}</p>
-              </div>
-            </div>
-
-            {/* Notes */}
-            <div className="mobile-input-group">
-              <div className="mobile-icon">
-                📝
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="dyslexic-heading text-sky-100">Notes</h3>
-                <p className="dyslexic-text text-sky-300 whitespace-pre-wrap">{dailyPlan.notes || 'No notes for today'}</p>
+                <h3 className="dyslexic-heading text-sky-100">Word of the Day</h3>
+                <p className="dyslexic-text text-sky-300">{dailyPlan.wordOfDay || 'No word set for today'}</p>
               </div>
             </div>
 
@@ -467,37 +438,20 @@ const GoalsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Side Quest */}
+              {/* Word of the Day */}
               <div className="mobile-input-group">
                 <div className="mobile-icon">
-                  ⚔️
+                  📖
                 </div>
                 <div className="flex-1 min-w-0">
                   <label className="dyslexic-label block">
-                    Side Quest
+                    Word of the Day
                   </label>
-                  <textarea
-                    value={dailyPlan.sideQuest}
-                    onChange={(e) => handleDailyPlanChange('sideQuest', e.target.value)}
-                    className="glass-input dyslexic-input min-h-[120px]"
-                    placeholder="..."
-                  />
-                </div>
-              </div>
-
-              {/* Notes */}
-              <div className="mobile-input-group">
-                <div className="mobile-icon">
-                  📝
-                </div>
-                <div className="flex-1 min-w-0">
-                  <label className="dyslexic-label block">
-                    Notes
-                  </label>
-                  <textarea
-                    value={dailyPlan.notes}
-                    onChange={(e) => handleDailyPlanChange('notes', e.target.value)}
-                    className="glass-input dyslexic-input min-h-[160px]"
+                  <input
+                    type="text"
+                    value={dailyPlan.wordOfDay}
+                    onChange={(e) => handleDailyPlanChange('wordOfDay', e.target.value)}
+                    className="glass-input dyslexic-input"
                     placeholder="..."
                   />
                 </div>
