@@ -15,6 +15,15 @@ interface DailyPlanWithText extends Omit<DayPlan, 'topGoals'> {
   topGoalTexts: string[];
 }
 
+// Helper function to ensure array has 5 slots
+const ensureFiveSlots = (arr: string[]): string[] => {
+  const result = [...arr];
+  while (result.length < 5) {
+    result.push('');
+  }
+  return result;
+};
+
 const GoalsPage: React.FC = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeFrame>('daily');
   const [showAddGoal, setShowAddGoal] = useState(false);
@@ -69,8 +78,8 @@ const GoalsPage: React.FC = () => {
             gratitude: existingPlan.gratitude || '',
             makeItEleven: existingPlan.makeItEleven || '',
             greatDay: existingPlan.greatDay || '',
-            topGoals: existingPlan.topGoals || ['', '', '', '', ''],
-            topGoalTexts: goalTexts,
+            topGoals: ensureFiveSlots(existingPlan.topGoals || []),
+            topGoalTexts: ensureFiveSlots(goalTexts),
             meals: existingPlan.meals || {
               breakfast: '',
               lunch: '',
@@ -104,8 +113,8 @@ const GoalsPage: React.FC = () => {
         gratitude: existingPlan.gratitude || '',
         makeItEleven: existingPlan.makeItEleven || '',
         greatDay: existingPlan.greatDay || '',
-        topGoals: existingPlan.topGoals || ['', '', '', '', ''],
-        topGoalTexts: goalTexts,
+        topGoals: ensureFiveSlots(existingPlan.topGoals || []),
+        topGoalTexts: ensureFiveSlots(goalTexts),
         meals: existingPlan.meals || {
           breakfast: '',
           lunch: '',
