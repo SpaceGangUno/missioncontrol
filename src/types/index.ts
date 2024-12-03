@@ -19,6 +19,7 @@ export interface DayPlan {
   greatDay: string;
   makeItEleven: string;
   topGoals: string[];
+  sideQuest: string;
   meals: {
     breakfast: string;
     lunch: string;

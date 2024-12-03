@@ -4,15 +4,15 @@ import LoginPage from './components/auth/LoginPage';
 import WelcomeScreen from './components/onboarding/WelcomeScreen';
 import GoalsPage from './components/views/GoalsPage';
 import { useStore } from './lib/store';
-import { Home, Heart, Wallet, Target, User, Sparkles, CheckCircle2 } from 'lucide-react';
-import { DayPlan, Goal } from './types';
+import { Home, Heart, Wallet, Target, User, Sparkles } from 'lucide-react';
+import { DayPlan } from './types';
 
 type ViewType = 'home' | 'wellbeing' | 'finance' | 'goals' | 'profile';
 
 export default function App() {
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState<ViewType>('home');
-  const { goals, weekPlans, getWeekPlans, toggleGoal } = useStore();
+  const { goals, weekPlans, getWeekPlans } = useStore();
 
   // Load week plans when component mounts or user changes
   useEffect(() => {
@@ -37,22 +37,7 @@ export default function App() {
   // Get today's daily plan
   const today = new Date().toISOString().split('T')[0];
   const todaysPlan = weekPlans[today];
-
-  // Find goal by ID and get its details
-  const getGoalDetails = (goalId: string): { title: string; completed: boolean } => {
-    const goal = goals.find(g => g.id === goalId);
-    return {
-      title: goal?.title || 'Unknown Goal',
-      completed: goal?.completed || false
-    };
-  };
-
-  // Handle goal toggle
-  const handleToggleGoal = async (goalId: string) => {
-    await toggleGoal(goalId);
-    // Refresh week plans to ensure UI is up to date
-    await getWeekPlans();
-  };
+  const topGoals = todaysPlan?.topGoals || ['', '', '', '', ''];
 
   const renderView = () => {
     switch (currentView) {
@@ -100,38 +85,30 @@ export default function App() {
             <div className="glass-card p-6 mb-4 rounded-[24px]">
               <h2 className="text-sm text-indigo-200/80 mb-4">Top Goals for Today</h2>
               <div className="space-y-4">
-                {todaysPlan?.topGoals?.map((goalId: string, index: number) => {
-                  if (!goalId) {
-                    return (
-                      <div key={index} className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg">
-                          {index + 1}
-                        </div>
-                        <p className="text-sm text-indigo-200/80">No goal set</p>
-                      </div>
-                    );
-                  }
-
-                  const { title, completed } = getGoalDetails(goalId);
-                  return (
-                    <div key={goalId} className="flex items-center gap-3">
-                      <button
-                        onClick={() => handleToggleGoal(goalId)}
-                        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
-                          completed
-                            ? 'bg-sky-500 text-white'
-                            : 'bg-sky-500/10 text-sky-300 hover:bg-sky-500/20'
-                        }`}
-                      >
-                        <CheckCircle2 className="w-5 h-5" />
-                      </button>
-                      <p className={`text-sm text-indigo-200/80 ${completed ? 'line-through' : ''}`}>
-                        {title}
-                      </p>
+                {topGoals.map((goal: string, index: number) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg">
+                      {index + 1}
                     </div>
-                  );
-                })}
+                    <p className="text-sm text-indigo-200/80">
+                      {goal || 'No goal set'}
+                    </p>
+                  </div>
+                ))}
               </div>
+            </div>
+
+            {/* Side Quest Card */}
+            <div className="glass-card p-6 mb-4 rounded-[24px]">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg">
+                  ⚔️
+                </div>
+                <h2 className="text-sm text-indigo-200/80">Side Quest</h2>
+              </div>
+              <p className="text-sm text-indigo-200/80">
+                {todaysPlan?.sideQuest || 'No side quest set for today'}
+              </p>
             </div>
 
             {/* Insight Cards */}
