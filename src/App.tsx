@@ -78,10 +78,10 @@ export default function App() {
                 <h1 className="text-3xl font-bold mb-1">
                   Greetings {user?.displayName?.split(' ')[0] || 'User'} 👽
                 </h1>
-                <p className="text-indigo-200/80 text-sm">Your financial wellness journey</p>
+                <p className="text-indigo-200/80 text-sm">Your cosmic journey awaits</p>
               </div>
               <button className="w-10 h-10 glass-card rounded-full flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-cyan-400" />
+                <Sparkles className="w-5 h-5 text-[#00f2ff]" />
               </button>
             </div>
 
@@ -89,34 +89,34 @@ export default function App() {
             <div className="glass-card p-6 mb-4 rounded-[24px]">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 bg-slate-800/50 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">😊</span>
+                  <span className="text-2xl">🚀</span>
                 </div>
                 <div>
-                  <h2 className="text-sm text-indigo-200/80 mb-0.5">Daily Progress</h2>
+                  <h2 className="text-sm text-indigo-200/80 mb-0.5">Mission Progress</h2>
                   <div className="flex items-baseline">
-                    <span className="text-3xl font-bold">{progressScore}</span>
+                    <span className="text-3xl font-bold text-[#00f2ff]">{progressScore}</span>
                     <span className="text-lg text-indigo-200/60 ml-1">/100</span>
                   </div>
                 </div>
               </div>
               <div className="bg-slate-800/50 rounded-full h-2 overflow-hidden">
                 <div 
-                  className="bg-gradient-to-r from-cyan-400 to-blue-500 h-full rounded-full transition-all duration-500 progress-bar"
+                  className="progress-bar h-full rounded-full transition-all duration-500"
                   style={{ width: `${progressScore}%` }}
                 />
               </div>
               <p className="text-sm text-indigo-200/60 mt-2">
                 {progressScore === 100 
-                  ? 'All goals completed for today! 🎉' 
+                  ? 'Mission accomplished! 🎉' 
                   : progressScore > 0 
-                    ? `${progressScore}% of today's goals completed`
-                    : 'Start completing your goals for today'}
+                    ? `${progressScore}% of today's mission completed`
+                    : 'Begin your mission for today'}
               </p>
             </div>
 
             {/* Top Goals Card */}
             <div className="glass-card p-6 mb-4 rounded-[24px]">
-              <h2 className="text-sm text-indigo-200/80 mb-4">Top Goals for Today</h2>
+              <h2 className="text-sm text-indigo-200/80 mb-4">Mission Objectives</h2>
               <div className="space-y-4">
                 {todaysPlan?.topGoals?.map((goalId: string, index: number) => (
                   <div key={index} className="flex items-center gap-3">
@@ -124,22 +124,22 @@ export default function App() {
                       onClick={() => goalId && handleToggleGoal(goalId)}
                       className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
                         goalId && isGoalCompleted(goalId)
-                          ? 'bg-sky-500 text-white'
-                          : 'bg-sky-500/10 text-sky-300 hover:bg-sky-500/20'
+                          ? 'bg-[#00f2ff] text-black'
+                          : 'bg-[#00f2ff]/10 text-[#00f2ff] hover:bg-[#00f2ff]/20'
                       }`}
                     >
                       <CheckCircle2 className="w-5 h-5" />
                     </button>
                     <p className={`text-sm ${goalId && isGoalCompleted(goalId) ? 'line-through text-indigo-200/60' : 'text-indigo-200/80'}`}>
-                      {goalId ? getGoalTitle(goalId) : 'No goal set'}
+                      {goalId ? getGoalTitle(goalId) : 'No objective set'}
                     </p>
                   </div>
                 )) || Array(5).fill(null).map((_, index) => (
                   <div key={index} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg">
+                    <div className="w-8 h-8 rounded-xl bg-[#00f2ff]/10 flex items-center justify-center text-[#00f2ff] text-lg">
                       {index + 1}
                     </div>
-                    <p className="text-sm text-indigo-200/80">No goal set</p>
+                    <p className="text-sm text-indigo-200/80">No objective set</p>
                   </div>
                 ))}
               </div>
@@ -148,30 +148,30 @@ export default function App() {
             {/* Side Quest Card */}
             <div className="glass-card p-6 mb-4 rounded-[24px]">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg">
+                <div className="w-8 h-8 rounded-xl bg-[#00f2ff]/10 flex items-center justify-center text-[#00f2ff] text-lg">
                   ⚔️
                 </div>
-                <h2 className="text-sm text-indigo-200/80">Side Quest</h2>
+                <h2 className="text-sm text-indigo-200/80">Side Mission</h2>
               </div>
               <p className="text-sm text-indigo-200/80">
-                {todaysPlan?.sideQuest || 'No side quest set for today'}
+                {todaysPlan?.sideQuest || 'No side mission available'}
               </p>
             </div>
 
             {/* Insight Cards */}
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="glass-card p-4 rounded-[20px] hover-card">
-                <Heart className="w-6 h-6 text-rose-400 mb-3" />
-                <h3 className="font-medium text-sm mb-1">Stress Free</h3>
+                <Heart className="w-6 h-6 text-[#ff00cc] mb-3" />
+                <h3 className="font-medium text-sm mb-1">Cosmic Balance</h3>
                 <p className="text-xs text-indigo-200/60">
-                  Your spending is balanced this week
+                  Your energy is aligned this week
                 </p>
               </div>
               <div className="glass-card p-4 rounded-[20px] hover-card">
-                <Target className="w-6 h-6 text-cyan-400 mb-3" />
-                <h3 className="font-medium text-sm mb-1">Money Mindful</h3>
+                <Target className="w-6 h-6 text-[#00f2ff] mb-3" />
+                <h3 className="font-medium text-sm mb-1">Star Tracker</h3>
                 <p className="text-xs text-indigo-200/60">
-                  You've saved 15% more than usual
+                  15% ahead of mission schedule
                 </p>
               </div>
             </div>
@@ -182,11 +182,11 @@ export default function App() {
                 <div className="flex items-center gap-3">
                   <span className="text-xl">☕️</span>
                   <div>
-                    <h3 className="font-medium text-sm">Morning Coffee</h3>
-                    <p className="text-xs text-indigo-200/60">Self-care</p>
+                    <h3 className="font-medium text-sm">Space Coffee</h3>
+                    <p className="text-xs text-indigo-200/60">Energy boost</p>
                   </div>
                 </div>
-                <span className="text-emerald-400">$4.50</span>
+                <span className="text-[#00f2ff]">$4.50</span>
               </div>
             </div>
           </>
