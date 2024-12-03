@@ -29,14 +29,23 @@ export default function App() {
     return <WelcomeScreen />;
   }
 
-  // Calculate completion percentage
-  const completedGoals = goals.filter(g => g.completed).length;
-  const totalGoals = goals.length;
-  const progressScore = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 18; // Default to 18 for demo
-
   // Get today's daily plan
   const today = new Date().toISOString().split('T')[0];
   const todaysPlan = weekPlans[today];
+
+  // Calculate daily progress
+  const calculateDailyProgress = () => {
+    if (!todaysPlan?.topGoals?.length) return 0;
+
+    const completedDailyGoals = todaysPlan.topGoals.filter(goalId => {
+      const goal = goals.find(g => g.id === goalId);
+      return goal?.completed;
+    }).length;
+
+    return Math.round((completedDailyGoals / todaysPlan.topGoals.length) * 100);
+  };
+
+  const progressScore = calculateDailyProgress();
 
   // Helper function to get goal title from ID
   const getGoalTitle = (goalId: string): string => {
@@ -64,14 +73,14 @@ export default function App() {
               </button>
             </div>
 
-            {/* Financial Score Card */}
+            {/* Daily Progress Card */}
             <div className="glass-card p-6 mb-4 rounded-[24px]">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 bg-slate-800/50 rounded-full flex items-center justify-center">
                   <span className="text-2xl">😊</span>
                 </div>
                 <div>
-                  <h2 className="text-sm text-indigo-200/80 mb-0.5">Financial Wellbeing Score</h2>
+                  <h2 className="text-sm text-indigo-200/80 mb-0.5">Daily Progress</h2>
                   <div className="flex items-baseline">
                     <span className="text-3xl font-bold">{progressScore}</span>
                     <span className="text-lg text-indigo-200/60 ml-1">/100</span>
@@ -81,25 +90,35 @@ export default function App() {
               <div className="bg-slate-800/50 rounded-full h-2 overflow-hidden">
                 <div 
                   className="bg-gradient-to-r from-cyan-400 to-blue-500 h-full rounded-full transition-all duration-500 progress-bar"
-                  style={{ '--progress': `${progressScore}%` } as React.CSSProperties}
+                  style={{ width: `${progressScore}%` }}
                 />
               </div>
+              <p className="text-sm text-indigo-200/60 mt-2">
+                {progressScore === 100 
+                  ? 'All goals completed for today! 🎉' 
+                  : progressScore > 0 
+                    ? `${progressScore}% of today's goals completed`
+                    : 'Start completing your goals for today'}
+              </p>
             </div>
 
             {/* Top Goals Card */}
             <div className="glass-card p-6 mb-4 rounded-[24px]">
               <h2 className="text-sm text-indigo-200/80 mb-4">Top Goals for Today</h2>
               <div className="space-y-4">
-                {todaysPlan?.topGoals?.map((goalId: string, index: number) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg">
-                      {index + 1}
+                {todaysPlan?.topGoals?.map((goalId: string, index: number) => {
+                  const goal = goals.find(g => g.id === goalId);
+                  return (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-xl ${goal?.completed ? 'bg-sky-500 text-white' : 'bg-sky-500/10 text-sky-300'} flex items-center justify-center text-lg`}>
+                        {index + 1}
+                      </div>
+                      <p className={`text-sm ${goal?.completed ? 'line-through text-indigo-200/60' : 'text-indigo-200/80'}`}>
+                        {goalId ? getGoalTitle(goalId) : 'No goal set'}
+                      </p>
                     </div>
-                    <p className="text-sm text-indigo-200/80">
-                      {goalId ? getGoalTitle(goalId) : 'No goal set'}
-                    </p>
-                  </div>
-                )) || Array(5).fill(null).map((_, index) => (
+                  );
+                }) || Array(5).fill(null).map((_, index) => (
                   <div key={index} className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg">
                       {index + 1}
