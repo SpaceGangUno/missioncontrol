@@ -3,6 +3,7 @@ import { Goal, DayPlan } from '../../types';
 import AddGoalForm from '../AddGoalForm';
 import { Plus, CheckCircle, Save, ChevronLeft, ChevronRight, Calendar, Edit2 } from 'lucide-react';
 import { useStore } from '../../lib/store';
+import WeekView from './WeekView';
 
 type TimeFrame = 'yearly' | 'monthly' | 'weekly' | 'daily';
 
@@ -639,6 +640,11 @@ const GoalsPage: React.FC = () => {
             </div>
           )}
         </div>
+      ) : selectedTimeframe === 'weekly' ? (
+        <WeekView 
+          selectedDate={selectedDate}
+          onDateChange={handleDateChange}
+        />
       ) : (
         <div className="space-y-4">
           {filteredGoals.map((goal) => (

@@ -1,37 +1,151 @@
 import React from 'react';
-import { Props } from '../../types';
+import { format, startOfWeek, addDays } from 'date-fns';
+import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Goal } from '../../types';
+import { useStore } from '../../lib/store';
 
-export default function WeekView({ goals, onToggleGoal }: Props) {
+interface WeekViewProps {
+  selectedDate: string;
+  onDateChange: (date: string) => void;
+}
+
+const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
+  const { goals, weekPlans, toggleGoal } = useStore();
+
+  // Get start of week for the selected date
+  const weekStart = startOfWeek(new Date(selectedDate), { weekStartsOn: 0 });
+
+  // Generate array of dates for the week
+  const weekDates = Array.from({ length: 7 }, (_, i) => {
+    const date = addDays(weekStart, i);
+    return {
+      date,
+      formattedDate: format(date, 'yyyy-MM-dd'),
+      dayName: format(date, 'EEE'),
+      dayNumber: format(date, 'd')
+    };
+  });
+
+  // Navigate to previous/next week
+  const handleNavigateWeek = (direction: 'prev' | 'next') => {
+    const currentDate = new Date(selectedDate);
+    const newDate = new Date(currentDate);
+    newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7));
+    onDateChange(newDate.toISOString().split('T')[0]);
+  };
+
+  // Helper function to get goal title
+  const getGoalTitle = (goalId: string): string => {
+    const goal = goals.find(g => g.id === goalId);
+    return goal?.title || '';
+  };
+
+  // Helper function to check if goal is completed
+  const isGoalCompleted = (goalId: string): boolean => {
+    const goal = goals.find(g => g.id === goalId);
+    return goal?.completed || false;
+  };
+
+  // Handle goal toggle
+  const handleToggleGoal = async (goalId: string) => {
+    await toggleGoal(goalId);
+  };
+
   return (
     <div className="space-y-6">
-      <div className="glass-card p-6">
-        <h2 className="text-xl font-semibold mb-4">This Week's Goals</h2>
-        <div className="space-y-4">
-          {goals.map(goal => (
-            <div 
-              key={goal.id}
-              className="flex items-center justify-between p-4 bg-white/5 rounded-lg"
-            >
-              <div>
-                <h3 className="font-medium">{goal.title}</h3>
-                {goal.description && (
-                  <p className="text-sm text-sky-400/60 mt-1">{goal.description}</p>
+      {/* Week Navigation */}
+      <div className="flex items-center justify-between mb-6">
+        <button
+          onClick={() => handleNavigateWeek('prev')}
+          className="p-2 text-[#00f2ff] hover:bg-[#00f2ff]/10 rounded-xl transition-colors"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+        <div className="text-lg font-medium text-sky-100">
+          Week of {format(weekStart, 'MMM d, yyyy')}
+        </div>
+        <button
+          onClick={() => handleNavigateWeek('next')}
+          className="p-2 text-[#00f2ff] hover:bg-[#00f2ff]/10 rounded-xl transition-colors"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* Week Days */}
+      <div className="grid grid-cols-7 gap-2 mb-6">
+        {weekDates.map(({ dayName, dayNumber, formattedDate }) => (
+          <button
+            key={formattedDate}
+            onClick={() => onDateChange(formattedDate)}
+            className={`flex flex-col items-center p-2 rounded-xl transition-colors ${
+              formattedDate === selectedDate
+                ? 'bg-[#00f2ff] text-black'
+                : 'text-[#00f2ff] hover:bg-[#00f2ff]/10'
+            }`}
+          >
+            <span className="text-xs">{dayName}</span>
+            <span className="text-lg font-medium">{dayNumber}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Daily Goals */}
+      <div className="space-y-4">
+        {weekDates.map(({ formattedDate, dayName, dayNumber }) => {
+          const dayPlan = weekPlans[formattedDate];
+          return (
+            <div key={formattedDate} className="glass-card p-4 rounded-xl">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    formattedDate === selectedDate
+                      ? 'bg-[#00f2ff] text-black'
+                      : 'bg-[#00f2ff]/10 text-[#00f2ff]'
+                  }`}>
+                    <div className="text-center">
+                      <div className="text-xs">{dayName}</div>
+                      <div className="text-lg font-medium leading-none">{dayNumber}</div>
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-medium text-sky-100">
+                    {format(new Date(formattedDate), 'MMMM d')}
+                  </h3>
+                </div>
+                {dayPlan?.topGoals?.length > 0 && (
+                  <div className="text-sm text-[#00f2ff]">
+                    {dayPlan.topGoals.filter(goalId => isGoalCompleted(goalId)).length} / {dayPlan.topGoals.length}
+                  </div>
                 )}
               </div>
-              <button
-                onClick={() => onToggleGoal(goal.id)}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  goal.completed 
-                    ? 'bg-green-500/20 text-green-400'
-                    : 'bg-sky-500/20 text-sky-400'
-                }`}
-              >
-                {goal.completed ? 'Completed' : 'In Progress'}
-              </button>
+              <div className="space-y-2">
+                {dayPlan?.topGoals?.map((goalId, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <button
+                      onClick={() => handleToggleGoal(goalId)}
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+                        isGoalCompleted(goalId)
+                          ? 'bg-[#00f2ff] text-black'
+                          : 'bg-[#00f2ff]/10 text-[#00f2ff] hover:bg-[#00f2ff]/20'
+                      }`}
+                    >
+                      <CheckCircle2 className="w-5 h-5" />
+                    </button>
+                    <p className={`text-sm ${isGoalCompleted(goalId) ? 'line-through text-indigo-200/60' : 'text-indigo-200/80'}`}>
+                      {getGoalTitle(goalId)}
+                    </p>
+                  </div>
+                ))}
+                {(!dayPlan?.topGoals || dayPlan.topGoals.length === 0) && (
+                  <p className="text-sm text-indigo-200/60">No objectives set for this day</p>
+                )}
+              </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );
-}
+};
+
+export default WeekView;
