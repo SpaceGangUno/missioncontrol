@@ -11,7 +11,7 @@ interface WeekViewProps {
 }
 
 const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
-  const { goals, weekPlans, toggleGoal, saveDayPlan } = useStore();
+  const { goals, weekPlans, toggleGoal, saveDayPlan, addGoal, getWeekPlans } = useStore();
   const selectedDayRef = useRef<HTMLDivElement>(null);
   const [showAddGoal, setShowAddGoal] = useState(false);
   const [addGoalDate, setAddGoalDate] = useState('');
@@ -68,25 +68,29 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
   // Handle adding a new goal
   const handleAddGoal = async (goalData: Omit<Goal, 'id' | 'completed' | 'createdAt'>) => {
     try {
+      // First, add the goal to the store
+      const result = await addGoal({
+        ...goalData,
+        priority: goalData.priority || 'medium',
+        category: goalData.category || 'personal',
+        progress: 0,
+        status: 'not_started'
+      });
+
+      // Then, update the day's plan with the new goal
       const dayPlan = weekPlans[addGoalDate] || {
         date: addGoalDate,
         topGoals: [],
         meals: { breakfast: '', lunch: '', dinner: '' }
       };
 
-      // Create the goal
-      const newGoal = {
-        ...goalData,
-        id: Date.now().toString(),
-        completed: false,
-        createdAt: new Date().toISOString()
-      };
-
-      // Add goal to the day's plan
       await saveDayPlan({
         ...dayPlan,
-        topGoals: [...(dayPlan.topGoals || []), newGoal.id]
+        topGoals: [...(dayPlan.topGoals || []), result.id]
       });
+
+      // Refresh the week plans to show the new goal
+      await getWeekPlans();
 
       setShowAddGoal(false);
     } catch (error) {
@@ -174,6 +178,7 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
                       setShowAddGoal(true);
                     }}
                     className="p-2 text-[#00f2ff] hover:bg-[#00f2ff]/10 rounded-xl transition-colors"
+                    title="Add Goal"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
