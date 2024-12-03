@@ -37,7 +37,12 @@ export default function App() {
   // Get today's daily plan
   const today = new Date().toISOString().split('T')[0];
   const todaysPlan = weekPlans[today];
-  const topGoals = todaysPlan?.topGoals || ['', '', '', '', ''];
+
+  // Helper function to get goal title from ID
+  const getGoalTitle = (goalId: string): string => {
+    const goal = goals.find(g => g.id === goalId);
+    return goal?.title || 'Unknown Goal';
+  };
 
   const renderView = () => {
     switch (currentView) {
@@ -85,14 +90,21 @@ export default function App() {
             <div className="glass-card p-6 mb-4 rounded-[24px]">
               <h2 className="text-sm text-indigo-200/80 mb-4">Top Goals for Today</h2>
               <div className="space-y-4">
-                {topGoals.map((goal: string, index: number) => (
+                {todaysPlan?.topGoals?.map((goalId: string, index: number) => (
                   <div key={index} className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg">
                       {index + 1}
                     </div>
                     <p className="text-sm text-indigo-200/80">
-                      {goal || 'No goal set'}
+                      {goalId ? getGoalTitle(goalId) : 'No goal set'}
                     </p>
+                  </div>
+                )) || Array(5).fill(null).map((_, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg">
+                      {index + 1}
+                    </div>
+                    <p className="text-sm text-indigo-200/80">No goal set</p>
                   </div>
                 ))}
               </div>
