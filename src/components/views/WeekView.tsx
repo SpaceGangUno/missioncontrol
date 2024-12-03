@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { format, startOfWeek, addDays } from 'date-fns';
 import { ChevronLeft, ChevronRight, CheckCircle2, Plus } from 'lucide-react';
-import { Goal } from '../../types';
+import { Goal, DayPlan } from '../../types';
 import { useStore } from '../../lib/store';
 import AddGoalForm from '../AddGoalForm';
 
@@ -16,6 +16,7 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
   const [showAddGoal, setShowAddGoal] = useState(false);
   const [addGoalDate, setAddGoalDate] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Get start of week for the selected date
   const weekStart = startOfWeek(new Date(selectedDate), { weekStartsOn: 0 });
@@ -68,59 +69,63 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
 
   // Handle goal toggle
   const handleToggleGoal = async (goalId: string) => {
-    await toggleGoal(goalId);
-    setRefreshKey(prev => prev + 1);
+    try {
+      await toggleGoal(goalId);
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Error toggling goal:', error);
+    }
   };
 
   // Handle adding a new goal
   const handleAddGoal = async (goalData: Omit<Goal, 'id' | 'completed' | 'createdAt'>) => {
+    setIsLoading(true);
     try {
-      // Create the new goal with all required fields
-      const newGoalData = {
+      // Create the new goal
+      const result = await addGoal({
         ...goalData,
         description: goalData.description || '',
         priority: goalData.priority || 'medium',
         category: goalData.category || 'personal',
         progress: 0,
-        status: 'not_started' as const,
-        timeframe: 'weekly' as const
-      };
+        status: 'not_started'
+      });
 
-      // Add the goal to the store
-      const result = await addGoal(newGoalData);
-
-      if (result && result.id) {
-        // Get or create the day plan
-        const dayPlan = weekPlans[addGoalDate] || {
-          date: addGoalDate,
-          gratitude: '',
-          wordOfDay: '',
-          greatDay: '',
-          makeItEleven: '',
-          topGoals: [],
-          sideQuest: '',
-          meals: {
-            breakfast: '',
-            lunch: '',
-            dinner: ''
-          }
-        };
-
-        // Update the day plan with the new goal
-        await saveDayPlan({
-          ...dayPlan,
-          date: addGoalDate,
-          topGoals: [...(dayPlan.topGoals || []), result.id]
-        });
-
-        // Refresh the UI
-        await getWeekPlans();
-        setRefreshKey(prev => prev + 1);
+      if (!result?.id) {
+        throw new Error('Failed to create goal');
       }
 
+      // Get or create the day plan
+      const existingPlan = weekPlans[addGoalDate] || {
+        date: addGoalDate,
+        gratitude: '',
+        wordOfDay: '',
+        greatDay: '',
+        makeItEleven: '',
+        topGoals: [],
+        sideQuest: '',
+        meals: {
+          breakfast: '',
+          lunch: '',
+          dinner: ''
+        }
+      };
+
+      // Add the new goal to the day's plan
+      await saveDayPlan({
+        ...existingPlan,
+        date: addGoalDate,
+        topGoals: [...(existingPlan.topGoals || []), result.id]
+      });
+
+      // Refresh the UI
+      await getWeekPlans();
+      setRefreshKey(prev => prev + 1);
       setShowAddGoal(false);
     } catch (error) {
       console.error('Error adding goal:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -205,6 +210,7 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
                     }}
                     className="p-2 text-[#00f2ff] hover:bg-[#00f2ff]/10 rounded-xl transition-colors"
                     title="Add Goal"
+                    disabled={isLoading}
                   >
                     <Plus className="w-5 h-5" />
                   </button>
