@@ -4,7 +4,7 @@ import LoginPage from './components/auth/LoginPage';
 import WelcomeScreen from './components/onboarding/WelcomeScreen';
 import GoalsPage from './components/views/GoalsPage';
 import { useStore } from './lib/store';
-import { Home, Heart, Wallet, Target, User, Sparkles } from 'lucide-react';
+import { Home, Heart, Wallet, Target, User, Sparkles, CheckCircle2 } from 'lucide-react';
 import { DayPlan } from './types';
 
 type ViewType = 'home' | 'wellbeing' | 'finance' | 'goals' | 'profile';
@@ -12,7 +12,7 @@ type ViewType = 'home' | 'wellbeing' | 'finance' | 'goals' | 'profile';
 export default function App() {
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState<ViewType>('home');
-  const { goals, weekPlans, getWeekPlans } = useStore();
+  const { goals, weekPlans, getWeekPlans, toggleGoal } = useStore();
 
   // Load week plans when component mounts or user changes
   useEffect(() => {
@@ -51,6 +51,18 @@ export default function App() {
   const getGoalTitle = (goalId: string): string => {
     const goal = goals.find(g => g.id === goalId);
     return goal?.title || 'Unknown Goal';
+  };
+
+  // Helper function to get goal completion status
+  const isGoalCompleted = (goalId: string): boolean => {
+    const goal = goals.find(g => g.id === goalId);
+    return goal?.completed || false;
+  };
+
+  // Handle goal toggle
+  const handleToggleGoal = async (goalId: string) => {
+    await toggleGoal(goalId);
+    await getWeekPlans(); // Refresh plans to update UI
   };
 
   const renderView = () => {
@@ -106,19 +118,23 @@ export default function App() {
             <div className="glass-card p-6 mb-4 rounded-[24px]">
               <h2 className="text-sm text-indigo-200/80 mb-4">Top Goals for Today</h2>
               <div className="space-y-4">
-                {todaysPlan?.topGoals?.map((goalId: string, index: number) => {
-                  const goal = goals.find(g => g.id === goalId);
-                  return (
-                    <div key={index} className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-xl ${goal?.completed ? 'bg-sky-500 text-white' : 'bg-sky-500/10 text-sky-300'} flex items-center justify-center text-lg`}>
-                        {index + 1}
-                      </div>
-                      <p className={`text-sm ${goal?.completed ? 'line-through text-indigo-200/60' : 'text-indigo-200/80'}`}>
-                        {goalId ? getGoalTitle(goalId) : 'No goal set'}
-                      </p>
-                    </div>
-                  );
-                }) || Array(5).fill(null).map((_, index) => (
+                {todaysPlan?.topGoals?.map((goalId: string, index: number) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <button
+                      onClick={() => goalId && handleToggleGoal(goalId)}
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+                        goalId && isGoalCompleted(goalId)
+                          ? 'bg-sky-500 text-white'
+                          : 'bg-sky-500/10 text-sky-300 hover:bg-sky-500/20'
+                      }`}
+                    >
+                      <CheckCircle2 className="w-5 h-5" />
+                    </button>
+                    <p className={`text-sm ${goalId && isGoalCompleted(goalId) ? 'line-through text-indigo-200/60' : 'text-indigo-200/80'}`}>
+                      {goalId ? getGoalTitle(goalId) : 'No goal set'}
+                    </p>
+                  </div>
+                )) || Array(5).fill(null).map((_, index) => (
                   <div key={index} className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-300 text-lg">
                       {index + 1}
