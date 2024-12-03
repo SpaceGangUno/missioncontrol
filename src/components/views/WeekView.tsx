@@ -1,8 +1,9 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { format, startOfWeek, addDays } from 'date-fns';
-import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, Plus } from 'lucide-react';
 import { Goal } from '../../types';
 import { useStore } from '../../lib/store';
+import AddGoalForm from '../AddGoalForm';
 
 interface WeekViewProps {
   selectedDate: string;
@@ -10,8 +11,10 @@ interface WeekViewProps {
 }
 
 const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
-  const { goals, weekPlans, toggleGoal } = useStore();
+  const { goals, weekPlans, toggleGoal, saveDayPlan } = useStore();
   const selectedDayRef = useRef<HTMLDivElement>(null);
+  const [showAddGoal, setShowAddGoal] = useState(false);
+  const [addGoalDate, setAddGoalDate] = useState('');
 
   // Get start of week for the selected date
   const weekStart = startOfWeek(new Date(selectedDate), { weekStartsOn: 0 });
@@ -60,6 +63,35 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
   // Handle goal toggle
   const handleToggleGoal = async (goalId: string) => {
     await toggleGoal(goalId);
+  };
+
+  // Handle adding a new goal
+  const handleAddGoal = async (goalData: Omit<Goal, 'id' | 'completed' | 'createdAt'>) => {
+    try {
+      const dayPlan = weekPlans[addGoalDate] || {
+        date: addGoalDate,
+        topGoals: [],
+        meals: { breakfast: '', lunch: '', dinner: '' }
+      };
+
+      // Create the goal
+      const newGoal = {
+        ...goalData,
+        id: Date.now().toString(),
+        completed: false,
+        createdAt: new Date().toISOString()
+      };
+
+      // Add goal to the day's plan
+      await saveDayPlan({
+        ...dayPlan,
+        topGoals: [...(dayPlan.topGoals || []), newGoal.id]
+      });
+
+      setShowAddGoal(false);
+    } catch (error) {
+      console.error('Error adding goal:', error);
+    }
   };
 
   return (
@@ -130,11 +162,22 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
                     {format(new Date(formattedDate), 'MMMM d')}
                   </h3>
                 </div>
-                {dayPlan?.topGoals?.length > 0 && (
-                  <div className="text-sm text-[#00f2ff]">
-                    {dayPlan.topGoals.filter(goalId => isGoalCompleted(goalId)).length} / {dayPlan.topGoals.length}
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  {dayPlan?.topGoals?.length > 0 && (
+                    <div className="text-sm text-[#00f2ff]">
+                      {dayPlan.topGoals.filter(goalId => isGoalCompleted(goalId)).length} / {dayPlan.topGoals.length}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => {
+                      setAddGoalDate(formattedDate);
+                      setShowAddGoal(true);
+                    }}
+                    className="p-2 text-[#00f2ff] hover:bg-[#00f2ff]/10 rounded-xl transition-colors"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
               <div className="space-y-2">
                 {dayPlan?.topGoals?.map((goalId, index) => (
@@ -162,6 +205,14 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
           );
         })}
       </div>
+
+      {/* Add Goal Modal */}
+      {showAddGoal && (
+        <AddGoalForm
+          onClose={() => setShowAddGoal(false)}
+          onAddGoal={handleAddGoal}
+        />
+      )}
     </div>
   );
 };
