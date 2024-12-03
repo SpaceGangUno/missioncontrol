@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { format, startOfWeek, addDays } from 'date-fns';
 import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { Goal } from '../../types';
@@ -11,6 +11,7 @@ interface WeekViewProps {
 
 const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
   const { goals, weekPlans, toggleGoal } = useStore();
+  const selectedDayRef = useRef<HTMLDivElement>(null);
 
   // Get start of week for the selected date
   const weekStart = startOfWeek(new Date(selectedDate), { weekStartsOn: 0 });
@@ -25,6 +26,16 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
       dayNumber: format(date, 'd')
     };
   });
+
+  // Scroll to selected day when it changes
+  useEffect(() => {
+    if (selectedDayRef.current) {
+      selectedDayRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }, [selectedDate]);
 
   // Navigate to previous/next week
   const handleNavigateWeek = (direction: 'prev' | 'next') => {
@@ -54,7 +65,7 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
   return (
     <div className="space-y-6">
       {/* Week Navigation */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 sticky top-0 z-10 bg-background/80 backdrop-blur-lg p-4 rounded-xl">
         <button
           onClick={() => handleNavigateWeek('prev')}
           className="p-2 text-[#00f2ff] hover:bg-[#00f2ff]/10 rounded-xl transition-colors"
@@ -73,7 +84,7 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
       </div>
 
       {/* Week Days */}
-      <div className="grid grid-cols-7 gap-2 mb-6">
+      <div className="grid grid-cols-7 gap-2 mb-6 sticky top-20 z-10 bg-background/80 backdrop-blur-lg p-4 rounded-xl">
         {weekDates.map(({ dayName, dayNumber, formattedDate }) => (
           <button
             key={formattedDate}
@@ -94,12 +105,19 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
       <div className="space-y-4">
         {weekDates.map(({ formattedDate, dayName, dayNumber }) => {
           const dayPlan = weekPlans[formattedDate];
+          const isSelected = formattedDate === selectedDate;
           return (
-            <div key={formattedDate} className="glass-card p-4 rounded-xl">
+            <div
+              key={formattedDate}
+              ref={isSelected ? selectedDayRef : null}
+              className={`glass-card p-4 rounded-xl transition-all duration-300 ${
+                isSelected ? 'ring-2 ring-[#00f2ff] ring-opacity-50' : ''
+              }`}
+            >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    formattedDate === selectedDate
+                    isSelected
                       ? 'bg-[#00f2ff] text-black'
                       : 'bg-[#00f2ff]/10 text-[#00f2ff]'
                   }`}>
