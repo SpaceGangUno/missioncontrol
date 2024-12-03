@@ -9,6 +9,7 @@ export interface Goal {
   progress: number;
   status: 'not_started' | 'in_progress' | 'completed';
   createdAt: Date | string;
+  timeframe?: 'yearly' | 'monthly' | 'weekly' | 'daily';
 }
 
 export interface DayPlan {

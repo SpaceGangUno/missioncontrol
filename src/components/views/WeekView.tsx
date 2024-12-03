@@ -15,6 +15,7 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
   const selectedDayRef = useRef<HTMLDivElement>(null);
   const [showAddGoal, setShowAddGoal] = useState(false);
   const [addGoalDate, setAddGoalDate] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0); // Add refresh key for forcing re-render
 
   // Get start of week for the selected date
   const weekStart = startOfWeek(new Date(selectedDate), { weekStartsOn: 0 });
@@ -40,6 +41,11 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
     }
   }, [selectedDate]);
 
+  // Load week plans when component mounts or refreshKey changes
+  useEffect(() => {
+    getWeekPlans();
+  }, [getWeekPlans, refreshKey]);
+
   // Navigate to previous/next week
   const handleNavigateWeek = (direction: 'prev' | 'next') => {
     const currentDate = new Date(selectedDate);
@@ -63,18 +69,20 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
   // Handle goal toggle
   const handleToggleGoal = async (goalId: string) => {
     await toggleGoal(goalId);
+    setRefreshKey(prev => prev + 1); // Force refresh after toggle
   };
 
   // Handle adding a new goal
   const handleAddGoal = async (goalData: Omit<Goal, 'id' | 'completed' | 'createdAt'>) => {
     try {
-      // First, add the goal to the store
+      // First, add the goal to the store with weekly timeframe
       const result = await addGoal({
         ...goalData,
         priority: goalData.priority || 'medium',
         category: goalData.category || 'personal',
         progress: 0,
-        status: 'not_started'
+        status: 'not_started',
+        timeframe: 'weekly' // Ensure goal is set as weekly
       });
 
       // Then, update the day's plan with the new goal
@@ -84,14 +92,16 @@ const WeekView: React.FC<WeekViewProps> = ({ selectedDate, onDateChange }) => {
         meals: { breakfast: '', lunch: '', dinner: '' }
       };
 
+      // Add the new goal to the day's plan
       await saveDayPlan({
         ...dayPlan,
+        date: addGoalDate, // Ensure date is set correctly
         topGoals: [...(dayPlan.topGoals || []), result.id]
       });
 
-      // Refresh the week plans to show the new goal
+      // Refresh the week plans and UI
       await getWeekPlans();
-
+      setRefreshKey(prev => prev + 1);
       setShowAddGoal(false);
     } catch (error) {
       console.error('Error adding goal:', error);
